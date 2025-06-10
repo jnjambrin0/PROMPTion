@@ -44,79 +44,138 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --radius: 0.5rem; /* Slightly sharper radius */
+  --background: oklch(0.98 0.01 240); /* Off-white, slightly cool */
+  --foreground: oklch(0.10 0.01 240); /* Dark, slightly desaturated blue/gray */
+
+  --card: oklch(1 0 0); /* Pure white cards for contrast */
+  --card-foreground: oklch(0.10 0.01 240);
+
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.10 0.01 240);
+
+  --primary: oklch(0.45 0.05 250); /* A muted blue for primary actions */
+  --primary-foreground: oklch(0.99 0.01 250); /* Light foreground for primary */
+
+  --secondary: oklch(0.96 0.01 240); /* Lighter gray for secondary elements */
+  --secondary-foreground: oklch(0.20 0.01 240); /* Darker gray for text on secondary */
+
+  --muted: oklch(0.96 0.01 240);
+  --muted-foreground: oklch(0.45 0.01 240); /* Muted text color */
+
+  --accent: oklch(0.94 0.02 240); /* Subtle accent */
+  --accent-foreground: oklch(0.15 0.01 240);
+
+  --destructive: oklch(0.55 0.18 15); /* Softer, less intense red */
+  --destructive-foreground: oklch(0.99 0.01 15);
+
+  --border: oklch(0.90 0.01 240); /* Softer borders */
+  --input: oklch(0.90 0.01 240);
+  --ring: oklch(0.45 0.05 250 / 0.5); /* Primary color based ring, semi-transparent */
+
+  /* Keeping chart and sidebar colors as they are, assuming they are part of a deliberate design */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: oklch(0.985 0 0); /* Default sidebar color slightly off-white */
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-border: oklch(0.90 0.01 240); /* Softer sidebar border */
   --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --radius: 0.5rem;
+  --background: oklch(0.10 0.01 240); /* Dark, slightly desaturated blue/gray */
+  --foreground: oklch(0.95 0.01 240); /* Light gray for text */
+
+  --card: oklch(0.15 0.01 240); /* Slightly lighter card background */
+  --card-foreground: oklch(0.95 0.01 240);
+
+  --popover: oklch(0.15 0.01 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+
+  --primary: oklch(0.80 0.03 250); /* Lighter, muted blue for primary in dark mode */
+  --primary-foreground: oklch(0.05 0.01 250);
+
+  --secondary: oklch(0.20 0.01 240); /* Darker secondary */
+  --secondary-foreground: oklch(0.90 0.01 240);
+
+  --muted: oklch(0.20 0.01 240);
+  --muted-foreground: oklch(0.65 0.01 240);
+
+  --accent: oklch(0.22 0.01 240);
+  --accent-foreground: oklch(0.90 0.01 240);
+
+  --destructive: oklch(0.50 0.20 15); /* Softer red for dark mode */
+  --destructive-foreground: oklch(0.98 0.01 15);
+
+  --border: oklch(0.25 0.01 240); /* Softer borders for dark mode */
+  --input: oklch(0.25 0.01 240);
+  --ring: oklch(0.80 0.03 250 / 0.5);
+
+  /* Keeping chart and sidebar colors as they are */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar: oklch(0.15 0.01 240); /* Dark sidebar */
+  --sidebar-foreground: oklch(0.95 0.01 240);
+  --sidebar-primary: oklch(0.80 0.03 250);
+  --sidebar-primary-foreground: oklch(0.05 0.01 250);
+  --sidebar-accent: oklch(0.22 0.01 240);
+  --sidebar-accent-foreground: oklch(0.90 0.01 240);
+  --sidebar-border: oklch(0.25 0.01 240);
   --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50; /* Existing: outline-ring/50 might need to become outline-primary/50 or similar if ring is too dark */
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased; /* Ensure antialiasing */
+    font-feature-settings: "rlig" 1, "calt" 1; /* Common ligatures and contextual alternates */
+  }
+  html {
+    line-height: 1.6; /* Slightly increased line height for readability */
+  }
+  h1, h2, h3, h4, h5, h6 { /* More consistent heading styles */
+    @apply font-semibold text-foreground tracking-tight; /* Add tight tracking */
+  }
+  h1 { @apply text-2xl md:text-3xl; } /* Responsive heading sizes */
+  h2 { @apply text-xl md:text-2xl; }
+  h3 { @apply text-lg md:text-xl; }
+
+  /* Subtle focus ring for accessibility, matching new palette */
+  *:focus-visible {
+    outline-offset: 2px;
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: hsl(var(--primary) / 0.5); /* Use primary color for focus, semi-transparent */
+  }
+}
+
+/* Custom scrollbar for a more Notion-like feel (optional) */
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 6px; /* Narrower scrollbar */
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3); /* Subtle scrollbar thumb based on muted text */
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 }
