@@ -9,7 +9,7 @@ export function CTASection() {
           <div className="space-y-6">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-gray-900 leading-tight">
               Ready to transform your{' '}
-              <span className="bg-brand-gradient bg-clip-text text-transparent">
+              <span className="bg-brand-gradient bg-clip-text text-white px-2 rounded-md">
                 AI workflow?
               </span>
             </h2>
