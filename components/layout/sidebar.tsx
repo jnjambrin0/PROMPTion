@@ -1,10 +1,35 @@
 import Link from 'next/link'
 import { Separator } from '@/components/ui/separator'
-import { QUICK_ACTIONS, WORKSPACE_NAVIGATION } from '@/lib/constants/navigation'
+import { QUICK_ACTIONS } from '@/lib/constants/navigation'
+import { getUserByAuthId } from '@/lib/db/users'
+import { getUserWorkspaces } from '@/lib/db/workspaces'
+import { createClient } from '@/utils/supabase/server'
+import { Home, Plus, Settings, Users } from 'lucide-react'
 
-export function Sidebar() {
+async function getUserData() {
+  try {
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    
+    if (!authUser) return null
+
+    const user = await getUserByAuthId(authUser.id)
+    if (!user) return null
+
+    const workspaces = await getUserWorkspaces(user.id)
+    
+    return { user, workspaces }
+  } catch (error) {
+    console.error('Error fetching user data:', error)
+    return null
+  }
+}
+
+export async function Sidebar() {
+  const userData = await getUserData()
+  
   return (
-    <aside className="w-64 border-r border-neutral-200 bg-neutral-50/30 p-4">
+    <aside className="w-64 h-screen border-r border-neutral-200 bg-neutral-50/30 p-4 flex flex-col">
       {/* Brand */}
       <div className="mb-6">
         <Link href="/home" className="block">
@@ -30,29 +55,93 @@ export function Sidebar() {
 
       <Separator className="mb-4" />
 
-      {/* Workspace Navigation */}
-      <div>
-        <h3 className="mb-3 px-3 text-xs font-medium uppercase tracking-wider text-neutral-500">
-          Workspace
-        </h3>
-        <div className="space-y-1">
-          {WORKSPACE_NAVIGATION.map((item) => (
+      {/* Workspaces */}
+      <div className="flex-1 overflow-auto">
+        <div className="flex items-center justify-between mb-3 px-3">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+            Workspaces
+          </h3>
+          <Link 
+            href="/dashboard/workspaces/new"
+            className="p-1 rounded-md hover:bg-neutral-200 transition-colors"
+            title="Create workspace"
+          >
+            <Plus className="h-3 w-3 text-neutral-500" />
+          </Link>
+        </div>
+        
+        <div className="space-y-1 mb-6">
+          {userData?.workspaces?.map((workspace) => (
             <Link
-              key={item.id}
-              href={item.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+              key={workspace.id}
+              href={`/dashboard/${workspace.slug}`}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover group"
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-              {item.badge && (
-                <span className="ml-auto rounded-full bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
-                  {item.badge}
+              <div className="h-4 w-4 rounded bg-neutral-300 flex items-center justify-center">
+                <span className="text-xs font-medium text-neutral-600">
+                  {workspace.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="flex-1 truncate">{workspace.name}</span>
+              {workspace._count && (
+                <span className="text-xs text-neutral-500">
+                  {workspace._count.prompts}
                 </span>
               )}
             </Link>
-          ))}
+          )) || (
+            <div className="px-3 py-2 text-sm text-neutral-500">
+              No workspaces yet
+            </div>
+          )}
+        </div>
+
+        <Separator className="mb-4" />
+
+        {/* Navigation */}
+        <div>
+          <h3 className="mb-3 px-3 text-xs font-medium uppercase tracking-wider text-neutral-500">
+            Navigation
+          </h3>
+          <div className="space-y-1">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+            >
+              <Home className="h-4 w-4" />
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/templates"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+            >
+              <Users className="h-4 w-4" />
+              Templates
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* User info at bottom */}
+      {userData?.user && (
+        <div className="mt-auto pt-4 border-t border-neutral-200">
+          <div className="px-3 py-2 text-sm text-neutral-600">
+            <div className="font-medium truncate">
+              {userData.user.fullName || userData.user.email}
+            </div>
+            <div className="text-xs text-neutral-500 truncate">
+              {userData.user.email}
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   )
 } 
