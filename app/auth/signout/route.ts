@@ -8,5 +8,5 @@ export async function POST(request: NextRequest) {
   await supabase.auth.signOut()
   
   // Redirect to sign in page
-  return NextResponse.redirect(new URL('/signin', request.url))
+  return NextResponse.redirect(new URL('/sign-in', request.url))
 } 

@@ -56,7 +56,7 @@ export default async function HomePage() {
   const userData = await getUserData()
   
   if (!userData) {
-    redirect('/signin')
+    redirect('/sign-in')
   }
 
   const { user, recentPrompts } = userData

@@ -29,7 +29,7 @@ export async function Sidebar() {
   const userData = await getUserData()
   
   return (
-    <aside className="w-64 h-screen border-r border-neutral-200 bg-neutral-50/30 p-4 flex flex-col">
+    <aside className="w-64 h-screen border-r border-neutral-200 bg-neutral-50/30 p-4 flex flex-col overflow-y-hidden">
       {/* Brand */}
       <div className="mb-6">
         <Link href="/home" className="block">
@@ -56,13 +56,13 @@ export async function Sidebar() {
       <Separator className="mb-4" />
 
       {/* Workspaces */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="flex items-center justify-between mb-3 px-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-neutral-500">
             Workspaces
           </h3>
           <Link 
-            href="/dashboard/workspaces/new"
+            href="/workspaces/new"
             className="p-1 rounded-md hover:bg-neutral-200 transition-colors"
             title="Create workspace"
           >
@@ -74,7 +74,7 @@ export async function Sidebar() {
           {userData?.workspaces?.map((workspace) => (
             <Link
               key={workspace.id}
-              href={`/dashboard/${workspace.slug}`}
+              href={`/${workspace.slug}`}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover group"
             >
               <div className="h-4 w-4 rounded bg-neutral-300 flex items-center justify-center">
@@ -119,7 +119,7 @@ export async function Sidebar() {
               Templates
             </Link>
             <Link
-              href="/dashboard/settings"
+              href="/settings"
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
             >
               <Settings className="h-4 w-4" />

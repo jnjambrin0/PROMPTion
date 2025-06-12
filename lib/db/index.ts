@@ -30,5 +30,6 @@ export type {
 export * from './users'
 export * from './workspaces'
 export * from './prompts'
+export * from './categories'
 export * from './blocks'
 export * from './utils' 

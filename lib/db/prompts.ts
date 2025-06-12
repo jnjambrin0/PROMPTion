@@ -86,6 +86,122 @@ export async function getPromptById(id: string, userId: string) {
 }
 
 /**
+ * Obtiene un prompt por slug dentro de un workspace con verificación de acceso
+ * @param slug - Slug del prompt
+ * @param workspaceId - ID del workspace
+ * @param userId - ID del usuario solicitante
+ * @returns Prompt si tiene acceso
+ */
+export async function getPromptBySlug(slug: string, workspaceId: string, userId: string) {
+  if (!slug || !workspaceId || !userId || 
+      typeof slug !== 'string' || typeof workspaceId !== 'string' || typeof userId !== 'string') {
+    throw new Error('Invalid prompt slug, workspace ID, or user ID')
+  }
+
+  try {
+    // Verificar primero acceso al workspace
+    const hasWorkspaceAccess = await prisma.workspace.findFirst({
+      where: {
+        id: workspaceId,
+        isActive: true,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: { userId }
+            }
+          }
+        ]
+      },
+      select: { id: true }
+    })
+
+    if (!hasWorkspaceAccess) {
+      throw new Error('Access denied to workspace')
+    }
+
+    // Buscar prompt por slug en el workspace
+    const prompt = await prisma.prompt.findFirst({
+      where: {
+        slug,
+        workspaceId,
+        deletedAt: null,
+        OR: [
+          { isPublic: true },
+          { userId },
+          {
+            workspace: {
+              OR: [
+                { ownerId: userId },
+                {
+                  members: {
+                    some: { userId }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatarUrl: true
+          }
+        },
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true
+          }
+        },
+        blocks: {
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            type: true,
+            content: true,
+            position: true,
+            indentLevel: true,
+            createdAt: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            favorites: true,
+            forks: true,
+            blocks: true
+          }
+        }
+      }
+    })
+
+    return prompt
+  } catch (error) {
+    console.error('Error fetching prompt by slug:', error)
+    
+    if (error instanceof Error && error.message.includes('Access denied')) {
+      throw error
+    }
+    
+    throw new Error('Failed to fetch prompt')
+  }
+}
+
+/**
  * Obtiene prompts de un workspace con paginación
  * @param workspaceId - ID del workspace
  * @param userId - ID del usuario
@@ -272,7 +388,22 @@ export async function createPrompt(
       throw new Error('Access denied to workspace')
     }
 
-    // Verificar slug único en el workspace
+    // Validar categoryId si se proporciona
+    if (data.categoryId) {
+      const categoryExists = await prisma.category.findFirst({
+        where: {
+          id: data.categoryId,
+          workspaceId: data.workspaceId
+        },
+        select: { id: true }
+      })
+
+      if (!categoryExists) {
+        throw new Error('Category not found in workspace')
+      }
+    }
+
+    // Verificar que el slug no existe en el workspace
     const existing = await prisma.prompt.findFirst({
       where: {
         slug: data.slug,
@@ -292,10 +423,10 @@ export async function createPrompt(
         data: {
           title: data.title,
           slug: data.slug,
-          description: data.description,
+          description: data.description || null,
           workspaceId: data.workspaceId,
           userId,
-          categoryId: data.categoryId,
+          categoryId: data.categoryId || null,
           isTemplate: data.isTemplate || false,
           isPublic: data.isPublic || false,
           modelConfig: {},

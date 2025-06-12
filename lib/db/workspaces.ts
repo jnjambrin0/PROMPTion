@@ -55,6 +55,60 @@ export async function getWorkspaceById(id: string, userId: string) {
 }
 
 /**
+ * Obtiene un workspace por slug con verificación de acceso
+ * @param slug - Slug del workspace
+ * @param userId - ID del usuario solicitante
+ * @returns Workspace si tiene acceso
+ */
+export async function getWorkspaceBySlug(slug: string, userId: string) {
+  if (!slug || !userId || typeof slug !== 'string' || typeof userId !== 'string') {
+    throw new Error('Invalid workspace slug or user ID')
+  }
+
+  try {
+    // Verificar que el usuario tiene acceso al workspace
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        slug,
+        isActive: true,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: {
+                userId
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            prompts: true,
+            members: true,
+            categories: true
+          }
+        }
+      }
+    })
+
+    return workspace
+  } catch (error) {
+    console.error('Error fetching workspace by slug:', error)
+    throw new Error('Failed to fetch workspace')
+  }
+}
+
+/**
  * Obtiene workspaces del usuario
  * @param userId - ID del usuario
  * @returns Lista de workspaces accesibles
@@ -260,5 +314,100 @@ export async function createWorkspace(
     }
     
     throw new Error('Failed to create workspace')
+  }
+}
+
+/**
+ * Obtiene miembros de un workspace con verificación de acceso
+ * @param workspaceId - ID del workspace
+ * @param userId - ID del usuario solicitante
+ * @returns Lista de miembros del workspace
+ */
+export async function getWorkspaceMembers(workspaceId: string, userId: string) {
+  if (!workspaceId || !userId || typeof workspaceId !== 'string' || typeof userId !== 'string') {
+    throw new Error('Invalid workspace or user ID')
+  }
+
+  try {
+    // Verificar acceso al workspace
+    const hasAccess = await prisma.workspace.findFirst({
+      where: {
+        id: workspaceId,
+        isActive: true,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: { userId }
+            }
+          }
+        ]
+      },
+      select: { id: true, ownerId: true }
+    })
+
+    if (!hasAccess) {
+      throw new Error('Access denied to workspace')
+    }
+
+    // Obtener owner por separado
+    const owner = await prisma.user.findUnique({
+      where: { id: hasAccess.ownerId },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        email: true,
+        avatarUrl: true
+      }
+    })
+
+    // Obtener miembros (excluyendo al owner)
+    const members = await prisma.workspaceMember.findMany({
+      where: { 
+        workspaceId,
+        userId: { not: hasAccess.ownerId }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            avatarUrl: true
+          }
+        }
+      },
+      orderBy: [
+        { role: 'asc' },
+        { joinedAt: 'desc' }
+      ]
+    })
+
+    // Combinar owner y miembros
+    const allMembers = [
+      ...(owner ? [{
+        id: `owner-${owner.id}`,
+        role: 'OWNER' as const,
+        permissions: [],
+        joinedAt: null, // Owner created the workspace
+        lastActiveAt: null,
+        user: owner,
+        userId: owner.id,
+        workspaceId
+      }] : []),
+      ...members
+    ]
+
+    return allMembers
+  } catch (error) {
+    console.error('Error fetching workspace members:', error)
+    
+    if (error instanceof Error && error.message.includes('Access denied')) {
+      throw error
+    }
+    
+    throw new Error('Failed to fetch workspace members')
   }
 } 

@@ -89,7 +89,7 @@ export default async function DashboardPage() {
             </div>
             
             <Link
-              href="/dashboard/prompts/new"
+              href="/prompts/new"
               className="flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
             >
               <Plus className="h-4 w-4" />
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-neutral-900">Workspaces</h2>
             <Link
-              href="/dashboard/workspaces/new"
+              href="/workspaces/new"
               className="text-sm text-neutral-600 hover:text-neutral-900 underline"
             >
               Create workspace
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
             {workspaces.map((workspace) => (
               <Link
                 key={workspace.id}
-                href={`/dashboard/${workspace.slug}`}
+                href={`/${workspace.slug}`}
                 className="block bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 transition-colors"
               >
                 <div className="flex items-start gap-3">
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
               {prompts.map((prompt) => (
                 <Link
                   key={prompt.id}
-                  href={`/dashboard/${prompt.workspace.slug}/${prompt.slug}`}
+                  href={`/${prompt.workspace.slug}/${prompt.slug}`}
                   className="block bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 transition-colors"
                 >
                   <div className="flex items-start justify-between">
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
                 Start creating prompts to see them here
               </p>
               <Link
-                href="/dashboard/prompts/new"
+                href="/prompts/new"
                 className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
               >
                 <Plus className="h-4 w-4" />

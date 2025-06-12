@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Search, LogOut, Bell, Settings } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { MobileNav } from '@/components/layout/mobile-nav'
+import { NotificationPanel } from '@/components/ui/notification-panel'
 import { getUserByAuthId } from '@/lib/db/users'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
@@ -25,7 +26,7 @@ export async function Topbar() {
   const userData = await getUser()
   
   if (!userData?.authUser) {
-    redirect('/signin')
+    redirect('/sign-in')
   }
 
   const { authUser, user } = userData
@@ -70,18 +71,10 @@ export async function Topbar() {
 
           {/* Header actions - Desktop only */}
           <div className="hidden md:flex items-center gap-2">
-            <Link
-              href="/dashboard/notifications"
-              className="flex h-8 w-8 items-center justify-center rounded-md notion-hover relative"
-              title="Notifications"
-            >
-              <Bell className="h-4 w-4 text-neutral-600" />
-              {/* Notification dot - could be dynamic based on unread count */}
-              <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full opacity-0"></span>
-            </Link>
+            <NotificationPanel />
             
             <Link
-              href="/dashboard/settings"
+              href="/settings"
               className="flex h-8 w-8 items-center justify-center rounded-md notion-hover"
               title="Settings"
             >
@@ -92,10 +85,10 @@ export async function Topbar() {
           {/* User info */}
           <div className="flex items-center gap-2">
             {/* User avatar */}
-            <Link href="/dashboard/profile" className="flex items-center gap-2">
+            <Link href="/settings" className="flex items-center gap-2">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="text-xs">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || authUser.email?.charAt(0).toUpperCase()}
+                <AvatarFallback className="text-xs bg-gray-100 text-gray-700">
+                  {user?.fullName?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || authUser.email?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
             </Link>
