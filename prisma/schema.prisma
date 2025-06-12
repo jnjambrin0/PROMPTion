@@ -49,6 +49,10 @@ model User {
   collaborations    Collaboration[]
   favorites         Favorite[]
   
+  // Notificaciones
+  receivedNotifications Notification[] @relation("NotificationRecipient")
+  sentNotifications     Notification[] @relation("NotificationActor")
+  
   @@index([email])
   @@index([authId])
   @@map("users")
@@ -86,6 +90,7 @@ model Workspace {
   rules             Rule[]
   categories        Category[]
   tags              Tag[]
+  notifications     Notification[]
   
   @@index([slug])
   @@index([ownerId])
@@ -186,6 +191,7 @@ model Prompt {
   favorites         Favorite[]
   forks             Prompt[] @relation("PromptForks")
   activities        Activity[]
+  notifications     Notification[]
   
   @@unique([workspaceId, slug])
   @@index([userId])
@@ -578,6 +584,58 @@ enum ActivityType {
   AGENT_CONFIGURED
   MEMBER_INVITED
   MEMBER_REMOVED
+}
+
+// ==================== NOTIFICACIONES ====================
+
+model Notification {
+  id                String   @id @default(uuid())
+  type              NotificationType
+  title             String
+  message           String   @db.Text
+  status            NotificationStatus @default(UNREAD)
+  
+  // Metadata adicional
+  actionUrl         String?  @map("action_url")
+  metadata          Json     @default("{}")
+  
+  // Timestamps
+  createdAt         DateTime @default(now()) @map("created_at")
+  readAt            DateTime? @map("read_at")
+  
+  // Relaciones
+  recipientId       String   @map("recipient_id")
+  actorId           String?  @map("actor_id")
+  workspaceId       String?  @map("workspace_id")
+  promptId          String?  @map("prompt_id")
+  
+  recipient         User     @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor             User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  workspace         Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  prompt            Prompt?  @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  
+  @@index([recipientId])
+  @@index([actorId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  WORKSPACE_INVITE
+  COMMENT_CREATED
+  COMMENT_REPLY
+  MENTION
+  PROMPT_SHARED
+  PROMPT_UPDATED
+  SYSTEM_UPDATE
+  WEEKLY_SUMMARY
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
 }
 
 // ==================== ÍNDICES PARA BÚSQUEDA ====================
