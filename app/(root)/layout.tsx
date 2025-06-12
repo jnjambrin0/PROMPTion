@@ -1,6 +1,7 @@
 import { Topbar } from '@/components/layout/topbar'
 import { Sidebar } from '@/components/layout/sidebar'
 import { RightSidebar } from '@/components/layout/right-sidebar'
+import { Toaster } from '@/components/ui/sonner'
 
 interface RootLayoutProps {
   children: React.ReactNode
@@ -30,6 +31,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </div>
         </div>
       </div>
+      
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="bottom-right" />
     </div>
   )
 }
