@@ -4,13 +4,15 @@ import {
   Clock, 
   Plus, 
   Search, 
-  TrendingUp,
+  Zap,
   Calendar,
   Settings,
   Bell,
   Archive,
   Star,
-  Users
+  Users,
+  Home,
+  BookOpen
 } from 'lucide-react'
 import { NavigationItem, QuickAction } from '@/lib/types/navigation'
 
@@ -68,6 +70,33 @@ export const WORKSPACE_NAVIGATION: NavigationItem[] = [
   }
 ]
 
+export const MAIN_NAVIGATION: NavigationItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: Home
+  },
+  {
+    id: 'templates',
+    label: 'Templates',
+    href: '/dashboard/templates',
+    icon: Users
+  },
+  {
+    id: 'guides',
+    label: 'Guides',
+    href: '/guides',
+    icon: BookOpen
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    href: '/settings',
+    icon: Settings
+  }
+]
+
 export const MAIN_QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'new-prompt',
@@ -88,10 +117,10 @@ export const MAIN_QUICK_ACTIONS: QuickAction[] = [
     href: '/templates/new'
   },
   {
-    id: 'import',
-    label: 'Import',
-    icon: TrendingUp,
-    href: '/import'
+    id: 'quick-start',
+    label: 'Quick Start',
+    icon: Zap,
+    href: '/quick-start'
   }
 ]
 

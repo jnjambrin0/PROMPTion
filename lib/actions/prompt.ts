@@ -83,7 +83,7 @@ export async function createPromptAction(
 
     // Revalidate relevant paths
     revalidatePath('/dashboard')
-    revalidatePath(`/dashboard/${workspace?.slug}`)
+    revalidatePath(`/${workspace?.slug}`)
     revalidatePath('/prompts')
 
     return { 
