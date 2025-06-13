@@ -499,3 +499,370 @@ export async function generateShareLinkAction(
   }
 }
 
+/**
+ * Server Action para hacer fork de un prompt
+ * Crea una copia independiente con referencia al original
+ */
+export async function forkPromptAction(
+  promptId: string,
+  targetWorkspaceId?: string
+): Promise<CreatePromptResult> {
+  try {
+    // 1. Authentication
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
+      return { success: false, error: 'Authentication required' }
+    }
+
+    const user = await getUserByAuthId(authUser.id)
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // 2. Get original prompt with authorization check
+    const originalPrompt = await getPromptById(promptId, user.id)
+    if (!originalPrompt) {
+      return { success: false, error: 'Prompt not found or access denied' }
+    }
+
+    // 3. Determine target workspace
+    let targetWorkspace
+    if (targetWorkspaceId) {
+      // Verify access to specified workspace
+      targetWorkspace = await prisma.workspace.findFirst({
+        where: {
+          id: targetWorkspaceId,
+          isActive: true,
+          OR: [
+            { ownerId: user.id },
+            {
+              members: {
+                some: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'ADMIN', 'EDITOR'] }
+                }
+              }
+            }
+          ]
+        },
+        select: { id: true, slug: true, name: true }
+      })
+
+      if (!targetWorkspace) {
+        return { success: false, error: 'Target workspace not found or access denied' }
+      }
+    } else {
+      // Use original workspace if user has access
+      targetWorkspace = await prisma.workspace.findFirst({
+        where: {
+          id: originalPrompt.workspace.id,
+          isActive: true,
+          OR: [
+            { ownerId: user.id },
+            {
+              members: {
+                some: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'ADMIN', 'EDITOR'] }
+                }
+              }
+            }
+          ]
+        },
+        select: { id: true, slug: true, name: true }
+      })
+
+      if (!targetWorkspace) {
+        return { success: false, error: 'No access to create forks in this workspace' }
+      }
+    }
+
+    // 4. Generate unique slug for fork
+    const baseSlug = `${originalPrompt.slug}-fork`
+    const uniqueSlug = await generateUniqueSlug(baseSlug)
+
+    // 5. Create fork in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create forked prompt
+      const forkedPrompt = await tx.prompt.create({
+        data: {
+          title: `${originalPrompt.title} (Fork)`,
+          slug: uniqueSlug,
+          description: originalPrompt.description || undefined,
+          workspaceId: targetWorkspace.id,
+          userId: user.id,
+          categoryId: originalPrompt.category?.id || undefined,
+          parentId: originalPrompt.id, // Key: reference to original
+          isTemplate: false, // Forks are not templates by default
+          isPublic: false,   // Forks are private by default
+          modelConfig: originalPrompt.modelConfig || {},
+          variables: originalPrompt.variables || []
+        }
+      })
+
+      // Copy blocks if they exist
+      if (originalPrompt.blocks && originalPrompt.blocks.length > 0) {
+        await tx.block.createMany({
+          data: originalPrompt.blocks.map((block, index) => ({
+            promptId: forkedPrompt.id,
+            type: block.type,
+            content: block.content as any,
+            position: index,
+            indentLevel: block.indentLevel || 0,
+            userId: user.id
+          }))
+        })
+      }
+
+      // Increment fork count on original prompt
+      await tx.prompt.update({
+        where: { id: originalPrompt.id },
+        data: {
+          forkCount: {
+            increment: 1
+          }
+        }
+      })
+
+      // Create activity record
+      await tx.activity.create({
+        data: {
+          type: 'PROMPT_FORKED',
+          description: `Forked "${originalPrompt.title}" to "${targetWorkspace.name}"`,
+          userId: user.id,
+          promptId: forkedPrompt.id,
+          metadata: {
+            originalPromptId: originalPrompt.id,
+            originalPromptTitle: originalPrompt.title,
+            originalWorkspaceId: originalPrompt.workspace.id,
+            targetWorkspaceId: targetWorkspace.id
+          }
+        }
+      })
+
+      // Create initial version for fork
+      await tx.promptVersion.create({
+        data: {
+          promptId: forkedPrompt.id,
+          userId: user.id,
+          version: 1,
+          title: forkedPrompt.title,
+          content: { 
+            blocks: originalPrompt.blocks || [],
+            forkedFrom: {
+              promptId: originalPrompt.id,
+              title: originalPrompt.title,
+              version: originalPrompt.currentVersion
+            }
+          },
+          modelConfig: originalPrompt.modelConfig || {},
+          variables: originalPrompt.variables || []
+        }
+      })
+
+      return forkedPrompt
+    })
+
+    // 6. Cache invalidation
+    revalidatePath(`/${targetWorkspace.slug}`)
+    revalidatePath(`/${targetWorkspace.slug}?tab=prompts`)
+    revalidatePath(`/${originalPrompt.workspace.slug}/${originalPrompt.slug}`) // Original prompt page
+    revalidatePath('/dashboard')
+    
+    // If different workspace, also revalidate original workspace
+    if (targetWorkspace.id !== originalPrompt.workspace.id) {
+      revalidatePath(`/${originalPrompt.workspace.slug}`)
+    }
+
+    return {
+      success: true,
+      promptSlug: result.slug,
+      workspaceSlug: targetWorkspace.slug
+    }
+  } catch (error) {
+    console.error('Error forking prompt:', error)
+    
+    if (error instanceof Error) {
+      if (error.message.includes('already exists')) {
+        return { success: false, error: 'A prompt with this URL already exists in the target workspace' }
+      }
+      return { success: false, error: error.message }
+    }
+    
+    return { success: false, error: 'Failed to fork prompt' }
+  }
+}
+
+/**
+ * Server Action para verificar si un prompt está en favoritos del usuario
+ */
+export async function checkPromptFavoriteAction(
+  promptId: string
+): Promise<{ success: boolean; error?: string; isFavorited?: boolean }> {
+  try {
+    // 1. Authentication
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
+      return { success: false, error: 'Authentication required' }
+    }
+
+    const user = await getUserByAuthId(authUser.id)
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // 2. Check if favorited
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        userId_promptId: {
+          userId: user.id,
+          promptId: promptId
+        }
+      }
+    })
+
+    return {
+      success: true,
+      isFavorited: !!favorite
+    }
+  } catch (error) {
+    console.error('Error checking favorite status:', error)
+    return { success: false, error: 'Failed to check favorite status' }
+  }
+}
+
+/**
+ * Server Action para actualizar un prompt
+ */
+export async function updatePromptAction(
+  promptId: string,
+  updates: {
+    title: string
+    description: string
+    blocks: Array<{
+      id: string
+      type: string
+      content: any
+      position: number
+    }>
+    isPublic: boolean
+    isTemplate: boolean
+  }
+): Promise<{ success: boolean; error?: string; data?: any }> {
+  try {
+    // 1. Authentication
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
+      return { success: false, error: 'Authentication required' }
+    }
+
+    const user = await getUserByAuthId(authUser.id)
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    // 2. Validate prompt exists and user has permission
+    const existingPrompt = await prisma.prompt.findUnique({
+      where: { id: promptId },
+      include: {
+        workspace: {
+          include: {
+            members: {
+              where: { userId: user.id }
+            }
+          }
+        }
+      }
+    })
+
+    if (!existingPrompt) {
+      return { success: false, error: 'Prompt not found' }
+    }
+
+    // Check if user is the owner or has write access
+    const membership = existingPrompt.workspace.members[0]
+    if (existingPrompt.userId !== user.id && (!membership || !['ADMIN', 'EDITOR'].includes(membership.role))) {
+      return { success: false, error: 'Permission denied' }
+    }
+
+    // 3. Update the prompt
+    const updatedPrompt = await prisma.prompt.update({
+      where: { id: promptId },
+      data: {
+        title: updates.title,
+        description: updates.description || null,
+        isPublic: updates.isPublic,
+        isTemplate: updates.isTemplate,
+        updatedAt: new Date()
+      },
+      include: {
+        workspace: true,
+        user: true,
+        _count: {
+          select: {
+            favorites: true,
+            forks: true,
+            comments: true,
+            blocks: true
+          }
+        }
+      }
+    })
+
+    // Update blocks separately (simpler approach)
+    await prisma.block.deleteMany({
+      where: { promptId: promptId }
+    })
+
+    if (updates.blocks.length > 0) {
+      await prisma.block.createMany({
+        data: updates.blocks.map(block => ({
+          id: block.id,
+          type: block.type as any,
+          content: block.content,
+          position: block.position,
+          promptId: promptId,
+          userId: user.id
+        }))
+      })
+    }
+
+    // Create activity for the update
+    await prisma.activity.create({
+      data: {
+        type: 'PROMPT_UPDATED',
+        description: `Updated prompt "${updates.title}"`,
+        userId: user.id,
+        promptId: promptId,
+        metadata: {
+          changes: {
+            title: updates.title !== existingPrompt.title ? { from: existingPrompt.title, to: updates.title } : undefined,
+            description: updates.description !== existingPrompt.description ? { from: existingPrompt.description, to: updates.description } : undefined,
+            isPublic: updates.isPublic !== existingPrompt.isPublic ? { from: existingPrompt.isPublic, to: updates.isPublic } : undefined,
+            isTemplate: updates.isTemplate !== existingPrompt.isTemplate ? { from: existingPrompt.isTemplate, to: updates.isTemplate } : undefined,
+            blocksCount: updates.blocks.length
+          }
+        }
+      }
+    })
+
+    return { 
+      success: true, 
+      data: updatedPrompt 
+    }
+
+  } catch (error) {
+    console.error('Error updating prompt:', error)
+    return { 
+      success: false, 
+      error: 'Failed to update prompt' 
+    }
+  }
+}
+
