@@ -31,7 +31,7 @@ function getVisibilityInfo(visibility: string) {
       return { icon: Lock, label: 'Private', description: 'Only you can see your profile', variant: 'outline' as const, color: 'text-green-600' }
     default:
       return { icon: Shield, label: 'Unknown', description: 'Unknown visibility setting', variant: 'destructive' as const, color: 'text-gray-600' }
-  }
+      }
 }
 
 export function PrivacySettings({ settings, onUpdate }: PrivacySettingsProps) {
@@ -42,16 +42,16 @@ export function PrivacySettings({ settings, onUpdate }: PrivacySettingsProps) {
     <div className="space-y-6">
       {/* Privacy Status Overview */}
       <CompactCard padding="sm" className="border-l-4 border-l-purple-500/50">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded bg-purple-500/10 flex items-center justify-center">
               <Shield className="h-4 w-4 text-purple-600" />
             </div>
-            <div>
+        <div>
               <h4 className="font-medium text-foreground text-sm">Privacy & Visibility</h4>
               <p className="text-xs text-muted-foreground">
                 Control your profile and data privacy
-              </p>
+          </p>
             </div>
           </div>
           <Badge variant={visibilityInfo.variant} className="text-xs">
@@ -106,7 +106,7 @@ export function PrivacySettings({ settings, onUpdate }: PrivacySettingsProps) {
             badge={
               settings.allowDiscovery ? (
                 <CheckCircle2 className="h-3 w-3 text-green-600" />
-              ) : (
+            ) : (
                 <div className="h-3 w-3 rounded-full border border-muted-foreground" />
               )
             }
@@ -180,14 +180,14 @@ export function PrivacySettings({ settings, onUpdate }: PrivacySettingsProps) {
       <CompactCard padding="sm" className="bg-muted/50">
         <div className="flex items-start gap-2">
           <Shield className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <div className="space-y-1">
+              <div className="space-y-1">
             <h4 className="text-sm font-medium text-foreground">Data Protection</h4>
             <p className="text-xs text-muted-foreground">
               Your privacy settings are applied immediately. We respect your choices about data sharing 
               and visibility. Advanced privacy controls will be available in future updates.
-            </p>
+                </p>
           </div>
-        </div>
+                </div>
       </CompactCard>
     </div>
   )

@@ -64,48 +64,48 @@ function WorkspaceCompactCard({ workspace, onUpdate }: {
           {/* Icon */}
           <div className="h-8 w-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
             <Building className="h-4 w-4 text-muted-foreground" />
-          </div>
-          
+            </div>
+            
           {/* Info */}
-          <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h4 className="font-medium text-foreground truncate text-sm">
-                {workspace.name}
+                  {workspace.name}
               </h4>
               {isOwner && <Crown className="h-3 w-3 text-yellow-600 flex-shrink-0" />}
-            </div>
+              </div>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-xs text-muted-foreground">@{workspace.slug}</span>
-              <Badge 
+                <Badge 
                 variant={getRoleBadgeVariant(workspace.role)}
                 className="text-xs px-1.5 py-0"
-              >
-                {workspace.role}
-              </Badge>
+                >
+                  {workspace.role}
+                </Badge>
               <Badge variant="outline" className="text-xs px-1.5 py-0">
-                {workspace.plan}
-              </Badge>
+                  {workspace.plan}
+                </Badge>
+              </div>
             </div>
           </div>
-        </div>
-        
+          
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button variant="ghost" size="sm" className="h-7 px-2" asChild>
-            <Link href={`/${workspace.slug}`}>
-              Open
-            </Link>
-          </Button>
-          
-          {!isOwner && (
+              <Link href={`/${workspace.slug}`}>
+                Open
+              </Link>
+            </Button>
+            
+            {!isOwner && (
             <WorkspaceActions 
               workspace={workspace}
               onUpdate={onUpdate}
               leaveAction={leaveWorkspaceAction}
             />
-          )}
+            )}
+          </div>
         </div>
-      </div>
     </CompactCard>
   )
 }
@@ -119,13 +119,13 @@ export function WorkspaceSettings({ workspaces, onUpdate }: WorkspaceSettingsPro
       {/* Overview */}
       <CompactCard padding="sm" className="border-l-4 border-l-muted-foreground/20">
         <div className="flex items-center justify-between">
-          <div>
+      <div>
             <h4 className="font-medium text-foreground">Workspace Membership</h4>
             <p className="text-xs text-muted-foreground">
               {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''} • 
               {ownedWorkspaces.length} owned • {memberWorkspaces.length} member
-            </p>
-          </div>
+        </p>
+      </div>
           <Badge variant="secondary" className="text-xs">
             {workspaces.length} Total
           </Badge>
@@ -142,7 +142,7 @@ export function WorkspaceSettings({ workspaces, onUpdate }: WorkspaceSettingsPro
             <div className="flex items-center gap-1">
               <Crown className="h-4 w-4 text-yellow-600" />
               <span className="text-xs text-muted-foreground">Owner</span>
-            </div>
+          </div>
           }
         >
           <div className="space-y-2">
@@ -186,8 +186,8 @@ export function WorkspaceSettings({ workspaces, onUpdate }: WorkspaceSettingsPro
               <p className="text-xs text-muted-foreground">
                 You cannot leave workspaces you own. Transfer ownership to another member or delete the workspace first.
               </p>
-            </div>
           </div>
+        </div>
         </CompactCard>
       )}
 

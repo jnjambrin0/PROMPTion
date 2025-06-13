@@ -22,7 +22,7 @@ function PlanFeature({ children, included = true }: { children: string; included
       <span className={included ? 'text-foreground' : 'text-muted-foreground'}>
         {children}
       </span>
-    </div>
+      </div>
   )
 }
 
@@ -58,24 +58,24 @@ function PlanCard({
       
       <div className="space-y-3">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
+          <div className="flex items-center justify-between">
+            <div>
             <h4 className="font-medium text-foreground text-sm">{name}</h4>
             <p className="text-xs text-muted-foreground">{description}</p>
-          </div>
-          <div className="text-right">
+            </div>
+            <div className="text-right">
             <div className="font-semibold text-foreground">{price}</div>
             <div className="text-xs text-muted-foreground">/{period}</div>
-          </div>
-        </div>
-
+              </div>
+            </div>
+            
         {/* Features Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
           {features.map((feature, index) => (
             <PlanFeature key={index}>{feature}</PlanFeature>
           ))}
-        </div>
-
+            </div>
+            
         {/* Action */}
         <Button 
           size="sm" 
@@ -84,8 +84,8 @@ function PlanCard({
           disabled
         >
           {current ? 'Current Plan' : 'Coming Soon'}
-        </Button>
-      </div>
+            </Button>
+          </div>
     </CompactCard>
   )
 }
@@ -117,7 +117,7 @@ export function BillingSettings({ onUpdate }: BillingSettingsProps) {
         description="Your active subscription details"
         compact
       >
-        <div className="space-y-1">
+              <div className="space-y-1">
           <SettingsRow
             label="Plan"
             value="Free (Beta)"
@@ -142,7 +142,7 @@ export function BillingSettings({ onUpdate }: BillingSettingsProps) {
             description="No restrictions during beta"
             compact
           />
-        </div>
+              </div>
       </SettingsSection>
 
       {/* Upcoming Plans */}
@@ -216,7 +216,7 @@ export function BillingSettings({ onUpdate }: BillingSettingsProps) {
               Billing will be introduced gradually with plenty of advance notice.
             </p>
           </div>
-        </div>
+            </div>
       </CompactCard>
 
       {/* Future Billing */}
@@ -247,7 +247,7 @@ export function BillingSettings({ onUpdate }: BillingSettingsProps) {
             compact
             disabled
           />
-        </div>
+          </div>
       </SettingsSection>
     </div>
   )

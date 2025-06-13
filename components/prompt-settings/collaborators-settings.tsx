@@ -121,7 +121,7 @@ export const CollaboratorsSettings = React.memo(({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-#6b7280">
+          <div className="text-center py-8 text-muted-foreground">
             <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">You don't have permission to view collaborators</p>
           </div>
@@ -141,9 +141,9 @@ export const CollaboratorsSettings = React.memo(({
       <CardContent className="space-y-4">
         {/* Add new collaborator - only for owners */}
         {canManageCollaborators && (
-          <div className="space-y-3 p-4 border border-#e5e7eb rounded-lg bg-#f9fafb">
+          <div className="space-y-3 p-4 border border-border rounded-lg bg-muted">
             <div className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-#6b7280" />
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Add Collaborator</span>
             </div>
             <div className="flex gap-3">
@@ -181,7 +181,7 @@ export const CollaboratorsSettings = React.memo(({
         {/* Current collaborators */}
         <div className="space-y-2">
           {collaborators.length === 0 ? (
-            <div className="text-center py-8 text-#6b7280">
+            <div className="text-center py-8 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No collaborators yet</p>
               {isOwner && (
@@ -208,9 +208,9 @@ export const CollaboratorsSettings = React.memo(({
         </div>
 
         {/* Permission explanations */}
-        <div className="mt-6 p-4 bg-#f9fafb border border-#e5e7eb rounded-lg">
+        <div className="mt-6 p-4 bg-muted border border-border rounded-lg">
           <h4 className="text-sm font-medium mb-3">Permission Levels</h4>
-          <div className="space-y-2 text-xs text-#6b7280">
+          <div className="space-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <Badge className={permissionLabels.VIEW.color} variant="secondary">{permissionLabels.VIEW.label}</Badge>
               <span>{permissionLabels.VIEW.description}</span>
@@ -248,10 +248,10 @@ const CollaboratorItem = React.memo(({
   }, [collaborator.id, onRemove])
 
   return (
-    <div className="flex items-center justify-between p-3 border border-#e5e7eb rounded-md hover:bg-#f9fafb transition-colors">
+    <div className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-muted transition-colors">
       <div className="flex items-center gap-3">
         {/* Avatar */}
-        <div className="h-8 w-8 rounded-full bg-#e5e7eb flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full bg-border flex items-center justify-center">
           {collaborator.avatarUrl ? (
             <img 
               src={collaborator.avatarUrl} 
@@ -259,7 +259,7 @@ const CollaboratorItem = React.memo(({
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <span className="text-xs font-medium text-#6b7280">
+            <span className="text-xs font-medium text-muted-foreground">
               {(collaborator.fullName || collaborator.email).charAt(0).toUpperCase()}
             </span>
           )}
@@ -275,7 +275,7 @@ const CollaboratorItem = React.memo(({
               {permission.label}
             </Badge>
           </div>
-                     <p className="text-xs text-#6b7280">
+                     <p className="text-xs text-muted-foreground">
              {collaborator.email}
              {collaborator.createdAt && (
                <span className="ml-2">

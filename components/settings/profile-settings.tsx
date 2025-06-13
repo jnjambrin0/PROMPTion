@@ -29,13 +29,13 @@ export function ProfileSettings({ profile, onUpdate }: ProfileSettingsProps) {
         <div className="flex items-center gap-3">
           {/* Compact Avatar */}
           <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            {profile.avatarUrl ? (
-              <img 
-                src={profile.avatarUrl} 
-                alt="Profile" 
+              {profile.avatarUrl ? (
+                <img 
+                  src={profile.avatarUrl} 
+                  alt="Profile" 
                 className="h-full w-full object-cover rounded-full"
-              />
-            ) : (
+                />
+              ) : (
               <User className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
@@ -57,10 +57,10 @@ export function ProfileSettings({ profile, onUpdate }: ProfileSettingsProps) {
             </p>
           </div>
           
-          <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs">
             {profile.email ? 'Verified' : 'Incomplete'}
-          </Badge>
-        </div>
+              </Badge>
+            </div>
       </CompactCard>
 
       {/* Basic Information Form */}
@@ -102,9 +102,9 @@ export function ProfileSettings({ profile, onUpdate }: ProfileSettingsProps) {
             description="Upload feature coming soon"
             badge={<Badge variant="outline" className="text-xs">Coming Soon</Badge>}
             compact
-            disabled
-          />
-        </div>
+              disabled
+            />
+          </div>
       </SettingsSection>
     </div>
   )

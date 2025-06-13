@@ -57,7 +57,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
     <div className="space-y-6">
       {/* Security Status Overview */}
       <CompactCard padding="sm" className="border-l-4 border-l-yellow-500/50">
-        <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded bg-yellow-500/10 flex items-center justify-center">
               <Shield className="h-4 w-4 text-yellow-600" />
@@ -79,7 +79,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
         description="Your account details and verification status"
         compact
       >
-        <div className="space-y-1">
+              <div className="space-y-1">
           <SettingsRow
             label="Email Address"
             value={userEmail}
@@ -106,7 +106,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
             description="Individual user account"
             compact
           />
-        </div>
+            </div>
       </SettingsSection>
 
       {/* Authentication & Security */}
@@ -121,7 +121,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
           </div>
         }
       >
-        <div className="space-y-1">
+              <div className="space-y-1">
           <SettingsRow
             label="Password"
             description="Last updated: 30 days ago"
@@ -129,7 +129,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
             action={
               <div className="flex items-center gap-1">
                 <Key className="h-3 w-3 text-muted-foreground" />
-              </div>
+                </div>
             }
             compact
             disabled
@@ -160,7 +160,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
             compact
             disabled
           />
-        </div>
+            </div>
       </SettingsSection>
 
       {/* Coming Soon Notice */}
@@ -173,7 +173,7 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
               Password management, two-factor authentication, and session management will be available in a future update.
             </p>
           </div>
-        </div>
+            </div>
       </CompactCard>
 
       {/* Current Session Details */}
@@ -212,14 +212,14 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-              <div className="space-y-1">
+                <div className="space-y-1">
                 <h4 className="text-sm font-medium text-destructive">Delete Account</h4>
                 <p className="text-xs text-muted-foreground">
-                  Permanently delete your account and all associated data. This action cannot be undone.
-                </p>
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                </div>
               </div>
-            </div>
-            
+
             <AccountDeleteActions 
               deleteAction={deleteAccountAction}
               onUpdate={onUpdate}

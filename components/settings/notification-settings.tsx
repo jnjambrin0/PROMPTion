@@ -40,7 +40,7 @@ export function NotificationSettings({ preferences, onUpdate }: NotificationSett
     <div className="space-y-6">
       {/* Notification Status Overview */}
       <CompactCard padding="sm" className="border-l-4 border-l-blue-500/50">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded bg-blue-500/10 flex items-center justify-center">
               <Bell className="h-4 w-4 text-blue-600" />
@@ -111,8 +111,8 @@ export function NotificationSettings({ preferences, onUpdate }: NotificationSett
               )
             }
             compact
-          />
-        </div>
+              />
+            </div>
       </SettingsSection>
 
       {/* Email Notifications */}
@@ -179,14 +179,14 @@ export function NotificationSettings({ preferences, onUpdate }: NotificationSett
       <CompactCard padding="sm" className="bg-muted/50">
         <div className="flex items-start gap-2">
           <Bell className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <div className="space-y-1">
+              <div className="space-y-1">
             <h4 className="text-sm font-medium text-foreground">Notification Delivery</h4>
             <p className="text-xs text-muted-foreground">
               Notifications are delivered via email to your registered address. 
               Push notifications will be available in a future update.
-            </p>
+                </p>
           </div>
-        </div>
+              </div>
       </CompactCard>
     </div>
   )
