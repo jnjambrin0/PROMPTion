@@ -221,12 +221,12 @@ export function PreviewPopup({ content, title, trigger }: PreviewPopupProps) {
             <div className="flex items-center justify-between text-xs text-neutral-500 p-3 bg-neutral-50 rounded-lg">
               <div className="flex items-center gap-4">
                 <span>Variables: {variables.length}</span>
-                <span style={{ color: '#059669' }}>
-                  Filled: {variables.filter(v => testValues[v.name]?.trim()).length}
-                </span>
-                <span style={{ color: '#DC2626' }}>
-                  Missing: {variables.filter(v => !testValues[v.name]?.trim()).length}
-                </span>
+                                        <span className="text-green-600">
+                          Filled: {variables.filter(v => testValues[v.name]?.trim()).length}
+                        </span>
+                        <span className="text-red-600">
+                          Missing: {variables.filter(v => !testValues[v.name]?.trim()).length}
+                        </span>
               </div>
               <div className="text-neutral-400">
                 Click variables to auto-fill

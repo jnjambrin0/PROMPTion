@@ -241,7 +241,7 @@ function VariableBlock({
   }
 
   return (
-    <Card className="group relative border-l-4" style={{ borderLeftColor: '#3B82F6' }}>
+                  <Card className="group relative border-l-4 border-l-blue-600">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -337,7 +337,7 @@ function PromptBlock({
   variables: Variable[]
 }) {
   return (
-    <Card className="group relative border-l-4" style={{ borderLeftColor: '#10B981' }}>
+                  <Card className="group relative border-l-4 border-l-green-600">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -368,11 +368,11 @@ function PromptBlock({
         />
         
         {variables.length > 0 && (
-          <div className="mt-3 p-3 rounded border" style={{ backgroundColor: '#ECFDF5' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: '#065F46' }}>Available Variables:</p>
+                        <div className="mt-3 p-3 rounded border bg-green-50">
+                <p className="text-xs font-medium mb-2 text-green-800">Available Variables:</p>
             <div className="flex flex-wrap gap-1">
               {variables.map(variable => (
-                <Badge key={variable.name} variant="outline" className="text-xs" style={{ color: '#059669' }}>
+                                  <Badge key={variable.name} variant="outline" className="text-xs text-green-600">
                   {'{{'}{variable.name}{'}}'}
                 </Badge>
               ))}
@@ -705,10 +705,10 @@ export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: Adva
                     <div className="flex items-center justify-between text-xs text-neutral-500 p-2 bg-neutral-50 rounded">
                       <div className="flex items-center gap-3">
                         <span>Variables: {variables.length}</span>
-                        <span style={{ color: '#059669' }}>
+                        <span className="text-green-600">
                           Filled: {variables.filter(v => testValues[v.name]?.trim()).length}
                         </span>
-                        <span style={{ color: '#DC2626' }}>
+                        <span className="text-red-600">
                           Missing: {variables.filter(v => !testValues[v.name]?.trim()).length}
                         </span>
                       </div>

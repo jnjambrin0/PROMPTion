@@ -312,7 +312,7 @@ export function PromptEditClient({
             </p>
           </div>
           {hasChanges && (
-            <Badge variant="outline" style={{ color: '#D97706', borderColor: '#FCD34D' }}>
+                              <Badge variant="outline" className="text-yellow-600 border-yellow-200">
               Unsaved changes
             </Badge>
           )}

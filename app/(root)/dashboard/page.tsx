@@ -5,8 +5,9 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow, formatDate } from '@/lib/utils'
-import { Search, Plus, Filter, Grid, List } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { PromptsSectionClient } from '@/components/dashboard/prompts-section-client'
 
 async function getDashboardData() {
   try {
@@ -57,7 +58,17 @@ async function getDashboardData() {
   }
 }
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{
+    view?: string
+    search?: string
+    workspace?: string
+    type?: string
+    sort?: string
+  }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const data = await getDashboardData()
   
   if (!data) {
@@ -65,6 +76,7 @@ export default async function DashboardPage() {
   }
 
   const { user, workspaces, prompts, stats } = data
+  const params = await searchParams
 
   return (
     <div className="flex justify-center w-full min-h-full">
@@ -163,91 +175,8 @@ export default async function DashboardPage() {
 
         <Separator className="mb-8" />
 
-        {/* Prompts Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-neutral-900">
-              All prompts ({prompts.length})
-            </h2>
-            
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-md hover:bg-neutral-100 transition-colors">
-                <Filter className="h-4 w-4 text-neutral-600" />
-              </button>
-              <button className="p-2 rounded-md hover:bg-neutral-100 transition-colors">
-                <Grid className="h-4 w-4 text-neutral-600" />
-              </button>
-              <button className="p-2 rounded-md bg-neutral-100 transition-colors">
-                <List className="h-4 w-4 text-neutral-600" />
-              </button>
-            </div>
-          </div>
-
-          {prompts.length > 0 ? (
-            <div className="space-y-3">
-              {prompts.map((prompt) => (
-                <Link
-                  key={prompt.id}
-                  href={`/${prompt.workspace.slug}/${prompt.slug}`}
-                  className="block bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-neutral-900 truncate">
-                          {prompt.title}
-                        </h3>
-                        {prompt.isTemplate && (
-                          <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
-                            Template
-                          </span>
-                        )}
-                        {prompt.isPublic && (
-                          <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
-                            Public
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
-                        {prompt.description || 'No description'}
-                      </p>
-                      
-                      <div className="flex items-center gap-4 text-xs text-neutral-500">
-                        <span className="flex items-center gap-1">
-                          <div className="h-3 w-3 rounded bg-neutral-300"></div>
-                          {prompt.workspace.name}
-                        </span>
-                        <span>{prompt._count?.blocks || 0} blocks</span>
-                        <span>Updated {formatDistanceToNow(new Date(prompt.updatedAt), { addSuffix: true })}</span>
-                        <span>Created {formatDate(new Date(prompt.createdAt), 'short')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-neutral-100 flex items-center justify-center">
-                <span className="text-2xl">📝</span>
-              </div>
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">
-                No prompts yet
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                Start creating prompts to see them here
-              </p>
-              <Link
-                href="/prompts/new"
-                className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Create your first prompt
-              </Link>
-            </div>
-          )}
-        </div>
+        {/* Enhanced Prompts Section */}
+        <PromptsSectionClient prompts={prompts} initialSearchParams={params} />
       </div>
     </div>
   )

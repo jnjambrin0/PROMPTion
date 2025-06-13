@@ -441,7 +441,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
                   <Badge variant="outline">Public</Badge>
                 )}
                 {promptData.isPinned && (
-                  <Badge variant="outline" style={{ color: '#D97706', borderColor: '#FCD34D' }}>
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-200">
                     <Star className="h-3 w-3 mr-1 fill-current" />
                     Pinned
                   </Badge>
