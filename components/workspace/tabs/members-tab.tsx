@@ -11,25 +11,188 @@ import {
   MoreHorizontal,
   Search,
   Plus,
-  Mail
+  Mail,
+  ArrowRight
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { WorkspaceTabProps } from '@/lib/types/workspace'
 
 const roleConfig = {
-  OWNER: { label: 'Owner', icon: Crown, color: 'purple' },
-  ADMIN: { label: 'Admin', icon: Shield, color: 'blue' },
-  EDITOR: { label: 'Editor', icon: Edit3, color: 'green' },
-  VIEWER: { label: 'Viewer', icon: Eye, color: 'gray' }
+  OWNER: { label: 'Owner', icon: Crown, color: 'default' },
+  ADMIN: { label: 'Admin', icon: Shield, color: 'secondary' },
+  EDITOR: { label: 'Editor', icon: Edit3, color: 'outline' },
+  VIEWER: { label: 'Viewer', icon: Eye, color: 'outline' }
+}
+
+// Server Component for better performance
+function StatCard({ icon: Icon, label, value }: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string | number
+}) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">{label}</span>
+        </div>
+        <p className="text-lg font-semibold text-foreground">{value}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Compact member row instead of large cards
+function MemberRow({ member }: { member: any }) {
+  const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
+    label: member.role, 
+    icon: Users,
+    color: 'outline'
+  }
+  const RoleIcon = roleInfo.icon
+
+  return (
+    <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={member.user.avatarUrl || undefined} />
+          <AvatarFallback className="text-xs">
+            {(member.user.fullName || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-foreground truncate">
+              {member.user.fullName || member.user.username || 'Unknown User'}
+            </p>
+            <Badge variant={roleInfo.color as any} className="flex items-center gap-1">
+              <RoleIcon className="h-3 w-3" />
+              <span className="text-xs">{roleInfo.label}</span>
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>@{member.user.username || 'no-username'}</span>
+            {member.joinedAt && (
+              <>
+                <span>•</span>
+                <span>Joined {formatDistanceToNow(new Date(member.joinedAt), { addSuffix: true })}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        {member.user.email && (
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+            <Mail className="h-3 w-3" />
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// Alternative: Compact card for grid view
+function CompactMemberCard({ member }: { member: any }) {
+  const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
+    label: member.role, 
+    icon: Users,
+    color: 'outline'
+  }
+  const RoleIcon = roleInfo.icon
+
+  return (
+    <div className="border border-border rounded-lg p-3 hover:shadow-sm transition-all hover:border-border">
+      <div className="flex items-center gap-3 mb-2">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={member.user.avatarUrl || undefined} />
+          <AvatarFallback className="text-xs">
+            {(member.user.fullName || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            {member.user.fullName || member.user.username || 'Unknown User'}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            @{member.user.username || 'no-username'}
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
+          <MoreHorizontal className="h-3 w-3" />
+        </Button>
+      </div>
+      
+      <div className="flex items-center justify-between">
+        <Badge variant={roleInfo.color as any} className="flex items-center gap-1">
+          <RoleIcon className="h-3 w-3" />
+          <span className="text-xs">{roleInfo.label}</span>
+        </Badge>
+        {member.user.email && (
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+            <Mail className="h-3 w-3 mr-1" />
+            Contact
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({ 
+  searchQuery, 
+  selectedRole, 
+  onClearFilters 
+}: {
+  searchQuery: string
+  selectedRole: string
+  onClearFilters: () => void
+}) {
+  const hasFilters = searchQuery || selectedRole !== 'all'
+
+  return (
+    <div className="text-center py-8">
+      <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+      {hasFilters ? (
+        <>
+          <h3 className="text-base font-medium text-foreground mb-2">No members found</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Try adjusting your search criteria or filters
+          </p>
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear filters
+          </Button>
+        </>
+      ) : (
+        <>
+          <h3 className="text-base font-medium text-foreground mb-2">No members yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Invite team members to collaborate on this workspace
+          </p>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Invite first member
+          </Button>
+        </>
+      )}
+    </div>
+  )
 }
 
 export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRole, setSelectedRole] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   const { members, stats } = workspaceData
 
@@ -65,8 +228,8 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Members</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl font-semibold text-foreground">Members</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage workspace members and their permissions
           </p>
         </div>
@@ -76,170 +239,88 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
+      {/* Search and Filters - Improved with Select component */}
+      <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search members..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9"
           />
-            </div>
-        <select
-          value={selectedRole}
-          onChange={(e) => setSelectedRole(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+        </div>
+        <Select value={selectedRole} onValueChange={setSelectedRole}>
+          <SelectTrigger className="w-40 h-9">
+            <SelectValue placeholder="All Roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="OWNER">Owner</SelectItem>
+            <SelectItem value="ADMIN">Admin</SelectItem>
+            <SelectItem value="EDITOR">Editor</SelectItem>
+            <SelectItem value="VIEWER">Viewer</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
         >
-          <option value="all">All Roles</option>
-          <option value="OWNER">Owner</option>
-          <option value="ADMIN">Admin</option>
-          <option value="EDITOR">Editor</option>
-          <option value="VIEWER">Viewer</option>
-        </select>
+          {viewMode === 'list' ? 'Grid' : 'List'}
+        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Total Members</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats.totalMembers}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Admins</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{roleCounts.admins}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Edit3 className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Editors</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{roleCounts.editors}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Viewers</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{roleCounts.viewers}</p>
-          </CardContent>
-        </Card>
-          </div>
+      {/* Compact Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard
+          icon={Users}
+          label="Total Members"
+          value={stats.totalMembers}
+        />
+        <StatCard
+          icon={Crown}
+          label="Admins"
+          value={roleCounts.admins}
+        />
+        <StatCard
+          icon={Edit3}
+          label="Editors"
+          value={roleCounts.editors}
+        />
+        <StatCard
+          icon={Eye}
+          label="Viewers"
+          value={roleCounts.viewers}
+        />
+      </div>
 
-      {/* Members Grid */}
+      {/* Members List/Grid */}
       {filteredMembers.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          {searchQuery || selectedRole !== 'all' ? (
-            <>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No members found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search criteria or filters
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchQuery('')
-                  setSelectedRole('all')
-                }}
-              >
-                Clear filters
-              </Button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No members yet</h3>
-              <p className="text-gray-600 mb-4">
-                Invite team members to collaborate on this workspace
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Invite your first member
-              </Button>
-            </>
-          )}
-        </div>
+        <EmptyState
+          searchQuery={searchQuery}
+          selectedRole={selectedRole}
+          onClearFilters={() => {
+            setSearchQuery('')
+            setSelectedRole('all')
+          }}
+        />
+      ) : viewMode === 'list' ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Team Members ({filteredMembers.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredMembers.map((member) => (
+              <MemberRow key={member.id} member={member} />
+            ))}
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMembers.map((member) => {
-            const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { label: member.role, icon: Users }
-            const RoleIcon = roleInfo.icon
-
-  return (
-              <Card key={member.id} className="group hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.user.avatarUrl || undefined} />
-                        <AvatarFallback>
-                          {(member.user.fullName || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-                      <div>
-                        <CardTitle className="text-base">
-                          {member.user.fullName || member.user.username || 'Unknown User'}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600">
-                          @{member.user.username || 'no-username'}
-                        </p>
-        </div>
-      </div>
-            <Button 
-              variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <RoleIcon className="h-3 w-3" />
-                        {roleInfo.label}
-                      </Badge>
-                      {member.user.email && (
-                        <Button variant="ghost" size="sm" className="h-6 px-2">
-              <Mail className="h-3 w-3" />
-            </Button>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 space-y-1">
-                      {member.joinedAt && (
-                        <div>
-                          Joined {formatDistanceToNow(new Date(member.joinedAt), { addSuffix: true })}
-                        </div>
-                      )}
-                      {member.lastActiveAt && (
-                        <div>
-                          Last active {formatDistanceToNow(new Date(member.lastActiveAt), { addSuffix: true })}
-                        </div>
-        )}
-      </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {filteredMembers.map((member) => (
+            <CompactMemberCard key={member.id} member={member} />
+          ))}
         </div>
       )}
     </div>
@@ -248,49 +329,50 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
 
 export function MembersTabSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header skeleton */}
-      <div className="flex items-center justify-between p-2">
-        <div className="flex items-center gap-2">
-          <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
-          <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-48 bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-7 w-24 bg-gray-200 rounded animate-pulse" />
+        <div className="h-9 w-32 bg-muted rounded animate-pulse" />
       </div>
 
       {/* Search skeleton */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 h-8 bg-gray-200 rounded animate-pulse" />
-        <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-9 bg-muted rounded animate-pulse" />
+        <div className="h-9 w-40 bg-muted rounded animate-pulse" />
+        <div className="h-9 w-16 bg-muted rounded animate-pulse" />
       </div>
       
       {/* Stats skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-6 w-8 bg-gray-200 rounded animate-pulse" />
+          <div key={i} className="border rounded-lg p-3">
+            <div className="h-4 w-20 bg-muted rounded animate-pulse mb-1" />
+            <div className="h-5 w-8 bg-muted rounded animate-pulse" />
           </div>
         ))}
       </div>
 
-      {/* Members grid skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
-              <div className="space-y-1">
-                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+      {/* Members list skeleton */}
+      <div className="border rounded-lg">
+        <div className="p-4 border-b">
+          <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="divide-y">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-4">
+              <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+              <div className="space-y-1 flex-1">
+                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                <div className="h-3 w-24 bg-muted rounded animate-pulse" />
               </div>
+              <div className="h-6 w-16 bg-muted rounded animate-pulse" />
             </div>
-            <div className="space-y-2">
-              <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )

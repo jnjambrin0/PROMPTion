@@ -21,6 +21,129 @@ interface WorkspaceSettingsTabProps {
   }
 }
 
+// Server Components for better performance
+function SettingsSection({ 
+  icon: Icon, 
+  title, 
+  description, 
+  children 
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-base">{title}</CardTitle>
+        </div>
+        <CardDescription className="text-sm">
+          {description}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
+
+function SettingRow({ 
+  icon: Icon, 
+  label, 
+  description, 
+  badge, 
+  action 
+}: {
+  icon?: React.ComponentType<{ className?: string }>
+  label: string
+  description: string
+  badge?: string
+  action: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-border last:border-0 last:pb-0">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+          <Label className="text-sm font-medium">{label}</Label>
+          {badge && (
+            <Badge variant="outline" className="text-xs">
+              {badge}
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      </div>
+      {action}
+    </div>
+  )
+}
+
+function IntegrationCard({ 
+  name, 
+  description, 
+  icon, 
+  color, 
+  connected 
+}: {
+  name: string
+  description: string
+  icon: string
+  color: string
+  connected: boolean
+}) {
+  return (
+    <div className="border border-border rounded-lg p-3">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`h-8 w-8 rounded-md flex items-center justify-center ${color}`}>
+          <span className="text-sm font-bold text-white">{icon}</span>
+        </div>
+        <div>
+          <h4 className="text-sm font-medium text-foreground">{name}</h4>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <Button variant="outline" size="sm" className="w-full h-7">
+        {connected ? 'Configure' : 'Connect'}
+      </Button>
+    </div>
+  )
+}
+
+function DangerAction({ 
+  title, 
+  description, 
+  buttonText, 
+  variant = "outline" 
+}: {
+  title: string
+  description: string
+  buttonText: string
+  variant?: "outline" | "destructive"
+}) {
+  return (
+    <div className="border border-border rounded-lg p-3 bg-card">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-sm font-medium text-foreground">{title}</h4>
+          <p className="text-xs text-muted-foreground">
+            {description}
+          </p>
+        </div>
+        <Button variant={variant} size="sm" className="h-7">
+          {buttonText}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: WorkspaceSettingsTabProps) {
   const { workspace } = workspaceData
   
@@ -37,8 +160,8 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Workspace Settings</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl font-semibold text-foreground">Workspace Settings</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage your workspace configuration and preferences
           </p>
         </div>
@@ -49,302 +172,211 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
       </div>
 
       {/* General Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-gray-600" />
-            <CardTitle>General</CardTitle>
-          </div>
-          <CardDescription>
-            Basic workspace information and settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SettingsSection
+        icon={Settings}
+        title="General"
+        description="Basic workspace information and settings"
+      >
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="workspace-name">Workspace Name</Label>
+              <Label htmlFor="workspace-name" className="text-sm">Workspace Name</Label>
               <Input
                 id="workspace-name"
                 value={workspaceName}
                 onChange={(e) => setWorkspaceName(e.target.value)}
                 placeholder="My Awesome Workspace"
+                className="mt-1 h-8"
               />
             </div>
-          <div>
-              <Label htmlFor="workspace-slug">Workspace URL</Label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-200 rounded-l-md">
+            <div>
+              <Label htmlFor="workspace-slug" className="text-sm">Workspace URL</Label>
+              <div className="flex mt-1">
+                <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-border rounded-l-md">
                   promption.com/
                 </span>
-            <Input
+                <Input
                   id="workspace-slug"
                   value={workspaceSlug}
                   disabled
-                  className="rounded-l-none"
+                  className="rounded-l-none h-8"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 URL cannot be changed after creation
               </p>
             </div>
           </div>
           
           <div>
-            <Label htmlFor="workspace-description">Description</Label>
+            <Label htmlFor="workspace-description" className="text-sm">Description</Label>
             <Textarea
               id="workspace-description"
               value={workspaceDescription}
               onChange={(e) => setWorkspaceDescription(e.target.value)}
               placeholder="Describe what this workspace is for..."
               rows={3}
+              className="mt-1"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
 
       {/* Privacy & Permissions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-gray-600" />
-            <CardTitle>Privacy & Permissions</CardTitle>
-          </div>
-          <CardDescription>
-            Control who can access and interact with your workspace
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-gray-600" />
-                <Label className="text-sm font-medium">Public Workspace</Label>
-                <Badge variant={isPublic ? 'default' : 'outline'} className="text-xs">
-                  {isPublic ? 'Public' : 'Private'}
-                </Badge>
-              </div>
-              <p className="text-sm text-gray-600">
-                Allow anyone to discover and view public prompts in this workspace
-              </p>
-            </div>
-            <Switch
-              checked={isPublic}
-              onCheckedChange={setIsPublic}
-            />
-          </div>
+      <SettingsSection
+        icon={Lock}
+        title="Privacy & Permissions"
+        description="Control who can access and interact with your workspace"
+      >
+        <div className="space-y-1">
+          <SettingRow
+            icon={Globe}
+            label="Public Workspace"
+            description="Allow anyone to discover and view public prompts in this workspace"
+            badge={isPublic ? 'Public' : 'Private'}
+            action={
+              <Switch
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+              />
+            }
+          />
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-600" />
-                <Label className="text-sm font-medium">Allow Comments</Label>
-              </div>
-              <p className="text-sm text-gray-600">
-                Let workspace members add comments and feedback on prompts
-              </p>
-            </div>
-            <Switch
-              checked={allowComments}
-              onCheckedChange={setAllowComments}
-            />
-          </div>
+          <SettingRow
+            icon={Users}
+            label="Allow Comments"
+            description="Let workspace members add comments and feedback on prompts"
+            action={
+              <Switch
+                checked={allowComments}
+                onCheckedChange={setAllowComments}
+              />
+            }
+          />
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-gray-600" />
-                <Label className="text-sm font-medium">Template Creation</Label>
-              </div>
-              <p className="text-sm text-gray-600">
-                Allow members to create and share templates from prompts
-              </p>
-            </div>
-            <Switch
-              checked={allowTemplates}
-              onCheckedChange={setAllowTemplates}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          <SettingRow
+            icon={BarChart3}
+            label="Template Creation"
+            description="Allow members to create and share templates from prompts"
+            action={
+              <Switch
+                checked={allowTemplates}
+                onCheckedChange={setAllowTemplates}
+              />
+            }
+          />
+        </div>
+      </SettingsSection>
 
       {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-gray-600" />
-            <CardTitle>Notifications</CardTitle>
-          </div>
-          <CardDescription>
-            Configure notification preferences for this workspace
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Email Notifications</Label>
-              <p className="text-sm text-gray-600">
-                Receive email updates about workspace activity
-              </p>
-            </div>
-            <Switch
-              checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
-            />
-          </div>
+      <SettingsSection
+        icon={Bell}
+        title="Notifications"
+        description="Configure notification preferences for this workspace"
+      >
+        <div className="space-y-1">
+          <SettingRow
+            label="Email Notifications"
+            description="Receive email updates about workspace activity"
+            action={
+              <Switch
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
+            }
+          />
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">Slack Integration</Label>
-              <p className="text-sm text-gray-600">
-                Send notifications to your Slack workspace
-              </p>
-              {!slackIntegration && (
-                <Button variant="outline" size="sm" className="mt-2">
-                  Connect Slack
-                </Button>
-              )}
-            </div>
-            <Switch
-              checked={slackIntegration}
-              onCheckedChange={setSlackIntegration}
-              disabled={!slackIntegration}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          <SettingRow
+            label="Slack Integration"
+            description="Send notifications to your Slack workspace"
+            action={
+              <div className="flex items-center gap-2">
+                {!slackIntegration && (
+                  <Button variant="outline" size="sm" className="h-7">
+                    Connect Slack
+                  </Button>
+                )}
+                <Switch
+                  checked={slackIntegration}
+                  onCheckedChange={setSlackIntegration}
+                  disabled={!slackIntegration}
+                />
+              </div>
+            }
+          />
+        </div>
+      </SettingsSection>
 
       {/* Integrations */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-gray-600" />
-            <CardTitle>Integrations</CardTitle>
-          </div>
-          <CardDescription>
-            Connect external tools and services
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
-                    <span className="text-sm font-bold" style={{ color: '#9333EA' }}>S</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Slack</h4>
-                    <p className="text-sm text-gray-600">Team communication</p>
+      <SettingsSection
+        icon={Shield}
+        title="Integrations"
+        description="Connect external tools and services"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <IntegrationCard
+            name="Slack"
+            description="Team communication"
+            icon="S"
+            color="bg-purple-600"
+            connected={slackIntegration}
+          />
+          <IntegrationCard
+            name="Notion"
+            description="Documentation sync"
+            icon="N"
+            color="bg-slate-900"
+            connected={false}
+          />
+          <IntegrationCard
+            name="GitHub"
+            description="Code integration"
+            icon="G"
+            color="bg-slate-800"
+            connected={false}
+          />
+          <IntegrationCard
+            name="Figma"
+            description="Design workflow"
+            icon="F"
+            color="bg-purple-500"
+            connected={false}
+          />
         </div>
-      </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  {slackIntegration ? 'Configure' : 'Connect'}
-                </Button>
-              </div>
-        
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FED7AA' }}>
-                    <span className="text-sm font-bold" style={{ color: '#EA580C' }}>N</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Notion</h4>
-                    <p className="text-sm text-gray-600">Documentation sync</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  Connect
-                </Button>
-          </div>
-          
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DBEAFE' }}>
-                    <span className="text-sm font-bold" style={{ color: '#2563EB' }}>G</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">GitHub</h4>
-                    <p className="text-sm text-gray-600">Code integration</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  Connect
-                </Button>
-          </div>
-          
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DCFCE7' }}>
-                    <span className="text-sm font-bold" style={{ color: '#16A34A' }}>F</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Figma</h4>
-                    <p className="text-sm text-gray-600">Design workflow</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  Connect
-                </Button>
-          </div>
-        </div>
-      </div>
-        </CardContent>
-      </Card>
+      </SettingsSection>
 
       {/* Danger Zone */}
-      <Card className="border-red-200 bg-red-50">
-        <CardHeader>
+      <Card className="border-destructive/20 bg-destructive/5">
+        <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <CardTitle className="text-red-900">Danger Zone</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
           </div>
-          <CardDescription className="text-red-700">
+          <CardDescription className="text-sm">
             Irreversible actions that will permanently affect your workspace
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border border-red-200 rounded-lg p-4 bg-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">Transfer Ownership</h4>
-                <p className="text-sm text-gray-600">
-                  Transfer this workspace to another member
-                </p>
-              </div>
-              <Button variant="outline" size="sm">
-                Transfer
-              </Button>
-            </div>
-          </div>
+        <CardContent className="pt-0 space-y-3">
+          <DangerAction
+            title="Transfer Ownership"
+            description="Transfer this workspace to another member"
+            buttonText="Transfer"
+            variant="outline"
+          />
 
-          <div className="border border-red-200 rounded-lg p-4 bg-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">Archive Workspace</h4>
-                <p className="text-sm text-gray-600">
-                  Make workspace read-only and hide from navigation
-                </p>
-        </div>
-              <Button variant="outline" size="sm">
-                Archive
-              </Button>
-      </div>
-    </div>
+          <DangerAction
+            title="Archive Workspace"
+            description="Make workspace read-only and hide from navigation"
+            buttonText="Archive"
+            variant="outline"
+          />
 
-          <div className="border border-red-200 rounded-lg p-4 bg-white">
-      <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-red-900">Delete Workspace</h4>
-                <p className="text-sm text-red-600">
-                  Permanently delete this workspace and all its content
-                </p>
-        </div>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
-            </div>
-          </div>
+          <DangerAction
+            title="Delete Workspace"
+            description="Permanently delete this workspace and all its content"
+            buttonText="Delete"
+            variant="destructive"
+          />
         </CardContent>
       </Card>
     </div>

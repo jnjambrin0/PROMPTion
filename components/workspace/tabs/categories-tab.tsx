@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, Filter } from 'lucide-react'
+import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, Filter, ArrowRight, Import, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-// No importamos getCategoryColorStyles ya que usaremos clases Tailwind simples
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface CategoriesTabProps {
   workspaceSlug: string
@@ -21,8 +21,8 @@ interface CategoriesTabProps {
 }
 
 interface CategoryWithCounts {
-    id: string
-    name: string
+  id: string
+  name: string
   description: string | null
   icon: string
   color: string
@@ -32,17 +32,202 @@ interface CategoryWithCounts {
   children?: CategoryWithCounts[]
 }
 
+// Server Component for better performance
+function StatCard({ icon: Icon, label, value }: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string | number
+}) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">{label}</span>
+        </div>
+        <p className="text-lg font-semibold text-foreground">{value}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function CategoryCard({ category, workspaceSlug }: { 
+  category: CategoryWithCounts
+  workspaceSlug: string 
+}) {
+  return (
+    <Card className="group hover:shadow-sm transition-all hover:border-border">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+              <span className="text-base">{category.icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <CardTitle className="text-base truncate">{category.name}</CardTitle>
+                {category.isDefault && (
+                  <Badge variant="outline" className="text-xs">
+                    Default
+                  </Badge>
+                )}
+              </div>
+              <CardDescription className="text-sm line-clamp-1">
+                {category.description || 'No description'}
+              </CardDescription>
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Hash className="h-3 w-3" />
+              <span>{category.promptCount} {category.promptCount === 1 ? 'prompt' : 'prompts'}</span>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {category.color}
+            </Badge>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex-1 h-7"
+              asChild
+            >
+              <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
+                View Prompts
+              </Link>
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-7 px-2"
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptyState({ 
+  searchQuery, 
+  onClearSearch, 
+  workspaceSlug 
+}: {
+  searchQuery: string
+  onClearSearch: () => void
+  workspaceSlug: string
+}) {
+  return (
+    <div className="text-center py-8">
+      <FolderOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+      {searchQuery ? (
+        <>
+          <h3 className="text-base font-medium text-foreground mb-2">No categories found</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Try adjusting your search query
+          </p>
+          <Button variant="outline" onClick={onClearSearch}>
+            Clear search
+          </Button>
+        </>
+      ) : (
+        <>
+          <h3 className="text-base font-medium text-foreground mb-2">No categories yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Create your first category to organize prompts
+          </p>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create first category
+          </Button>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Improved Quick Actions Component
+function QuickActionsSection({ workspaceSlug }: { workspaceSlug: string }) {
+  const actions = [
+    {
+      icon: Plus,
+      label: "Create Category",
+      description: "Add a new category",
+      href: `/${workspaceSlug}/categories/new`,
+      primary: true
+    },
+    {
+      icon: Import,
+      label: "Import Categories", 
+      description: "From CSV or JSON",
+      href: `/${workspaceSlug}/categories/import`,
+      primary: false
+    },
+    {
+      icon: Settings,
+      label: "Bulk Actions",
+      description: "Edit multiple at once",
+      href: `/${workspaceSlug}/categories/bulk`,
+      primary: false
+    }
+  ]
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {actions.map((action, index) => (
+        <Card key={index} className="group hover:shadow-sm transition-all hover:border-border cursor-pointer">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={`h-8 w-8 rounded-md flex items-center justify-center ${
+                action.primary ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              }`}>
+                <action.icon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-foreground mb-1">
+                  {action.label}
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  {action.description}
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
 export default function CategoriesTab({ workspaceSlug, workspaceData }: CategoriesTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [showHierarchy, setShowHierarchy] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const { workspace, categories, prompts, stats } = workspaceData
 
-  // Transformar categorías reales con conteo de prompts
+  // Transform categories with prompt counts
   const categoriesWithCounts = useMemo((): CategoryWithCounts[] => {
     if (!categories || categories.length === 0) return []
     
-    // Contar prompts por categoría
+    // Count prompts per category
     const categoryPromptCounts = new Map()
     if (prompts && prompts.length > 0) {
       prompts.forEach(prompt => {
@@ -54,7 +239,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
     return categories.map(category => ({
       id: category.id,
       name: category.name,
-      description: category.description || 'No description available',
+      description: category.description || null,
       icon: category.icon || '📋',
       color: category.color || 'gray',
       promptCount: categoryPromptCounts.get(category.id) || 0,
@@ -63,25 +248,44 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
     }))
   }, [categories, prompts])
 
-  // Filtrar categorías según búsqueda
+  // Filter categories based on search and selection
   const filteredCategories = useMemo(() => {
-    if (!searchQuery) return categoriesWithCounts
-    
-    return categoriesWithCounts.filter(category =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  }, [categoriesWithCounts, searchQuery])
+    let filtered = categoriesWithCounts
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    }
+
+    // Apply category filter
+    if (selectedCategory !== 'all') {
+      if (selectedCategory === 'default') {
+        filtered = filtered.filter(category => category.isDefault)
+      } else if (selectedCategory === 'custom') {
+        filtered = filtered.filter(category => !category.isDefault)
+      }
+    }
+
+    return filtered
+  }, [categoriesWithCounts, searchQuery, selectedCategory])
 
   const totalPrompts = stats.totalPrompts
+  const mostPopularCategory = categoriesWithCounts.length > 0 
+    ? categoriesWithCounts.reduce((prev, current) => 
+        prev.promptCount > current.promptCount ? prev : current
+      )
+    : null
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl font-semibold text-foreground">Categories</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Organize and manage your prompt categories
           </p>
         </div>
@@ -91,69 +295,65 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex gap-4">
+      {/* Search and Filters - Improved with proper Select */}
+      <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9"
           />
         </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-48 h-9">
+            <SelectValue placeholder="Filter categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="default">Default Only</SelectItem>
+            <SelectItem value="custom">Custom Only</SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           variant="outline"
-          onClick={() => setShowHierarchy(!showHierarchy)}
+          size="sm"
+          onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
         >
-          {showHierarchy ? 'Grid View' : 'Tree View'}
-        </Button>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
+          {viewMode === 'grid' ? 'List' : 'Grid'}
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Compact Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard
+          icon={FolderOpen}
+          label="Categories"
+          value={stats.totalCategories}
+        />
+        <StatCard
+          icon={Hash}
+          label="Total Prompts"
+          value={totalPrompts}
+        />
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Total Categories</span>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm text-muted-foreground">Average per Category</span>
             </div>
-            <p className="text-2xl font-bold mt-1">{stats.totalCategories}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Hash className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Total Prompts</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{totalPrompts}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Average per Category</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">
+            <p className="text-lg font-semibold text-foreground">
               {stats.totalCategories > 0 ? Math.round(totalPrompts / stats.totalCategories) : 0}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Most Popular</span>
-          </div>
-            <p className="text-sm font-medium mt-1">
-              {categoriesWithCounts.length > 0 ? 
-                categoriesWithCounts.reduce((prev, current) => 
-                  prev.promptCount > current.promptCount ? prev : current
-                ).name : 'None'
-              }
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm text-muted-foreground">Most Popular</span>
+            </div>
+            <p className="text-sm font-medium text-foreground truncate">
+              {mostPopularCategory?.name || 'None'}
             </p>
           </CardContent>
         </Card>
@@ -161,139 +361,33 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
 
       {/* Categories Grid */}
       {filteredCategories.length === 0 ? (
-        <div className="text-center py-12">
-          <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          {searchQuery ? (
-            <>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search query
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => setSearchQuery('')}
-              >
-                Clear search
-              </Button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h3>
-              <p className="text-gray-600 mb-4">
-                Create your first category to organize your prompts
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first category
-              </Button>
-            </>
-          )}
-        </div>
+        <EmptyState
+          searchQuery={searchQuery}
+          onClearSearch={() => setSearchQuery('')}
+          workspaceSlug={workspaceSlug}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCategories.map((category) => (
-            <Card key={category.id} className="group hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                      category.color === 'blue' ? 'bg-blue-100' :
-                      category.color === 'green' ? 'bg-green-100' :
-                      category.color === 'purple' ? 'bg-purple-100' :
-                      category.color === 'orange' ? 'bg-orange-100' :
-                      category.color === 'red' ? 'bg-red-100' :
-                      'bg-gray-100'
-                    }`}>
-                      <span className="text-lg">{category.icon}</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{category.name}</CardTitle>
-                        {category.isDefault && (
-                          <Badge variant="outline" className="text-xs">
-                            Default
-                          </Badge>
-          )}
-        </div>
-                      <CardDescription className="line-clamp-2">
-                        {category.description}
-                      </CardDescription>
-      </div>
-      </div>
-        <Button 
-          variant="ghost" 
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-                    <MoreHorizontal className="h-4 w-4" />
-        </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm text-gray-600">
-                        {category.promptCount} {category.promptCount === 1 ? 'prompt' : 'prompts'}
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {category.color}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex gap-2 pt-2">
-        <Button 
-          size="sm" 
-                      variant="outline" 
-                      className="flex-1"
-                      asChild
-        >
-                      <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
-                        View Prompts
-                      </Link>
-        </Button>
-        <Button 
-          size="sm" 
-                      variant="outline"
-                      className="flex-1"
-        >
-                      <Edit2 className="h-3 w-3 mr-1" />
-                      Edit
-        </Button>
-      </div>
-    </div>
-              </CardContent>
-            </Card>
+            <CategoryCard
+              key={category.id}
+              category={category}
+              workspaceSlug={workspaceSlug}
+            />
           ))}
         </div>
       )}
 
-      {/* Quick Actions */}
+      {/* Improved Quick Actions */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle className="text-base">Quick Actions</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             Common category management tasks
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button variant="outline" className="justify-start">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Category
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Import Categories
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <Hash className="h-4 w-4 mr-2" />
-              Bulk Edit
-            </Button>
-          </div>
+        <CardContent className="pt-0">
+          <QuickActionsSection workspaceSlug={workspaceSlug} />
         </CardContent>
       </Card>
     </div>

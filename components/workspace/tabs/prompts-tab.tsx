@@ -1,3 +1,5 @@
+'use client'
+
 import { useMemo, useState, useCallback, useTransition } from 'react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
@@ -15,10 +17,11 @@ import {
   MoreHorizontal,
   Clock,
   User,
-  RefreshCcw
+  RefreshCcw,
+  Hash,
+  ArrowRight
 } from 'lucide-react'
 import { useDebounce } from '@/hooks/use-debounce'
-
 
 interface PromptsTabProps {
   workspaceSlug: string
@@ -55,6 +58,25 @@ interface FilterCategory {
   name: string
 }
 
+// Server Component for better performance
+function StatCard({ icon: Icon, label, value }: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string | number
+}) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">{label}</span>
+        </div>
+        <p className="text-lg font-semibold text-foreground">{value}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
 // Custom hook for search debouncing
 function usePromptSearch(prompts: TransformedPrompt[], searchQuery: string) {
   const debouncedQuery = useDebounce(searchQuery, 300)
@@ -80,137 +102,82 @@ function usePromptFilters(prompts: TransformedPrompt[], selectedCategory: string
   }, [prompts, selectedCategory])
 }
 
-// Memoized stats component
-function PromptsStats({ stats }: { stats: any }) {
-  const statsData = useMemo(() => [
-    {
-      icon: MessageSquare,
-      label: 'Total Prompts',
-      value: stats.totalPrompts,
-      color: 'text-gray-600'
-    },
-    {
-      icon: Eye,
-      label: 'Total Views',
-      value: stats.totalViews,
-      color: 'text-gray-600'
-    },
-    {
-      icon: Filter,
-      label: 'Templates',
-      value: stats.templatesCount,
-      color: 'text-gray-600'
-    },
-    {
-      icon: User,
-      label: 'Public',
-      value: stats.publicPromptsCount,
-      color: 'text-gray-600'
-    }
-  ], [stats])
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {statsData.map((stat, index) => (
-        <Card key={index}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              <span className="text-sm text-gray-600">{stat.label}</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stat.value}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
-
 // Memoized prompt card component
 function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; workspaceSlug: string }) {
   const [isPending, startTransition] = useTransition()
-  const [isHovered, setIsHovered] = useState(false)
 
   const handleAction = useCallback((action: string) => {
     startTransition(() => {
-      // TODO: Implement actions
       console.log(`${action} prompt:`, prompt.id)
     })
   }, [prompt.id])
 
   return (
-    <Card 
-      className="group hover:shadow-md transition-shadow"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <Card className="group hover:shadow-sm transition-all hover:border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <MessageSquare className="h-4 w-4 text-blue-600" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="flex gap-1">
-              {prompt.isTemplate && (
-                <Badge variant="secondary" className="text-xs">
-                  Template
-                </Badge>
-              )}
-              {prompt.isPublic && (
-                <Badge variant="outline" className="text-xs">
-                  Public
-                </Badge>
-              )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <CardTitle className="text-base line-clamp-1">{prompt.name}</CardTitle>
+                <div className="flex gap-1">
+                  {prompt.isTemplate && (
+                    <Badge variant="secondary" className="text-xs">
+                      Template
+                    </Badge>
+                  )}
+                  {prompt.isPublic && (
+                    <Badge variant="outline" className="text-xs">
+                      Public
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <CardDescription className="text-sm line-clamp-1">
+                {prompt.description}
+              </CardDescription>
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 transition-opacity ${
-              isHovered ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
             disabled={isPending}
             onClick={() => handleAction('more')}
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
-        <div>
-          <CardTitle className="text-lg line-clamp-1">{prompt.name}</CardTitle>
-          <CardDescription className="line-clamp-2 mt-1">
-            {prompt.description}
-          </CardDescription>
-        </div>
       </CardHeader>
         
       <CardContent className="pt-0">
         <div className="space-y-3">
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span>{prompt.blocks} blocks</span>
-            <span>•</span>
-            <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              {prompt.views} views
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {prompt.category}
-              </Badge>
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(prompt.updatedAt, { addSuffix: true })}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span>{prompt.blocks} blocks</span>
+              <div className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                {prompt.views} views
               </div>
             </div>
+            <Badge variant="outline" className="text-xs">
+              {prompt.category}
+            </Badge>
           </div>
           
-          <div className="flex gap-2 pt-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{formatDistanceToNow(prompt.updatedAt, { addSuffix: true })}</span>
+          </div>
+          
+          <div className="flex gap-2">
             <Button 
               size="sm" 
               variant="outline" 
-              className="flex-1"
+              className="flex-1 h-7"
               asChild
             >
               <Link href={`/${workspaceSlug}/${prompt.slug}`}>
@@ -221,12 +188,11 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
             <Button 
               size="sm" 
               variant="outline"
-              className="flex-1"
+              className="h-7 px-2"
               disabled={isPending}
               onClick={() => handleAction('edit')}
             >
-              <Edit3 className="h-3 w-3 mr-1" />
-              Edit
+              <Edit3 className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -250,12 +216,12 @@ function EmptyState({
   const hasFilters = searchQuery || selectedCategory !== 'all'
 
   return (
-    <div className="text-center py-12">
-      <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+    <div className="text-center py-8">
+      <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
       {hasFilters ? (
         <>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No prompts found</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-base font-medium text-foreground mb-2">No prompts found</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Try adjusting your search criteria or filters
           </p>
           <Button variant="outline" onClick={onClearFilters}>
@@ -265,14 +231,14 @@ function EmptyState({
         </>
       ) : (
         <>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No prompts yet</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-base font-medium text-foreground mb-2">No prompts yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Get started by creating your first prompt
           </p>
           <Button asChild>
             <Link href={`/${workspaceSlug}/prompts/new`}>
               <Plus className="h-4 w-4 mr-2" />
-              Create your first prompt
+              Create first prompt
             </Link>
           </Button>
         </>
@@ -348,8 +314,8 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Prompts</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-xl font-semibold text-foreground">Prompts</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage and organize all your prompts
           </p>
         </div>
@@ -362,20 +328,20 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
       </div>
 
       {/* Search and Filters */}
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search prompts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9"
           />
         </div>
         <select
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          className="px-3 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {filterCategories.map(category => (
             <option key={category.id} value={category.id}>
@@ -383,13 +349,34 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
             </option>
           ))}
         </select>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="sm">
           <Filter className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Stats */}
-      <PromptsStats stats={stats} />
+      {/* Compact Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard
+          icon={MessageSquare}
+          label="Prompts"
+          value={stats.totalPrompts}
+        />
+        <StatCard
+          icon={Eye}
+          label="Total Views"
+          value={stats.totalViews}
+        />
+        <StatCard
+          icon={Filter}
+          label="Templates"
+          value={stats.templatesCount}
+        />
+        <StatCard
+          icon={User}
+          label="Public"
+          value={stats.publicPromptsCount}
+        />
+      </div>
 
       {/* Prompts Grid */}
       {filteredPrompts.length === 0 ? (
@@ -400,7 +387,7 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
           workspaceSlug={workspaceSlug}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPrompts.map((prompt) => (
             <PromptCard
               key={prompt.id}
@@ -416,32 +403,32 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
 
 export function PromptsTabSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header skeleton */}
-      <div className="flex items-center justify-between p-2">
-        <div className="flex items-center gap-2">
-          <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
-          <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-48 bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-7 w-20 bg-gray-200 rounded animate-pulse" />
+        <div className="h-9 w-32 bg-muted rounded animate-pulse" />
       </div>
 
       {/* Search and filters skeleton */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 h-8 bg-gray-200 rounded animate-pulse" />
-        <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
-        <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-9 bg-muted rounded animate-pulse" />
+        <div className="h-9 w-32 bg-muted rounded animate-pulse" />
+        <div className="h-9 w-20 bg-muted rounded animate-pulse" />
       </div>
 
       {/* Stats skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+          <div key={i} className="border rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-20 bg-muted rounded animate-pulse" />
             </div>
-            <div className="h-8 w-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 w-12 bg-muted rounded animate-pulse" />
           </div>
         ))}
       </div>
@@ -449,21 +436,21 @@ export function PromptsTabSkeleton() {
       {/* Prompts grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+          <div key={i} className="border rounded-lg p-4 space-y-3">
             <div className="flex items-start justify-between">
-              <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
             </div>
             <div className="space-y-2">
-              <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-full bg-muted rounded animate-pulse" />
+              <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-gray-200 rounded-full animate-pulse" />
-                <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+                <div className="h-3 w-3 bg-muted rounded-full animate-pulse" />
+                <div className="h-3 w-16 bg-muted rounded animate-pulse" />
               </div>
-              <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />
+              <div className="h-3 w-12 bg-muted rounded animate-pulse" />
             </div>
           </div>
         ))}
