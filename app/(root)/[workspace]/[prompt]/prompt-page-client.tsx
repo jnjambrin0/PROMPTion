@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 // Skeleton import removed - using Next.js loading.tsx instead
 import { PromptViewer } from '@/components/prompt/prompt-viewer'
-import { getPromptPageDataAction } from '@/lib/actions/prompt'
+import { getPromptPageDataAction, duplicatePromptAction, forkPromptAction, generateShareLinkAction, toggleFavoritePromptAction, checkPromptFavoriteAction } from '@/lib/actions/prompt'
+import { toast } from 'sonner'
 
 interface PromptData {
   id: string
@@ -142,6 +143,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
   })
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [isFavorited, setIsFavorited] = useState(false)
 
   // Fetch prompt data
   const fetchPromptData = useCallback(async () => {
@@ -170,6 +172,12 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
           blocks: Array.isArray(result.data.blocks) ? result.data.blocks : []
         }
         setPromptData(transformedData)
+        
+        // Check favorite status
+        const favoriteResult = await checkPromptFavoriteAction(transformedData.id)
+        if (favoriteResult.success && favoriteResult.isFavorited !== undefined) {
+          setIsFavorited(favoriteResult.isFavorited)
+        }
       }
     } catch (err) {
       console.error('Error fetching prompt:', err)
@@ -210,34 +218,168 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
     }
   }, [promptData])
 
-  // Action functions (placeholder - will implement later)
+  // Action functions with real implementations
   const actions = useMemo(() => ({
     duplicate: async () => {
-      // TODO: Implement duplicate logic
-      console.log('Duplicate prompt')
+      if (!promptData) return
+      
+      const result = await duplicatePromptAction(promptData.id, workspaceSlug)
+      
+      if (result.success && result.promptSlug && result.workspaceSlug) {
+        toast.success("Prompt duplicated successfully", {
+          description: "You've been redirected to the duplicated prompt",
+        })
+        router.push(`/${result.workspaceSlug}/${result.promptSlug}`)
+      } else {
+        toast.error("Failed to duplicate prompt", {
+          description: result.error || "Unknown error occurred",
+        })
+      }
     },
+    
     fork: async () => {
-      // TODO: Implement fork logic
-      console.log('Fork prompt')
+      if (!promptData) return
+      
+      const result = await forkPromptAction(promptData.id)
+      
+      if (result.success && result.promptSlug && result.workspaceSlug) {
+        toast.success("Prompt forked successfully", {
+          description: "You've been redirected to the forked prompt",
+        })
+        router.push(`/${result.workspaceSlug}/${result.promptSlug}`)
+      } else {
+        toast.error("Failed to fork prompt", {
+          description: result.error || "Unknown error occurred",
+        })
+      }
     },
+    
     share: async () => {
-      // TODO: Implement share logic
-      console.log('Share prompt')
+      if (!promptData) return
+      
+      const result = await generateShareLinkAction(promptData.id)
+      
+      if (result.success && result.shareUrl) {
+        try {
+          await navigator.clipboard.writeText(result.shareUrl)
+          toast.success("Share link copied to clipboard", {
+            description: result.isPublic 
+              ? "Anyone with this link can view the prompt" 
+              : "Only workspace members can view this prompt",
+          })
+        } catch (clipboardError) {
+          // Fallback for browsers that don't support clipboard API
+          toast.success("Share link generated", {
+            description: `Link: ${result.shareUrl}`,
+          })
+        }
+      } else {
+        toast.error("Failed to generate share link", {
+          description: result.error || "Unknown error occurred",
+        })
+      }
     },
+    
     favorite: async () => {
-      // TODO: Implement favorite logic
-      console.log('Favorite prompt')
+      if (!promptData) return
+      
+      const result = await toggleFavoritePromptAction(promptData.id)
+      
+      if (result.success && result.isFavorited !== undefined) {
+        // Update local states optimistically
+        setIsFavorited(result.isFavorited)
+        setPromptData(prev => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            _count: {
+              comments: prev._count?.comments || 0,
+              forks: prev._count?.forks || 0,
+              blocks: prev._count?.blocks || 0,
+              favorites: (prev._count?.favorites || 0) + (result.isFavorited ? 1 : -1)
+            }
+          }
+        })
+        
+        toast.success(result.isFavorited ? "Added to favorites" : "Removed from favorites", {
+          description: result.isFavorited 
+            ? "This prompt has been added to your favorites" 
+            : "This prompt has been removed from your favorites",
+        })
+      } else {
+        toast.error("Failed to update favorites", {
+          description: result.error || "Unknown error occurred",
+        })
+      }
     },
+    
     settings: async () => {
       router.push(`/${workspaceSlug}/${promptSlug}/settings`)
     }
-  }), [workspaceSlug, promptSlug, router])
+  }), [workspaceSlug, promptSlug, router, promptData])
 
-  // Simple loading state
+  // Prefetching for performance optimization
+  const prefetchRelatedData = useCallback(() => {
+    // Prefetch edit page if user is owner
+    if (isOwner) {
+      router.prefetch(`/${workspaceSlug}/${promptSlug}/edit`)
+    }
+    // Prefetch settings page
+    router.prefetch(`/${workspaceSlug}/${promptSlug}/settings`)
+    // Prefetch workspace page
+    if (breadcrumbData) {
+      router.prefetch(`/${breadcrumbData.workspaceSlug}`)
+    }
+  }, [isOwner, workspaceSlug, promptSlug, router, breadcrumbData])
+
+  // Prefetch on component mount
+  useEffect(() => {
+    if (promptData && !loading.initial) {
+      prefetchRelatedData()
+    }
+  }, [promptData, loading.initial, prefetchRelatedData])
+
+  // Optimized loading state with skeleton that mimics real content
   if (loading.initial) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+      <div className="max-w-4xl mx-auto space-y-6 p-2">
+        {/* Breadcrumb skeleton */}
+        <div className="flex items-center gap-4">
+          <div className="h-4 w-4 bg-neutral-200 rounded animate-pulse" />
+          <div className="h-4 w-32 bg-neutral-200 rounded animate-pulse" />
+        </div>
+        
+        {/* Header skeleton */}
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-neutral-200 rounded animate-pulse" />
+                <div className="h-8 w-80 bg-neutral-200 rounded animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                  <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="h-4 w-96 bg-neutral-200 rounded animate-pulse" />
+              <div className="flex items-center gap-4">
+                <div className="h-4 w-4 bg-neutral-200 rounded-full animate-pulse" />
+                <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                <div className="h-4 w-20 bg-neutral-200 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="h-8 w-20 bg-neutral-200 rounded animate-pulse" />
+              <div className="h-8 w-24 bg-neutral-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Content skeleton */}
+        <div className="space-y-4">
+          <div className="h-64 bg-neutral-200 rounded-lg animate-pulse" />
+          <div className="h-32 bg-neutral-200 rounded-lg animate-pulse" />
+        </div>
       </div>
     )
   }
@@ -299,7 +441,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
                   <Badge variant="outline">Public</Badge>
                 )}
                 {promptData.isPinned && (
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                  <Badge variant="outline" style={{ color: '#D97706', borderColor: '#FCD34D' }}>
                     <Star className="h-3 w-3 mr-1 fill-current" />
                     Pinned
                   </Badge>
@@ -491,8 +633,8 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
                 disabled={loading.action}
                 onClick={() => handleAction(actions.favorite)}
               >
-                <Star className="h-4 w-4 mr-2" />
-                Favorite
+                <Star className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-current' : ''}`} style={isFavorited ? { color: '#EAB308' } : {}} />
+                {isFavorited ? 'Remove from favorites' : 'Add to favorites'}
               </Button>
               {isOwner && (
                 <Button 

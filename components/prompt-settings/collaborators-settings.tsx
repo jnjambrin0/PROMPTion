@@ -21,9 +21,9 @@ interface CollaboratorsSettingsProps {
 }
 
 const permissionLabels = {
-  VIEW: { label: 'Viewer', color: 'bg-#6b7280', description: 'Can view the prompt' },
-  COMMENT: { label: 'Commenter', color: 'bg-#3b82f6', description: 'Can view and comment' },
-  EDIT: { label: 'Editor', color: 'bg-#10b981', description: 'Can view, comment, and edit' }
+  VIEW: { label: 'Viewer', color: 'bg-gray-500', description: 'Can view the prompt' },
+  COMMENT: { label: 'Commenter', color: 'bg-blue-600', description: 'Can view and comment' },
+  EDIT: { label: 'Editor', color: 'bg-green-600', description: 'Can view, comment, and edit' }
 } as const
 
 export const CollaboratorsSettings = React.memo(({ 

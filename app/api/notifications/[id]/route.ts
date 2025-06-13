@@ -7,9 +7,9 @@ import { z } from 'zod'
 // ==================== TIPOS Y ESQUEMAS ====================
 
 interface NotificationParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // Esquema de validación para ID
@@ -44,9 +44,10 @@ export async function PATCH(
     if (auth.error) return auth.error
 
     const { user } = auth
+    const { id } = await params
 
     // Validar ID de notificación
-    const validation = notificationIdSchema.safeParse(params.id)
+    const validation = notificationIdSchema.safeParse(id)
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid notification ID' },
@@ -99,9 +100,10 @@ export async function DELETE(
     if (auth.error) return auth.error
 
     const { user } = auth
+    const { id } = await params
 
     // Validar ID de notificación
-    const validation = notificationIdSchema.safeParse(params.id)
+    const validation = notificationIdSchema.safeParse(id)
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid notification ID' },

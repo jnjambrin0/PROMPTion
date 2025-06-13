@@ -1,199 +1,253 @@
 'use client'
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Eye, EyeOff, Clock, Users, Settings, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Settings, ChevronDown, ChevronUp, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { VersionHistoryPanel } from '@/components/ui/version-history-panel'
-import { useDebounce } from '@/hooks/use-debounce'
+import { getPromptPageDataAction, updatePromptAction } from '@/lib/actions/prompt'
+import { SimpleEditor, PreviewPanel } from '@/components/prompt-editor'
+import { PreviewPopup } from '@/components/prompt-editor/preview-popup'
+import { AdvancedEditor } from '@/components/prompt-editor/advanced-editor'
 
-// Types for edit form - based on our database schema
+// Simplified types for basic editing
+// Enhanced types for advanced mode
+interface Variable {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select'
+  description: string
+  required: boolean
+  defaultValue?: string
+  options?: string[]
+}
+
+interface Block {
+  id: string
+  type: 'TEXT' | 'VARIABLE' | 'PROMPT' | 'HEADING' | 'CODE'
+  position: number
+  content: {
+    text?: string
+    level?: number
+    language?: string
+    variable?: Variable
+  }
+}
+
 interface PromptEditData {
   title: string
   description: string
+  content: string // Single content field for simple mode
+  blocks: Block[] // Advanced mode blocks
   isPublic: boolean
   isTemplate: boolean
-  variables: Array<{
-    name: string
-    description: string
-    required: boolean
-  }>
-}
-
-interface Workspace {
-  id: string
-  name: string
-  slug: string
-}
-
-interface Prompt {
-  id: string
-  title: string
-  slug: string
-  description?: string | null
-  isPublic: boolean
-  isTemplate: boolean
-  variables: any // JSON field
-  workspace: Workspace
-  createdAt: Date
-  updatedAt: Date
 }
 
 interface PromptEditClientProps {
   workspaceSlug: string
   promptSlug: string
   userId: string
-  initialPrompt?: Prompt | null
-  initialWorkspace?: Workspace | null
+  initialPrompt?: any
+  initialWorkspace?: any
 }
 
-interface SaveState {
-  status: 'saved' | 'saving' | 'unsaved' | 'error'
-  lastSaved?: Date
-  error?: string
-}
-
-// Auto-save indicator component
-function AutoSaveIndicator({ saveState }: { saveState: SaveState }) {
-  const { status, lastSaved, error } = saveState
-
-  const icons = {
-    saved: <span className="text-green-600">✓</span>,
-    saving: <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-neutral-600"></div>,
-    unsaved: <Clock className="h-3 w-3 text-yellow-600" />,
-    error: <AlertTriangle className="h-3 w-3 text-red-600" />
-  }
-
-  const messages = {
-    saved: `Saved ${lastSaved ? lastSaved.toLocaleTimeString() : ''}`,
-    saving: 'Saving...',
-    unsaved: 'Unsaved changes',
-    error: error || 'Save failed'
-  }
-
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      {icons[status]}
-      <span className={`${
-        status === 'error' ? 'text-red-600' : 
-        status === 'unsaved' ? 'text-yellow-600' : 
-        'text-neutral-600'
-      }`}>
-        {messages[status]}
-      </span>
-    </div>
-  )
-}
-
-// Unsaved changes warning dialog
-function UnsavedChangesDialog({ 
-  isOpen, 
-  onConfirm, 
-  onCancel 
-}: { 
-  isOpen: boolean
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-        <div className="flex items-center gap-3 mb-4">
-          <AlertTriangle className="h-6 w-6 text-yellow-600" />
-          <h3 className="font-semibold text-neutral-900">Unsaved changes</h3>
-        </div>
-        <p className="text-neutral-600 mb-6">
-          You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-        </p>
-        <div className="flex gap-3 justify-end">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Leave without saving
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+interface LoadingState {
+  initial: boolean
+  saving: boolean
 }
 
 export function PromptEditClient({ 
   workspaceSlug, 
   promptSlug, 
   userId,
-  initialPrompt = null,
-  initialWorkspace = null
+  initialPrompt,
+  initialWorkspace
 }: PromptEditClientProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [isLoading, setIsLoading] = useState(!initialPrompt)
-  const [previewMode, setPreviewMode] = useState(false)
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   
-  const [saveState, setSaveState] = useState<SaveState>({
-    status: 'saved'
+  // State management
+  const [loading, setLoading] = useState<LoadingState>({
+    initial: true,
+    saving: false
   })
   
-  // Form data state
   const [formData, setFormData] = useState<PromptEditData>({
-    title: initialPrompt?.title || '',
-    description: initialPrompt?.description || '',
-    isPublic: initialPrompt?.isPublic || false,
-    isTemplate: initialPrompt?.isTemplate || false,
-    variables: Array.isArray(initialPrompt?.variables) ? initialPrompt.variables : []
+    title: '',
+    description: '',
+    content: '',
+    blocks: [],
+    isPublic: false,
+    isTemplate: false
   })
+  
+  const [originalData, setOriginalData] = useState<PromptEditData | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false)
+  const [promptData, setPromptData] = useState<any>(null)
 
-  // Track initial state for change detection
-  const [initialData, setInitialData] = useState<PromptEditData | null>(
-    initialPrompt ? {
-      title: initialPrompt.title,
-      description: initialPrompt.description || '',
-      isPublic: initialPrompt.isPublic,
-      isTemplate: initialPrompt.isTemplate,
-      variables: Array.isArray(initialPrompt.variables) ? initialPrompt.variables : []
-    } : null
-  )
+  // Check for unsaved changes
+  const hasChanges = useMemo(() => {
+    if (!originalData) return false
+    return JSON.stringify(formData) !== JSON.stringify(originalData)
+  }, [formData, originalData])
 
-  // Workspace and prompt metadata
-  const [workspace, setWorkspace] = useState<Workspace | null>(
-    initialWorkspace || initialPrompt?.workspace || null
-  )
-  const [prompt, setPrompt] = useState<Prompt | null>(initialPrompt)
+  // Convert blocks to simple content and vice versa
+  const blocksToContent = useCallback((blocks: any[]): string => {
+    if (!Array.isArray(blocks)) return ''
+    
+    return blocks
+      .filter(block => block.type === 'TEXT' || block.type === 'PROMPT')
+      .map(block => block.content?.text || '')
+      .join('\n\n')
+      .trim()
+  }, [])
 
-  // Debounced form data for auto-save
-  const debouncedFormData = useDebounce(formData, 2000)
+  const contentToBlocks = useCallback((content: string): Block[] => {
+    if (!content.trim()) return []
+    
+    // Simple conversion: split by double newlines and create text blocks
+    const paragraphs = content.split('\n\n').filter(p => p.trim())
+    
+    return paragraphs.map((text, index): Block => ({
+      id: `block-${Date.now()}-${index}`,
+      type: 'TEXT' as const,
+      position: index,
+      content: { text: text.trim() }
+    }))
+  }, [])
 
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = useMemo(() => {
-    if (!initialData) return false
-    return JSON.stringify(formData) !== JSON.stringify(initialData)
-  }, [formData, initialData])
+  // Load initial data
+  const fetchPromptData = useCallback(async () => {
+    try {
+      setLoading(prev => ({ ...prev, initial: true }))
+      
+      const result = await getPromptPageDataAction(workspaceSlug, promptSlug, userId)
+      
+      if (!result.success) {
+        toast.error(result.error || 'Failed to load prompt')
+        return
+      }
 
-  // Auto-save effect with debounce
-  useEffect(() => {
-    if (initialData && hasUnsavedChanges && prompt) {
-      handleAutoSave()
+      if (result.data) {
+        const data = result.data
+        
+        // Convert blocks to simple content for editing
+        const content = blocksToContent(data.blocks || [])
+        
+        const initialFormData: PromptEditData = {
+          title: data.title,
+          description: data.description || '',
+          content,
+          blocks: [], // Will be populated when switching to advanced mode
+          isPublic: data.isPublic,
+          isTemplate: data.isTemplate
+        }
+        
+        setFormData(initialFormData)
+        setOriginalData(initialFormData)
+        setPromptData(data)
+      }
+    } catch (error) {
+      console.error('Error loading prompt:', error)
+      toast.error('Failed to load prompt')
+    } finally {
+      setLoading(prev => ({ ...prev, initial: false }))
     }
-  }, [debouncedFormData, initialData, hasUnsavedChanges, prompt])
+  }, [workspaceSlug, promptSlug, userId, blocksToContent])
 
-  // Handle browser navigation/refresh with unsaved changes
+  // Save changes
+  const handleSave = useCallback(async () => {
+    if (!promptData || loading.saving) return
+    
+    try {
+      setLoading(prev => ({ ...prev, saving: true }))
+      
+      // Convert content back to blocks for storage
+      const blocks = contentToBlocks(formData.content)
+      
+      const result = await updatePromptAction(promptData.id, {
+        title: formData.title,
+        description: formData.description,
+        blocks,
+        isPublic: formData.isPublic,
+        isTemplate: formData.isTemplate
+      })
+      
+      if (result.success) {
+        setOriginalData({ ...formData })
+        toast.success('Prompt saved successfully')
+      } else {
+        toast.error(result.error || 'Failed to save prompt')
+      }
+    } catch (error) {
+      console.error('Error saving prompt:', error)
+      toast.error('Failed to save prompt')
+    } finally {
+      setLoading(prev => ({ ...prev, saving: false }))
+    }
+  }, [formData, promptData, loading.saving, contentToBlocks])
+
+  // Handle navigation with unsaved changes
+  const handleBack = useCallback(() => {
+    if (hasChanges) {
+      if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        router.push(`/${workspaceSlug}/${promptSlug}`)
+      }
+    } else {
+      router.push(`/${workspaceSlug}/${promptSlug}`)
+    }
+  }, [hasChanges, router, workspaceSlug, promptSlug])
+
+  // Toggle advanced mode
+  const toggleAdvancedMode = useCallback(() => {
+    if (hasChanges) {
+      toast.error('Please save your changes before switching modes')
+      return
+    }
+    
+    if (isAdvancedMode) {
+      // Switch back to simple mode - convert blocks to content
+      const content = blocksToContent(formData.blocks)
+      setFormData(prev => ({ ...prev, content, blocks: [] }))
+      setIsAdvancedMode(false)
+      toast.success('Switched to simple mode')
+    } else {
+      // Switch to advanced mode - convert content to blocks
+      const blocks = contentToBlocks(formData.content)
+      setFormData(prev => ({ ...prev, blocks, content: '' }))
+      setIsAdvancedMode(true)
+      toast.success('Switched to advanced mode')
+    }
+  }, [hasChanges, isAdvancedMode, formData.blocks, formData.content, blocksToContent, contentToBlocks])
+
+  // Handle back to simple from advanced editor
+  const handleBackToSimple = useCallback(() => {
+    if (hasChanges) {
+      toast.error('Please save your changes before switching modes')
+      return
+    }
+    
+    const content = blocksToContent(formData.blocks)
+    setFormData(prev => ({ ...prev, content, blocks: [] }))
+    setIsAdvancedMode(false)
+    toast.success('Switched to simple mode')
+  }, [hasChanges, formData.blocks, blocksToContent])
+
+  // Load data on mount
+  useEffect(() => {
+    fetchPromptData()
+  }, [fetchPromptData])
+
+  // Browser navigation warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
+      if (hasChanges) {
         e.preventDefault()
         e.returnValue = ''
       }
@@ -201,341 +255,225 @@ export function PromptEditClient({
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [hasUnsavedChanges])
+  }, [hasChanges])
 
-  // Initialize data from server-provided props
-  useEffect(() => {
-    if (initialPrompt) {
-      setSaveState({ status: 'saved', lastSaved: new Date(initialPrompt.updatedAt) })
-    }
-  }, [initialPrompt])
-
-  const handleAutoSave = useCallback(async () => {
-    if (saveState.status === 'saving' || !prompt) return
-
-    setSaveState({ status: 'saving' })
-    
-    try {
-      // TODO: Implement actual save logic with API call
-      const response = await fetch(`/api/workspaces/${workspaceSlug}/prompts/${promptSlug}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save')
-      }
-      
-      const newSaveState: SaveState = { 
-        status: 'saved', 
-        lastSaved: new Date() 
-      }
-      setSaveState(newSaveState)
-      
-      // Update initial data to match current state
-      setInitialData({ ...formData })
-    } catch (error) {
-      console.error('Auto-save failed:', error)
-      setSaveState({ 
-        status: 'error', 
-        error: 'Auto-save failed' 
-      })
-    }
-  }, [formData, saveState.status, prompt, workspaceSlug, promptSlug])
-
-  const handleManualSave = useCallback(() => {
-    startTransition(async () => {
-      try {
-        setSaveState({ status: 'saving' })
-        
-        // TODO: Implement actual save logic with API call
-        const response = await fetch(`/api/workspaces/${workspaceSlug}/prompts/${promptSlug}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to save')
-        }
-        
-        const newSaveState: SaveState = { 
-          status: 'saved', 
-          lastSaved: new Date() 
-        }
-        setSaveState(newSaveState)
-        setInitialData({ ...formData })
-        toast.success('Prompt saved successfully')
-      } catch (error) {
-        console.error('Save failed:', error)
-        setSaveState({ 
-          status: 'error', 
-          error: 'Failed to save prompt' 
-        })
-        toast.error('Failed to save prompt')
-      }
-    })
-  }, [formData, workspaceSlug, promptSlug])
-
-  const updateFormData = useCallback((updates: Partial<PromptEditData>) => {
-    setFormData(prev => ({ ...prev, ...updates }))
-    setSaveState(prev => ({ ...prev, status: 'unsaved' }))
-  }, [])
-
-  // Handle navigation with unsaved changes
-  const handleNavigation = useCallback((path: string) => {
-    if (hasUnsavedChanges) {
-      setPendingNavigation(path)
-      setShowUnsavedDialog(true)
-    } else {
-      router.push(path)
-    }
-  }, [hasUnsavedChanges, router])
-
-  const confirmNavigation = useCallback(() => {
-    if (pendingNavigation) {
-      router.push(pendingNavigation)
-    }
-    setShowUnsavedDialog(false)
-    setPendingNavigation(null)
-  }, [pendingNavigation, router])
-
-  const cancelNavigation = useCallback(() => {
-    setShowUnsavedDialog(false)
-    setPendingNavigation(null)
-  }, [])
-
-  if (isLoading) {
+  // Loading state
+  if (loading.initial) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        </div>
       </div>
     )
   }
 
-  if (!prompt || !workspace) {
+  // Error state
+  if (!promptData) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <div className="text-neutral-500">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Prompt not found</h2>
-          <p className="mb-4">The prompt you're looking for doesn't exist or you don't have access to it.</p>
-          <Button asChild variant="outline">
-            <Link href={`/${workspaceSlug}`}>
-              Back to workspace
-            </Link>
-          </Button>
-        </div>
+      <div className="max-w-4xl mx-auto p-6">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <h3 className="text-lg font-medium text-neutral-900 mb-2">
+              Prompt not found
+            </h3>
+            <p className="text-neutral-600 mb-6">
+              The prompt you're looking for doesn't exist or you don't have access to it.
+            </p>
+            <Button asChild variant="outline">
+              <Link href={`/${workspaceSlug}`}>
+                Back to workspace
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <>
-      <div className="max-w-4xl mx-auto space-y-6 p-2">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => handleNavigation(`/${workspaceSlug}/${promptSlug}`)}
-              className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to prompt
-            </button>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-neutral-900">Edit Prompt</h1>
-              <Badge variant="secondary" className="text-xs">
-                {workspace.name}
-              </Badge>
-            </div>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header - Clean and focused */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={handleBack}
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-xl font-semibold">Edit Prompt</h1>
+            <p className="text-sm text-neutral-600">
+              {promptData.workspace.name}
+            </p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <AutoSaveIndicator saveState={saveState} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPreviewMode(!previewMode)}
-              className="gap-2"
-            >
-              {previewMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {previewMode ? 'Edit' : 'Preview'}
-            </Button>
-            <Button
-              onClick={handleManualSave}
-              disabled={isPending || saveState.status === 'saving' || !hasUnsavedChanges}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Save
-            </Button>
-          </div>
+          {hasChanges && (
+            <Badge variant="outline" style={{ color: '#D97706', borderColor: '#FCD34D' }}>
+              Unsaved changes
+            </Badge>
+          )}
         </div>
-
-        <Separator />
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Primary Editor */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>
-                  Update the title and description of your prompt
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => updateFormData({ title: e.target.value })}
-                    placeholder="Enter prompt title"
-                    className="text-base"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => updateFormData({ description: e.target.value })}
-                    placeholder="Describe what this prompt does"
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label htmlFor="isPublic">Public</Label>
-                    <p className="text-xs text-neutral-500">
-                      Allow anyone to view this prompt
-                    </p>
-                  </div>
-                  <Switch
-                    id="isPublic"
-                    checked={formData.isPublic}
-                    onCheckedChange={(checked) => updateFormData({ isPublic: checked })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label htmlFor="isTemplate">Template</Label>
-                    <p className="text-xs text-neutral-500">
-                      Make available as a template
-                    </p>
-                  </div>
-                  <Switch
-                    id="isTemplate"
-                    checked={formData.isTemplate}
-                    onCheckedChange={(checked) => updateFormData({ isTemplate: checked })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Variables */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Variables</CardTitle>
-                <CardDescription>
-                  Detected variables in your prompt
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {formData.variables.length > 0 ? (
-                  <div className="space-y-3">
-                    {formData.variables.map((variable, index) => (
-                      <div key={index} className="p-3 border border-neutral-200 rounded-md">
-                        <div className="flex items-center justify-between mb-2">
-                          <code className="text-sm font-mono bg-neutral-100 px-2 py-1 rounded">
-                            {'{{'}{variable.name}{'}}'}
-                          </code>
-                          <Badge variant={variable.required ? "default" : "secondary"} className="text-xs">
-                            {variable.required ? 'Required' : 'Optional'}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-neutral-600">
-                          {variable.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-neutral-500 text-center py-4">
-                    No variables detected
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start gap-2"
-                  asChild
-                >
-                  <Link href={`/${workspaceSlug}/${promptSlug}/settings`}>
-                    <Settings className="h-4 w-4" />
-                    Advanced Settings
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                  <Users className="h-4 w-4" />
-                  Manage Collaborators
-                </Button>
-                {prompt && (
-                  <VersionHistoryPanel 
-                    promptId={prompt.id}
-                    onRestoreVersion={async (versionId) => {
-                      // TODO: Implement restore version logic
-                      toast.success('Version restored successfully')
-                    }}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={loading.saving || !hasChanges}
+            className="gap-2"
+          >
+            {loading.saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            Save
+          </Button>
         </div>
       </div>
 
-      {/* Unsaved Changes Dialog */}
-      <UnsavedChangesDialog
-        isOpen={showUnsavedDialog}
-        onConfirm={confirmNavigation}
-        onCancel={cancelNavigation}
-      />
-    </>
+      {/* Basic Info - Streamlined */}
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter prompt title"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description (optional)</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description"
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Editor - Simple or Advanced based on mode */}
+      {isAdvancedMode ? (
+        <div className="space-y-4">
+          {/* Mode Toggle Bar for Advanced */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Advanced Mode</h3>
+                  <p className="text-sm text-neutral-500">
+                    Create complex prompts with specialized blocks and variables
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBackToSimple}
+                  className="gap-2"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Simple Mode
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <AdvancedEditor
+            blocks={formData.blocks}
+            onChange={(blocks) => setFormData(prev => ({ ...prev, blocks }))}
+            onBackToSimple={handleBackToSimple}
+            title={formData.title}
+          />
+        </div>
+      ) : (
+        <SimpleEditor
+          content={formData.content}
+          onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+          onToggleAdvanced={toggleAdvancedMode}
+          showPreview={showPreview}
+          onTogglePreview={() => setShowPreview(!showPreview)}
+          title={formData.title}
+          isAdvancedMode={isAdvancedMode}
+        />
+      )}
+
+      {/* Preview - Panel for simple mode, integrated in advanced mode */}
+      {!isAdvancedMode && (
+        <PreviewPanel 
+          content={formData.content}
+          title={formData.title}
+          isVisible={showPreview}
+        />
+      )}
+
+      {/* Advanced Settings - Collapsed by default */}
+      <Card>
+        <CardHeader className="pb-4">
+          <Button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            variant="ghost"
+            className="w-full justify-between p-0 h-auto font-medium"
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </div>
+            {showAdvanced ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        </CardHeader>
+        
+        {showAdvanced && (
+          <CardContent className="pt-0">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="isPublic">Public Access</Label>
+                  <p className="text-sm text-neutral-500">
+                    Allow anyone with the link to view this prompt
+                  </p>
+                </div>
+                <Switch
+                  id="isPublic"
+                  checked={formData.isPublic}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, isPublic: checked }))
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="isTemplate">Template</Label>
+                  <p className="text-sm text-neutral-500">
+                    Make this prompt available as a template for others
+                  </p>
+                </div>
+                <Switch
+                  id="isTemplate"
+                  checked={formData.isTemplate}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, isTemplate: checked }))
+                  }
+                />
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
   )
 } 

@@ -1,14 +1,14 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
-
 import { notFound, redirect } from 'next/navigation'
-import { PromptSettingsClient } from './prompt-settings-client';
+import { PromptSettingsClient } from './prompt-settings-client'
+import { getPromptSettingsAction } from '@/lib/actions/prompt-settings'
 
 interface PromptSettingsPageProps {
   params: Promise<{ workspace: string; prompt: string }>
 }
 
-// Server component - handles authentication and data validation
+// ✅ Server Component optimizado - hace fetch inicial
 export default async function PromptSettingsPage({ params }: PromptSettingsPageProps) {
   const supabase = await createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -24,15 +24,23 @@ export default async function PromptSettingsPage({ params }: PromptSettingsPageP
 
   const { workspace: workspaceSlug, prompt: promptSlug } = await params
 
-  // TODO: Add validation that user has settings permissions for this prompt
-  // For now, we'll pass the validation to the client component
-  // In a production app, you'd want to validate ownership/permissions here
+  // ✅ Fetch inicial en Server Component para mejor performance
+  const settingsResult = await getPromptSettingsAction(workspaceSlug, promptSlug)
+  
+  if (!settingsResult.success) {
+    notFound()
+  }
+
+  if (!settingsResult.data) {
+    notFound()
+  }
 
   return (
     <PromptSettingsClient 
       workspaceSlug={workspaceSlug}
       promptSlug={promptSlug}
       userId={user.id}
+      initialData={settingsResult.data}
     />
   )
 } 

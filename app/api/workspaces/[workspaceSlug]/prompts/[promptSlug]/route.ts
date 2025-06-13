@@ -8,10 +8,10 @@ import { z } from 'zod'
 // ==================== TIPOS Y ESQUEMAS ====================
 
 interface PromptParams {
-  params: {
+  params: Promise<{
     workspaceSlug: string
     promptSlug: string
-  }
+  }>
 }
 
 interface PromptUser {
@@ -161,10 +161,11 @@ export async function GET(
     if (auth.error) return auth.error
 
     const { user } = auth
+    const { workspaceSlug, promptSlug } = await params
 
     const validation = await validateAndGetWorkspacePrompt(
-      params.workspaceSlug, 
-      params.promptSlug, 
+      workspaceSlug, 
+      promptSlug, 
       user.id
     )
 
@@ -254,10 +255,11 @@ export async function PATCH(
     if (auth.error) return auth.error
 
     const { user } = auth
+    const { workspaceSlug, promptSlug } = await params
 
     const validation = await validateAndGetWorkspacePrompt(
-      params.workspaceSlug, 
-      params.promptSlug, 
+      workspaceSlug, 
+      promptSlug, 
       user.id
     )
 
