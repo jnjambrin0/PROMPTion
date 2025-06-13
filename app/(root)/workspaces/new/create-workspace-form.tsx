@@ -53,7 +53,7 @@ export function CreateWorkspaceForm() {
       const result = await createWorkspaceAction(formData)
       
       if (result.success && result.workspaceSlug) {
-        router.push(`/dashboard/${result.workspaceSlug}`)
+        router.push(`/${result.workspaceSlug}`)
       } else {
         setErrors({ name: result.error || 'Error creating workspace' })
       }

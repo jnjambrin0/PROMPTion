@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { Separator } from '@/components/ui/separator'
-import { QUICK_ACTIONS } from '@/lib/constants/navigation'
+import { QUICK_ACTIONS, MAIN_NAVIGATION } from '@/lib/constants/navigation'
 import { getUserByAuthId } from '@/lib/db/users'
 import { getUserWorkspaces } from '@/lib/db/workspaces'
 import { createClient } from '@/utils/supabase/server'
-import { Home, Plus, Settings, Users } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 async function getUserData() {
   try {
@@ -104,27 +104,16 @@ export async function Sidebar() {
             Navigation
           </h3>
           <div className="space-y-1">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
-            >
-              <Home className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/templates"
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
-            >
-              <Users className="h-4 w-4" />
-              Templates
-            </Link>
-            <Link
-              href="/settings"
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Link>
+            {MAIN_NAVIGATION.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

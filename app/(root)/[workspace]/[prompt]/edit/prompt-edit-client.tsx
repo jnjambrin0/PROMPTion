@@ -185,10 +185,10 @@ export function PromptEditClient({
 
   // Auto-save effect with debounce
   useEffect(() => {
-    if (!isLoading && initialData && hasUnsavedChanges && prompt) {
+    if (initialData && hasUnsavedChanges && prompt) {
       handleAutoSave()
     }
-  }, [debouncedFormData, isLoading, initialData, hasUnsavedChanges, prompt])
+  }, [debouncedFormData, initialData, hasUnsavedChanges, prompt])
 
   // Handle browser navigation/refresh with unsaved changes
   useEffect(() => {
@@ -203,52 +203,12 @@ export function PromptEditClient({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
 
-  // Load data if not provided initially
+  // Initialize data from server-provided props
   useEffect(() => {
-    if (!initialPrompt && !isLoading) {
-      loadPromptData()
-    } else if (initialPrompt) {
-      setIsLoading(false)
+    if (initialPrompt) {
       setSaveState({ status: 'saved', lastSaved: new Date(initialPrompt.updatedAt) })
     }
-  }, [workspaceSlug, promptSlug, initialPrompt])
-
-  const loadPromptData = async () => {
-    try {
-      setIsLoading(true)
-      
-      // TODO: Implement actual API call to fetch prompt data
-      // This would be replaced with a proper API call
-      const response = await fetch(`/api/workspaces/${workspaceSlug}/prompts/${promptSlug}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to load prompt data')
-      }
-      
-      const data = await response.json()
-      
-      setPrompt(data.prompt)
-      setWorkspace(data.workspace)
-      
-      const promptData: PromptEditData = {
-        title: data.prompt.title,
-        description: data.prompt.description || '',
-        isPublic: data.prompt.isPublic,
-        isTemplate: data.prompt.isTemplate,
-        variables: Array.isArray(data.prompt.variables) ? data.prompt.variables : []
-      }
-      
-      setFormData(promptData)
-      setInitialData(promptData)
-      setSaveState({ status: 'saved', lastSaved: new Date(data.prompt.updatedAt) })
-      setIsLoading(false)
-    } catch (error) {
-      console.error('Error loading prompt data:', error)
-      toast.error('Failed to load prompt data')
-      setSaveState({ status: 'error', error: 'Failed to load data' })
-      setIsLoading(false)
-    }
-  }
+  }, [initialPrompt])
 
   const handleAutoSave = useCallback(async () => {
     if (saveState.status === 'saving' || !prompt) return
@@ -352,12 +312,8 @@ export function PromptEditClient({
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-neutral-200 rounded w-1/3 mb-4"></div>
-          <div className="h-16 bg-neutral-200 rounded mb-6"></div>
-          <div className="h-64 bg-neutral-200 rounded"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
       </div>
     )
   }
@@ -381,7 +337,7 @@ export function PromptEditClient({
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 p-2">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -544,15 +500,17 @@ export function PromptEditClient({
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <button
-                  onClick={() => handleNavigation(`/${workspaceSlug}/${promptSlug}/settings`)}
-                  className="w-full"
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start gap-2"
+                  asChild
                 >
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                  <Link href={`/${workspaceSlug}/${promptSlug}/settings`}>
                     <Settings className="h-4 w-4" />
                     Advanced Settings
-                  </Button>
-                </button>
+                  </Link>
+                </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start gap-2">
                   <Users className="h-4 w-4" />
                   Manage Collaborators

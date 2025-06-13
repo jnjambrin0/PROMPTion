@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { LayoutDashboard, MessageSquare, FolderOpen, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getWorkspaceDataAction } from '@/lib/actions/workspace'
@@ -25,95 +25,13 @@ const TABS: { id: WorkspaceTab; label: string; icon: React.ElementType }[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
-// Loading skeleton components for better UX
-const OverviewSkeleton = () => (
-  <div className="space-y-6">
-    <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
-
-const PromptsSkeleton = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-      <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
-
-const CategoriesSkeleton = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-      <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
-
-const MembersSkeleton = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-      <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-          </div>
-          <div className="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
-
-const SettingsSkeleton = () => (
-  <div className="space-y-6">
-    <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-    <div className="space-y-4">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-3 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-full mb-2 animate-pulse"></div>
-          <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-)
+import { 
+  WorkspaceOverviewSkeleton,
+} from '@/components/ui/skeletons'
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   // ============================================================================
-  // STATE MANAGEMENT - Optimized
+  // STATE MANAGEMENT - Simplificado
   // ============================================================================
   
   const [workspaceSlug, setWorkspaceSlug] = useState<string>('')
@@ -121,10 +39,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [data, setData] = useState<WorkspaceData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [prefetchedTabs, setPrefetchedTabs] = useState<Set<WorkspaceTab>>(new Set())
 
   // ============================================================================
-  // DATA FETCHING - Single optimized function with caching
+  // DATA FETCHING - Single optimized function
   // ============================================================================
   
   const fetchWorkspaceData = useCallback(async (slug: string) => {
@@ -135,6 +52,12 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     
     try {
       const result = await getWorkspaceDataAction(slug)
+      
+      // Validación defensiva para Server Actions
+      if (!result) {
+        setError('Server connection failed. Please refresh the page.')
+        return
+      }
       
       if (result.success && result.data) {
         setData(result.data as WorkspaceData)
@@ -150,58 +73,39 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [])
 
   // ============================================================================
-  // PREFETCHING LOGIC - Smart preloading
-  // ============================================================================
-
-  const prefetchTabData = useCallback((tab: WorkspaceTab) => {
-    if (prefetchedTabs.has(tab) || tab === activeTab) return
-
-    // In a real app, you would prefetch specific data for each tab
-    // For now, we'll just mark it as prefetched since we already have all data
-    setPrefetchedTabs(prev => new Set([...prev, tab]))
-  }, [prefetchedTabs, activeTab])
-
-  // ============================================================================
-  // EFFECTS
+  // EFFECTS - Simplificados
   // ============================================================================
 
   useEffect(() => {
     params.then(({ workspace }) => {
       setWorkspaceSlug(workspace)
       fetchWorkspaceData(workspace)
+      
+      // Solo leer URL una vez al cargar la página
+      const searchParams = new URLSearchParams(window.location.search)
+      const tab = searchParams.get('tab') as WorkspaceTab
+      if (tab && TABS.find(t => t.id === tab)) {
+        setActiveTab(tab)
+      }
     })
   }, [params, fetchWorkspaceData])
 
-  // Handle URL search params for tab switching
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const tab = searchParams.get('tab') as WorkspaceTab
-    if (tab && TABS.find(t => t.id === tab)) {
-      setActiveTab(tab)
-    }
-  }, [])
-
   // ============================================================================
-  // TAB SWITCHING - Optimized with prefetching
+  // TAB SWITCHING - Simplificado
   // ============================================================================
   
   const handleTabChange = useCallback((tab: WorkspaceTab) => {
     setActiveTab(tab)
-    
-    // Update URL without page reload
+    // Manejo de URL simplificado sin efectos secundarios
     const url = new URL(window.location.href)
     if (tab === 'overview') {
       url.searchParams.delete('tab')
     } else {
       url.searchParams.set('tab', tab)
     }
-    window.history.replaceState({}, '', url.toString())
+    // Usar pushState en lugar de replaceState para evitar problemas
+    window.history.pushState({}, '', url.toString())
   }, [])
-
-  const handleTabHover = useCallback((tab: WorkspaceTab) => {
-    // Prefetch on hover for instant tab switching
-    prefetchTabData(tab)
-  }, [prefetchTabData])
 
   // ============================================================================
   // MEMOIZED VALUES - Performance optimization
@@ -218,7 +122,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [data])
 
   // ============================================================================
-  // RENDER HELPERS - Memoized tab content
+  // RENDER HELPERS - Sin Suspense innecesario
   // ============================================================================
   
   const renderActiveTab = useCallback(() => {
@@ -231,41 +135,17 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
     switch (activeTab) {
       case 'overview':
-        return (
-          <Suspense fallback={<OverviewSkeleton />}>
-            <OverviewTab {...commonProps} />
-          </Suspense>
-        )
+        return <OverviewTab {...commonProps} />
       case 'prompts':
-        return (
-          <Suspense fallback={<PromptsSkeleton />}>
-            <PromptsTab {...commonProps} />
-          </Suspense>
-        )
+        return <PromptsTab {...commonProps} />
       case 'categories':
-        return (
-          <Suspense fallback={<CategoriesSkeleton />}>
-            <CategoriesTab {...commonProps} />
-          </Suspense>
-        )
+        return <CategoriesTab {...commonProps} />
       case 'members':
-        return (
-          <Suspense fallback={<MembersSkeleton />}>
-            <MembersTab {...commonProps} />
-          </Suspense>
-        )
+        return <MembersTab {...commonProps} />
       case 'settings':
-        return (
-          <Suspense fallback={<SettingsSkeleton />}>
-            <WorkspaceSettingsTab {...commonProps} />
-          </Suspense>
-        )
+        return <WorkspaceSettingsTab {...commonProps} />
       default:
-        return (
-          <Suspense fallback={<OverviewSkeleton />}>
-            <OverviewTab {...commonProps} />
-          </Suspense>
-        )
+        return <OverviewTab {...commonProps} />
     }
   }, [activeTab, workspaceSlug, data])
 
@@ -308,7 +188,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           
           {/* Content skeleton */}
           <div className="min-h-[600px]">
-            <OverviewSkeleton />
+            <WorkspaceOverviewSkeleton />
           </div>
         </div>
       </div>
@@ -344,7 +224,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
-                    onMouseEnter={() => handleTabHover(tab.id)}
                     className={`
                       flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors
                       ${isActive 

@@ -1,11 +1,11 @@
 import { Metadata } from 'next'
 import { Navigation } from '@/components/landing/navigation'
 import { HeroSection } from '@/components/landing/hero-section'
-import { SocialProof } from '@/components/landing/social-proof'
-import { FeaturesSection } from '@/components/landing/features-section'
-import { ProductDemo } from '@/components/landing/product-demo'
-import { BenefitsSection } from '@/components/landing/benefits-section'
-import { PricingSection } from '@/components/landing/pricing-section'
+// import { SocialProof } from '@/components/landing/social-proof'
+// import { FeaturesSection } from '@/components/landing/features-section'
+// import { ProductDemo } from '@/components/landing/product-demo'
+// import { BenefitsSection } from '@/components/landing/benefits-section'
+// import { PricingSection } from '@/components/landing/pricing-section'
 import { TestimonialsSection } from '@/components/landing/testimonials-section'
 import { FAQSection } from '@/components/landing/faq-section'
 import { CTASection } from '@/components/landing/cta-section'
@@ -75,23 +75,23 @@ export default function HomePage() {
         <HeroSection />
         
         {/* Social Proof */}
-        <SocialProof />
+        {/* <SocialProof /> */}
         
         {/* Features Section */}
-        <section id="features">
+        {/* <section id="features">
           <FeaturesSection />
-        </section>
+        </section> */}
         
         {/* Product Demo */}
-        <ProductDemo />
+        {/* <ProductDemo /> */}
         
         {/* Benefits Section */}
-        <BenefitsSection />
+        {/* <BenefitsSection /> */}
         
         {/* Pricing Section */}
-        <section id="pricing">
+        {/* <section id="pricing">
           <PricingSection />
-        </section>
+        </section> */}
         
         {/* Testimonials */}
         <TestimonialsSection />

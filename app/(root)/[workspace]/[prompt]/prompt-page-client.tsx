@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+// Skeleton import removed - using Next.js loading.tsx instead
 import { PromptViewer } from '@/components/prompt/prompt-viewer'
 import { getPromptPageDataAction } from '@/lib/actions/prompt'
 
@@ -67,87 +67,7 @@ interface LoadingState {
   action: boolean
 }
 
-// Loading Skeleton Components
-function PromptHeaderSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 space-y-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-80" />
-            <div className="flex gap-2">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-6 w-16" />
-            </div>
-          </div>
-          <Skeleton className="h-4 w-96" />
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded-full" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-32" />
-            <div className="flex gap-4">
-              <Skeleton className="h-4 w-8" />
-              <Skeleton className="h-4 w-8" />
-              <Skeleton className="h-4 w-8" />
-            </div>
-          </div>
-        </div>
-        <Skeleton className="h-10 w-32" />
-      </div>
-    </div>
-  )
-}
-
-function PromptContentSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-9 w-20" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex gap-3">
-              <Skeleton className="h-5 w-5 mt-1" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function SidebarSkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i}>
-          <CardHeader>
-            <Skeleton className="h-5 w-24" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, j) => (
-                <Skeleton key={j} className="h-12 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
+// Simple client-side loading for better UX
 
 // Error Component
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
@@ -230,7 +150,6 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
       setError(null)
       setNotFound(false)
 
-      // Use Server Action to fetch data safely
       const result = await getPromptPageDataAction(workspaceSlug, promptSlug, userId)
       
       if (!result.success) {
@@ -242,7 +161,6 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
         return
       }
 
-      // Set the data with proper transformation
       if (result.data) {
         const transformedData: PromptData = {
           ...result.data,
@@ -315,47 +233,28 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
     }
   }), [workspaceSlug, promptSlug, router])
 
-  // Render loading state
+  // Simple loading state
   if (loading.initial) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Breadcrumb Skeleton */}
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-
-        {/* Header Skeleton */}
-        <PromptHeaderSkeleton />
-        
-        <Separator />
-
-        {/* Content Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            <PromptContentSkeleton />
-          </div>
-          <div>
-            <SidebarSkeleton />
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
       </div>
     )
   }
 
-  // Render error state
+  // Error state
   if (error) {
     return <ErrorState message={error} onRetry={fetchPromptData} />
   }
 
-  // Render not found state
+  // Not found state
   if (notFound || !promptData) {
     return <NotFoundState workspaceSlug={workspaceSlug} />
   }
 
   // Main render
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-2">
       {/* Breadcrumb & Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

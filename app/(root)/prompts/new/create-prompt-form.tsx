@@ -121,7 +121,7 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
         const result = await createPromptAction(cleanedData)
         
         if (result.success && result.promptSlug && result.workspaceSlug) {
-          router.push(`/dashboard/${result.workspaceSlug}/${result.promptSlug}`)
+          router.push(`/${result.workspaceSlug}/${result.promptSlug}`)
         } else {
           setErrors({ title: result.error || 'Failed to create prompt' })
         }

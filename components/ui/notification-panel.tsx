@@ -443,16 +443,19 @@ export function NotificationPanel() {
             <p className="text-sm text-neutral-500">Loading notifications...</p>
           </div>
         ) : (
-          <div className="p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-neutral-50 border border-neutral-200 flex items-center justify-center mb-4">
-              <Bell className="h-8 w-8 text-neutral-400" />
+          <div className="p-8 text-center">
+            <div className="mx-auto h-24 w-24 mb-4">
+              <img 
+                src="/waiting.svg" 
+                alt="No notifications" 
+                className="w-full h-full object-contain opacity-60"
+              />
             </div>
-            <h3 className="text-sm font-medium text-neutral-900 mb-2">
+            <h3 className="text-sm font-medium text-neutral-900 mb-1">
               All caught up!
             </h3>
-            <p className="text-sm text-neutral-500 leading-relaxed">
-              No new notifications at the moment.<br />
-              We'll notify you when something important happens.
+            <p className="text-sm text-neutral-500">
+              No new notifications at the moment.
             </p>
           </div>
         )}

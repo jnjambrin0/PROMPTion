@@ -100,7 +100,7 @@ export default async function HomePage() {
               {recentPrompts.map((prompt) => (
                 <Link
                   key={prompt.id}
-                  href={`/dashboard/${prompt.workspace.slug}/${prompt.slug}`}
+                  href={`/${prompt.workspace.slug}/${prompt.slug}`}
                   className="block rounded-lg border border-neutral-200 bg-white p-4 hover:bg-neutral-50 transition-colors"
                 >
                   <div className="flex items-start justify-between">

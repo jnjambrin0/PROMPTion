@@ -15,7 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { StatCard } from '@/components/ui/stat-card'
 import { TopicItem } from '@/components/ui/topic-item'
-import { QUICK_ACTIONS, WORKSPACE_NAVIGATION } from '@/lib/constants/navigation'
+import { QUICK_ACTIONS, WORKSPACE_NAVIGATION, MAIN_NAVIGATION } from '@/lib/constants/navigation'
 import { 
   UPCOMING_ITEMS, 
   POPULAR_TOPICS, 
@@ -96,6 +96,28 @@ export function MobileNav({ className = '' }: MobileNavProps) {
                             {item.badge}
                           </span>
                         )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator className="mb-4" />
+
+                {/* Main Navigation */}
+                <div className="mb-6">
+                  <h3 className="mb-3 px-3 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                    Navigation
+                  </h3>
+                  <div className="space-y-1">
+                    {MAIN_NAVIGATION.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-neutral-700 notion-hover"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
                       </Link>
                     ))}
                   </div>
