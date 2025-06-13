@@ -229,8 +229,8 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-purple-600">S</span>
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
+                    <span className="text-sm font-bold" style={{ color: '#9333EA' }}>S</span>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">Slack</h4>
@@ -244,8 +244,8 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
         
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-orange-600">N</span>
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FED7AA' }}>
+                    <span className="text-sm font-bold" style={{ color: '#EA580C' }}>N</span>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">Notion</h4>
@@ -259,8 +259,8 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
           
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">G</span>
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DBEAFE' }}>
+                    <span className="text-sm font-bold" style={{ color: '#2563EB' }}>G</span>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">GitHub</h4>
@@ -274,8 +274,8 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
           
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-green-600">F</span>
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#DCFCE7' }}>
+                    <span className="text-sm font-bold" style={{ color: '#16A34A' }}>F</span>
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">Figma</h4>

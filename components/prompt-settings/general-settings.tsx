@@ -120,7 +120,7 @@ export const GeneralSettings = React.memo(({
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-#6b7280" />
+                <Database className="h-4 w-4 text-muted-foreground" />
                 <Label htmlFor="template">Template</Label>
               </div>
               <p className="text-xs text-#6b7280">
@@ -139,7 +139,7 @@ export const GeneralSettings = React.memo(({
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-#6b7280" />
+                  <Lock className="h-4 w-4 text-muted-foreground" />
                   <Label htmlFor="pinned">Pinned</Label>
                 </div>
                 <p className="text-xs text-muted-foreground">
