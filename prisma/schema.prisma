@@ -409,6 +409,9 @@ model Category {
   icon              String?
   color             String?
   
+  // Configuración
+  isDefault         Boolean  @default(false) @map("is_default")
+  
   // Jerarquía
   parentId          String?  @map("parent_id")
   

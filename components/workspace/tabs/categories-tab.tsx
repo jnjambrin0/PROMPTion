@@ -2,12 +2,26 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, Filter, ArrowRight, Import, Settings } from 'lucide-react'
+import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, ArrowRight, Settings, List, Grid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ColorBadge } from '@/components/ui/color-badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+// Import dialog components
+import { CreateCategoryDialog } from '@/components/categories/create-category-dialog'
+import { EditCategoryDialog } from '@/components/categories/edit-category-dialog'
+import { DeleteCategoryDialog } from '@/components/categories/delete-category-dialog'
+import { BulkActionsDialog } from '@/components/categories/bulk-actions-dialog'
 
 interface CategoriesTabProps {
   workspaceSlug: string
@@ -21,13 +35,13 @@ interface CategoriesTabProps {
 }
 
 interface CategoryWithCounts {
-  id: string
-  name: string
+    id: string
+    name: string
   description: string | null
   icon: string
   color: string
   promptCount: number
-  isDefault?: boolean
+  isDefault: boolean
   parentId?: string | null
   children?: CategoryWithCounts[]
 }
@@ -48,6 +62,44 @@ function StatCard({ icon: Icon, label, value }: {
         <p className="text-lg font-semibold text-foreground">{value}</p>
       </CardContent>
     </Card>
+  )
+}
+
+// View Switcher with Dashboard style
+function CategoryViewSwitcher({ 
+  currentView, 
+  onViewChange 
+}: {
+  currentView: 'list' | 'grid'
+  onViewChange: (view: 'list' | 'grid') => void
+}) {
+  return (
+    <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onViewChange('list')}
+        className={`h-8 w-8 p-0 transition-colors ${
+          currentView === 'list'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+        }`}
+      >
+        <List className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onViewChange('grid')}
+        className={`h-8 w-8 p-0 transition-colors ${
+          currentView === 'grid'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+        }`}
+      >
+        <Grid className="h-4 w-4" />
+      </Button>
+    </div>
   )
 }
 
@@ -77,13 +129,48 @@ function CategoryCard({ category, workspaceSlug }: {
               </CardDescription>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
+                  View Prompts ({category.promptCount})
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <EditCategoryDialog
+                category={category}
+                workspaceSlug={workspaceSlug}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Edit Category
+                  </DropdownMenuItem>
+                }
+              />
+              {!category.isDefault && (
+                <DeleteCategoryDialog
+                  category={category}
+                  workspaceSlug={workspaceSlug}
+                  trigger={
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Category
+                    </DropdownMenuItem>
+                  }
+                />
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       
@@ -94,9 +181,7 @@ function CategoryCard({ category, workspaceSlug }: {
               <Hash className="h-3 w-3" />
               <span>{category.promptCount} {category.promptCount === 1 ? 'prompt' : 'prompts'}</span>
             </div>
-            <Badge variant="outline" className="text-xs">
-              {category.color}
-            </Badge>
+            <ColorBadge color={category.color} size="sm" />
           </div>
           
           <div className="flex gap-2">
@@ -110,17 +195,113 @@ function CategoryCard({ category, workspaceSlug }: {
                 View Prompts
               </Link>
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-7 px-2"
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
+            <EditCategoryDialog
+              category={category}
+              workspaceSlug={workspaceSlug}
+              trigger={
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="h-7 px-2"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </Button>
+              }
+            />
           </div>
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+// Compact list view for categories
+function CategoryListItem({ category, workspaceSlug }: { 
+  category: CategoryWithCounts
+  workspaceSlug: string 
+}) {
+  return (
+    <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+          <span className="text-base">{category.icon}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-medium text-foreground truncate">
+              {category.name}
+            </h4>
+            {category.isDefault && (
+              <Badge variant="outline" className="text-xs">
+                Default
+              </Badge>
+            )}
+            <ColorBadge color={category.color} size="sm" />
+          </div>
+          <p className="text-xs text-muted-foreground truncate">
+            {category.description || 'No description'} • {category.promptCount} {category.promptCount === 1 ? 'prompt' : 'prompts'}
+          </p>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="h-7 px-3"
+          asChild
+        >
+          <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
+            View
+          </Link>
+        </Button>
+        <EditCategoryDialog
+          category={category}
+          workspaceSlug={workspaceSlug}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
+                View All Prompts
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <EditCategoryDialog
+              category={category}
+              workspaceSlug={workspaceSlug}
+              trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Category
+                </DropdownMenuItem>
+              }
+            />
+            {!category.isDefault && (
+              <DeleteCategoryDialog
+                category={category}
+                workspaceSlug={workspaceSlug}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Category
+                  </DropdownMenuItem>
+                }
+              />
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   )
 }
 
@@ -152,66 +333,79 @@ function EmptyState({
           <p className="text-sm text-muted-foreground mb-4">
             Create your first category to organize prompts
           </p>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create first category
-          </Button>
+          <CreateCategoryDialog
+            workspaceSlug={workspaceSlug}
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create first category
+              </Button>
+            }
+          />
         </>
       )}
     </div>
   )
 }
 
-// Improved Quick Actions Component
-function QuickActionsSection({ workspaceSlug }: { workspaceSlug: string }) {
-  const actions = [
-    {
-      icon: Plus,
-      label: "Create Category",
-      description: "Add a new category",
-      href: `/${workspaceSlug}/categories/new`,
-      primary: true
-    },
-    {
-      icon: Import,
-      label: "Import Categories", 
-      description: "From CSV or JSON",
-      href: `/${workspaceSlug}/categories/import`,
-      primary: false
-    },
-    {
-      icon: Settings,
-      label: "Bulk Actions",
-      description: "Edit multiple at once",
-      href: `/${workspaceSlug}/categories/bulk`,
-      primary: false
-    }
-  ]
-
+// Updated Quick Actions Component (functional)
+function QuickActionsSection({ 
+  workspaceSlug, 
+  categories 
+}: { 
+  workspaceSlug: string
+  categories: CategoryWithCounts[]
+}) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-      {actions.map((action, index) => (
-        <Card key={index} className="group hover:shadow-sm transition-all hover:border-border cursor-pointer">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className={`h-8 w-8 rounded-md flex items-center justify-center ${
-                action.primary ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              }`}>
-                <action.icon className="h-4 w-4" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <CreateCategoryDialog
+        workspaceSlug={workspaceSlug}
+        trigger={
+          <Card className="group hover:shadow-sm transition-all hover:border-border cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+                  <Plus className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium text-foreground mb-1">
+                    Create Category
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Add a new category
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium text-foreground mb-1">
-                  {action.label}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {action.description}
-                </p>
+            </CardContent>
+          </Card>
+        }
+      />
+      
+      <BulkActionsDialog
+        categories={categories}
+        workspaceSlug={workspaceSlug}
+        trigger={
+          <Card className="group hover:shadow-sm transition-all hover:border-border cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+                  <Settings className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium text-foreground mb-1">
+                    Bulk Actions
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Edit multiple at once
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        }
+      />
     </div>
   )
 }
@@ -251,13 +445,13 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
   // Filter categories based on search and selection
   const filteredCategories = useMemo(() => {
     let filtered = categoriesWithCounts
-
+    
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(category =>
-        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
     }
 
     // Apply category filter
@@ -272,7 +466,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
     return filtered
   }, [categoriesWithCounts, searchQuery, selectedCategory])
 
-  const totalPrompts = stats.totalPrompts
+  const totalPrompts = stats?.totalPrompts || 0
   const mostPopularCategory = categoriesWithCounts.length > 0 
     ? categoriesWithCounts.reduce((prev, current) => 
         prev.promptCount > current.promptCount ? prev : current
@@ -289,13 +483,10 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
             Organize and manage your prompt categories
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          New Category
-        </Button>
+        <CreateCategoryDialog workspaceSlug={workspaceSlug} />
       </div>
 
-      {/* Search and Filters - Improved with proper Select */}
+      {/* Search and Filters - with View Switcher */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -316,13 +507,10 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
             <SelectItem value="custom">Custom Only</SelectItem>
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-        >
-          {viewMode === 'grid' ? 'List' : 'Grid'}
-        </Button>
+        <CategoryViewSwitcher 
+          currentView={viewMode}
+          onViewChange={setViewMode}
+        />
       </div>
 
       {/* Compact Stats */}
@@ -330,7 +518,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
         <StatCard
           icon={FolderOpen}
           label="Categories"
-          value={stats.totalCategories}
+          value={stats?.totalCategories || 0}
         />
         <StatCard
           icon={Hash}
@@ -343,7 +531,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
               <span className="text-sm text-muted-foreground">Average per Category</span>
             </div>
             <p className="text-lg font-semibold text-foreground">
-              {stats.totalCategories > 0 ? Math.round(totalPrompts / stats.totalCategories) : 0}
+              {stats?.totalCategories > 0 ? Math.round(totalPrompts / stats.totalCategories) : 0}
             </p>
           </CardContent>
         </Card>
@@ -351,7 +539,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
           <CardContent className="p-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm text-muted-foreground">Most Popular</span>
-            </div>
+          </div>
             <p className="text-sm font-medium text-foreground truncate">
               {mostPopularCategory?.name || 'None'}
             </p>
@@ -359,14 +547,14 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
         </Card>
       </div>
 
-      {/* Categories Grid */}
+      {/* Categories List/Grid */}
       {filteredCategories.length === 0 ? (
         <EmptyState
           searchQuery={searchQuery}
           onClearSearch={() => setSearchQuery('')}
           workspaceSlug={workspaceSlug}
         />
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCategories.map((category) => (
             <CategoryCard
@@ -376,9 +564,24 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
             />
           ))}
         </div>
+      ) : (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Categories ({filteredCategories.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredCategories.map((category) => (
+              <CategoryListItem
+                key={category.id}
+                category={category}
+                workspaceSlug={workspaceSlug}
+              />
+            ))}
+          </CardContent>
+        </Card>
       )}
 
-      {/* Improved Quick Actions */}
+      {/* Updated Quick Actions */}
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">Quick Actions</CardTitle>
@@ -387,7 +590,10 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <QuickActionsSection workspaceSlug={workspaceSlug} />
+          <QuickActionsSection 
+            workspaceSlug={workspaceSlug} 
+            categories={categoriesWithCounts}
+          />
         </CardContent>
       </Card>
     </div>

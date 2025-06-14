@@ -22,9 +22,10 @@ export function CTASection() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
             <Button 
+              variant="outline"
               size="lg" 
               asChild 
-              className="bg-brand-gradient hover:opacity-90 text-white shadow-brand hover:shadow-brand-hover transition-all duration-200 transform hover:scale-105 px-8 h-12"
+              className="bg-brand-gradient hover:opacity-90 text-white shadow-brand hover:shadow-brand-hover transition-all duration-200 transform hover:scale-105 px-8 h-12 border-0"
             >
               <Link href="/sign-up">Start Your Free Trial</Link>
             </Button>

@@ -44,8 +44,9 @@ export function Navigation() {
               <Link href="/sign-in">Sign In</Link>
             </Button>
             <Button 
+              variant="outline"
               asChild 
-              className="bg-brand-gradient hover:opacity-90 text-white shadow-brand hover:shadow-brand-hover transition-all duration-200"
+              className="bg-brand-gradient hover:opacity-90 text-white shadow-brand hover:shadow-brand-hover transition-all duration-200 border-0"
             >
               <Link href="/sign-up">Get Started</Link>
             </Button>

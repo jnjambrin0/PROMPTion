@@ -1,15 +1,17 @@
 import { Metadata } from 'next'
-import { Navigation } from '@/components/landing/navigation'
-import { HeroSection } from '@/components/landing/hero-section'
-// import { SocialProof } from '@/components/landing/social-proof'
-// import { FeaturesSection } from '@/components/landing/features-section'
-// import { ProductDemo } from '@/components/landing/product-demo'
-// import { BenefitsSection } from '@/components/landing/benefits-section'
-// import { PricingSection } from '@/components/landing/pricing-section'
-import { TestimonialsSection } from '@/components/landing/testimonials-section'
-import { FAQSection } from '@/components/landing/faq-section'
-import { CTASection } from '@/components/landing/cta-section'
-import { Footer } from '@/components/landing/footer'
+import {
+  Navigation,
+  HeroSection,
+  SocialProof,
+  FeaturesSection,
+  ProductDemo,
+  BenefitsSection,
+  PricingSection,
+  TestimonialsSection,
+  FAQSection,
+  CTASection,
+  Footer
+} from '@/components/landing'
 
 export const metadata: Metadata = {
   title: 'Promption - Your Personal Notion for AI Prompts',
@@ -63,49 +65,21 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
+    <div className="min-h-screen">
       <Navigation />
-      
-      {/* Main Content */}
-      <main className="pt-16">
-        {/* Hero Section */}
+      <main>
         <HeroSection />
-        
-        {/* Social Proof */}
-        {/* <SocialProof /> */}
-        
-        {/* Features Section */}
-        {/* <section id="features">
-          <FeaturesSection />
-        </section> */}
-        
-        {/* Product Demo */}
-        {/* <ProductDemo /> */}
-        
-        {/* Benefits Section */}
-        {/* <BenefitsSection /> */}
-        
-        {/* Pricing Section */}
-        {/* <section id="pricing">
-          <PricingSection />
-        </section> */}
-        
-        {/* Testimonials */}
+        <SocialProof />
+        <FeaturesSection />
+        <ProductDemo />
+        <BenefitsSection />
+        <PricingSection />
         <TestimonialsSection />
-        
-        {/* FAQ Section */}
-        <section id="faq">
-          <FAQSection />
-        </section>
-        
-        {/* Final CTA */}
+        <FAQSection />
         <CTASection />
       </main>
-      
-      {/* Footer */}
       <Footer />
     </div>
   )

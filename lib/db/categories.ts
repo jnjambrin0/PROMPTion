@@ -92,6 +92,7 @@ export async function createCategory(
     parentId?: string
     icon?: string
     color?: string
+    isDefault?: boolean
   },
   userId: string
 ) {
@@ -165,6 +166,19 @@ export async function createCategory(
       }
     }
 
+    // Si se está marcando como default, remover el default de otras categorías
+    if (data.isDefault) {
+      await prisma.category.updateMany({
+        where: {
+          workspaceId: data.workspaceId,
+          isDefault: true
+        },
+        data: {
+          isDefault: false
+        }
+      })
+    }
+
     const category = await prisma.category.create({
       data: {
         name: data.name,
@@ -173,7 +187,8 @@ export async function createCategory(
         workspaceId: data.workspaceId,
         parentId: data.parentId,
         icon: data.icon,
-        color: data.color
+        color: data.color,
+        isDefault: data.isDefault || false
       },
       include: {
         parent: {
@@ -309,5 +324,196 @@ export async function isCategorySlugAvailable(
   } catch (error) {
     console.error('Error checking category slug availability:', error)
     return false
+  }
+}
+
+/**
+ * Obtiene categorías de un workspace por slug
+ * @param workspaceSlug - Slug del workspace
+ * @returns Lista de categorías del workspace
+ */
+export async function getCategoriesByWorkspace(workspaceSlug: string) {
+  if (!workspaceSlug || typeof workspaceSlug !== 'string') {
+    throw new Error('Invalid workspace slug')
+  }
+
+  try {
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        slug: workspaceSlug,
+        isActive: true
+      },
+      select: { id: true }
+    })
+
+    if (!workspace) {
+      return null
+    }
+
+    const categories = await prisma.category.findMany({
+      where: { workspaceId: workspace.id },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            icon: true
+          }
+        },
+        children: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true
+          }
+        },
+        _count: {
+          select: {
+            prompts: true,
+            children: true
+          }
+        }
+      },
+      orderBy: [
+        { parentId: 'asc' },
+        { name: 'asc' }
+      ]
+    })
+
+    return categories
+  } catch (error) {
+    console.error('Error fetching workspace categories:', error)
+    throw new Error('Failed to fetch categories')
+  }
+}
+
+/**
+ * Actualiza una categoría
+ * @param id - ID de la categoría
+ * @param data - Datos a actualizar
+ * @returns Categoría actualizada
+ */
+export async function updateCategory(
+  id: string,
+  data: {
+    name?: string
+    description?: string
+    icon?: string
+    color?: string
+    parentId?: string
+    isDefault?: boolean
+  }
+) {
+  if (!id || typeof id !== 'string') {
+    throw new Error('Invalid category ID')
+  }
+
+  try {
+    // Si se está marcando como default, obtener el workspaceId primero
+    let workspaceId = null
+    if (data.isDefault) {
+      const currentCategory = await prisma.category.findUnique({
+        where: { id },
+        select: { workspaceId: true }
+      })
+      
+      if (currentCategory) {
+        workspaceId = currentCategory.workspaceId
+        
+        // Remover el default de otras categorías en el mismo workspace
+        await prisma.category.updateMany({
+          where: {
+            workspaceId: workspaceId,
+            isDefault: true,
+            id: { not: id }
+          },
+          data: {
+            isDefault: false
+          }
+        })
+      }
+    }
+
+    const category = await prisma.category.update({
+      where: { id },
+      data: {
+        ...(data.name && { name: data.name }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.icon && { icon: data.icon }),
+        ...(data.color && { color: data.color }),
+        ...(data.parentId !== undefined && { parentId: data.parentId }),
+        ...(data.isDefault !== undefined && { isDefault: data.isDefault })
+      },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            icon: true
+          }
+        },
+        _count: {
+          select: {
+            prompts: true,
+            children: true
+          }
+        }
+      }
+    })
+
+    return category
+  } catch (error) {
+    console.error('Error updating category:', error)
+    throw new Error('Failed to update category')
+  }
+}
+
+/**
+ * Elimina una categoría y mueve sus prompts a "Sin categoría"
+ * @param id - ID de la categoría
+ * @returns true si se eliminó correctamente
+ */
+export async function deleteCategory(id: string) {
+  if (!id || typeof id !== 'string') {
+    throw new Error('Invalid category ID')
+  }
+
+  try {
+    // Verificar que la categoría existe y no es default
+    const category = await prisma.category.findFirst({
+      where: { id },
+      select: { id: true, workspaceId: true, isDefault: true }
+    })
+
+    if (!category) {
+      throw new Error('Category not found')
+    }
+
+    if (category.isDefault) {
+      throw new Error('Cannot delete default category')
+    }
+
+    // Usar transacción para mover prompts y eliminar categoría
+    await prisma.$transaction(async (tx) => {
+      // Mover todos los prompts de esta categoría a null (sin categoría)
+      await tx.prompt.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null }
+      })
+
+      // Eliminar la categoría
+      await tx.category.delete({
+        where: { id }
+      })
+    })
+
+    return true
+  } catch (error) {
+    console.error('Error deleting category:', error)
+    if (error instanceof Error && error.message.includes('Cannot delete default')) {
+      throw error
+    }
+    throw new Error('Failed to delete category')
   }
 } 

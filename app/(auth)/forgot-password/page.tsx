@@ -103,7 +103,8 @@ export default function ForgotPasswordPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-brand-gradient hover:opacity-90 text-white font-medium transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-brand hover:shadow-brand-hover rounded-lg"
+              variant="outline"
+              className="w-full h-12 bg-brand-gradient hover:opacity-90 text-white font-medium transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-brand hover:shadow-brand-hover rounded-lg border-0"
               disabled={loading}
             >
               {loading ? (

@@ -147,11 +147,11 @@
   --color-success-muted-foreground: var(--color-green-700);
   --color-success-border: var(--color-green-200);
   
-  /* Promption Brand Colors - Very subtle */
-  --color-brand-primary: var(--color-gray-900);
-  --color-brand-secondary: var(--color-gray-700);
-  --color-brand-gradient-start: var(--color-gray-900);
-  --color-brand-gradient-end: var(--color-gray-700);
+  /* Promption Brand Colors - Subtle blues/purples as documented */
+  --color-brand-primary: var(--color-blue-600);
+  --color-brand-secondary: var(--color-purple-600);
+  --color-brand-gradient-start: var(--color-gray-700);
+  --color-brand-gradient-end: var(--color-gray-500);
   
   /* Shadows - Even more subtle than before */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
@@ -356,11 +356,11 @@
   }
   
   p, span, div, label, button {
-    color: var(--color-gray-800) !important;
+    color: var(--color-gray-800);
   }
   
   .text-muted-foreground {
-    color: var(--color-gray-600) !important;
+    color: var(--color-gray-600) ;
   }
   
   /* Remove scrollbars from sidebar containers */

@@ -1,0 +1,97 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { CategoryForm } from './category-form'
+
+interface CreateCategoryDialogProps {
+  workspaceSlug: string
+  trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function CreateCategoryDialog({
+  workspaceSlug,
+  trigger,
+  open,
+  onOpenChange,
+}: CreateCategoryDialogProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  // Use controlled or uncontrolled state
+  const dialogOpen = open !== undefined ? open : isOpen
+  const setDialogOpen = onOpenChange || setIsOpen
+
+  const handleCreateCategory = async (data: any) => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceSlug}/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create category')
+      }
+
+      const result = await response.json()
+      
+      toast.success('Category created successfully')
+      setDialogOpen(false)
+      router.refresh() // Refresh to show new category
+      
+    } catch (error) {
+      console.error('Error creating category:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to create category')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const defaultTrigger = (
+    <Button variant="outline">
+      <Plus className="h-4 w-4 mr-2" />
+      New Category
+    </Button>
+  )
+
+  return (
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogTrigger asChild>
+        {trigger || defaultTrigger}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Create New Category</DialogTitle>
+          <DialogDescription>
+            Add a new category to organize your prompts. Categories help you keep your workspace organized and make it easier to find related prompts.
+          </DialogDescription>
+        </DialogHeader>
+        <CategoryForm
+          onSubmit={handleCreateCategory}
+          isLoading={isLoading}
+          submitLabel="Create Category"
+          onCancel={() => setDialogOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+} 
