@@ -19,9 +19,20 @@ import {
   User,
   RefreshCcw,
   Hash,
-  ArrowRight
+  ArrowRight,
+  Trash2,
+  Copy,
+  Share2
 } from 'lucide-react'
 import { useDebounce } from '@/hooks/use-debounce'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface PromptsTabProps {
   workspaceSlug: string
@@ -109,8 +120,25 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
   const handleAction = useCallback((action: string) => {
     startTransition(() => {
       console.log(`${action} prompt:`, prompt.id)
+      // TODO: Implement actual actions
+      switch (action) {
+        case 'edit':
+          window.location.href = `/${workspaceSlug}/${prompt.slug}/edit`
+          break
+        case 'duplicate':
+          // TODO: Implement duplicate action
+          break
+        case 'share':
+          // TODO: Implement share action
+          break
+        case 'delete':
+          // TODO: Implement delete confirmation dialog
+          break
+        default:
+          break
+      }
     })
-  }, [prompt.id])
+  }, [prompt.id, prompt.slug, workspaceSlug])
 
   return (
     <Card className="group hover:shadow-sm transition-all hover:border-border">
@@ -141,15 +169,48 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
               </CardDescription>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-            disabled={isPending}
-            onClick={() => handleAction('more')}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                disabled={isPending}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/${workspaceSlug}/${prompt.slug}`}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Prompt
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAction('edit')}>
+                <Edit3 className="h-4 w-4 mr-2" />
+                Edit Prompt
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAction('duplicate')}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleAction('share')}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => handleAction('delete')}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
         
@@ -338,17 +399,18 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
             className="pl-9 h-9"
           />
         </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-          className="px-3 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          {filterCategories.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+          <SelectTrigger className="w-[200px] h-9">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {filterCategories.map(category => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm">
           <Filter className="h-4 w-4" />
         </Button>

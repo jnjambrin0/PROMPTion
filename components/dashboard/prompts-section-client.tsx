@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, Suspense } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, Plus, MessageSquare, FileText, Globe, Users, Clock } from 'lucide-react'
 import { PromptViewSwitcher } from './prompt-view-switcher'
@@ -37,148 +37,150 @@ interface PromptsSectionClientProps {
   prompts: Prompt[]
   initialSearchParams: {
     view?: string
-    search?: string
     workspace?: string
     type?: string
     sort?: string
   }
 }
 
-// Enhanced Prompt Card - Memoized for performance
-const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => {
-  const getPromptIcon = () => {
-    if (prompt.isTemplate) return FileText
-    if (prompt.isPublic) return Globe
-    return MessageSquare
-  }
-
-  const Icon = getPromptIcon()
-
-  return (
+// Enhanced Prompt Card Component
+const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => (
     <Link
-      href={`/${prompt.workspace.slug}/${prompt.slug}`}
-      className="group block bg-white rounded-lg border border-neutral-200 p-5 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
+    href={`/${prompt.workspace.slug}/${prompt.slug}`}
+    className="group block bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
     >
+    <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="h-10 w-10 rounded-lg bg-neutral-100 flex items-center justify-center group-hover:bg-neutral-200 transition-colors">
-          <Icon className="h-5 w-5 text-neutral-600" />
-        </div>
-        
+      <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-medium text-neutral-900 truncate group-hover:text-black">
-              {prompt.title}
-            </h3>
-            {prompt.isTemplate && (
-              <span className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded border border-blue-200">
-                Template
-              </span>
-            )}
-            {prompt.isPublic && (
-              <span className="px-2 py-0.5 text-xs bg-green-50 text-green-700 rounded border border-green-200">
-                Public
-              </span>
-            )}
-          </div>
-          
-          <p className="text-sm text-neutral-600 line-clamp-2 mb-3">
-            {prompt.description || 'No description provided'}
-          </p>
-        </div>
-      </div>
-
-      {/* Metadata */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-4 text-xs text-neutral-500">
-          <span className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded bg-neutral-400"></div>
-            {prompt.workspace.name}
-          </span>
-          <span className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            {prompt._count?.blocks || 0} blocks
-          </span>
-        </div>
-        
-        <div className="flex items-center justify-between text-xs text-neutral-500">
-          <span className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {prompt.user.fullName || prompt.user.username || 'Unknown'}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {formatDistanceToNow(new Date(prompt.updatedAt), { addSuffix: true })}
-          </span>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-// Compact List Item - Memoized for performance
-const CompactPromptItem = ({ prompt }: { prompt: Prompt }) => {
-  const getPromptIcon = () => {
-    if (prompt.isTemplate) return FileText
-    if (prompt.isPublic) return Globe
-    return MessageSquare
-  }
-
-  const Icon = getPromptIcon()
-
-  return (
-    <Link
-      href={`/${prompt.workspace.slug}/${prompt.slug}`}
-      className="group flex items-center gap-4 bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 hover:bg-neutral-50/50 transition-all duration-200"
-    >
-      {/* Icon */}
-      <div className="h-8 w-8 rounded bg-neutral-100 flex items-center justify-center group-hover:bg-neutral-200 transition-colors">
-        <Icon className="h-4 w-4 text-neutral-600" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-medium text-neutral-900 truncate group-hover:text-black">
+          <h3 className="font-medium text-neutral-900 line-clamp-2 group-hover:text-neutral-700">
             {prompt.title}
           </h3>
-          <div className="flex gap-1">
+          {prompt.description && (
+            <p className="text-sm text-neutral-600 mt-1 line-clamp-2">
+              {prompt.description}
+            </p>
+          )}
+        </div>
+        
+        {/* Status badges */}
+        <div className="flex items-center gap-1 ml-3 shrink-0">
             {prompt.isTemplate && (
-              <span className="px-1.5 py-0.5 text-xs bg-blue-50 text-blue-700 rounded">
+            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+              <FileText className="h-3 w-3" />
                 Template
-              </span>
+            </div>
             )}
             {prompt.isPublic && (
-              <span className="px-1.5 py-0.5 text-xs bg-green-50 text-green-700 rounded">
+            <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-md">
+              <Globe className="h-3 w-3" />
                 Public
-              </span>
+            </div>
+            )}
+        </div>
+      </div>
+
+      {/* Meta info */}
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <div className="h-4 w-4 rounded bg-neutral-200 flex items-center justify-center">
+              <span className="text-xs font-medium text-neutral-600">
+                {prompt.workspace.name.charAt(0).toUpperCase()}
+          </span>
+            </div>
+            <span className="truncate">{prompt.workspace.name}</span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            <span>{prompt._count.blocks} blocks</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+          <span>{formatDistanceToNow(prompt.updatedAt)} ago</span>
+        </div>
+      </div>
+
+      {/* Author */}
+      <div className="flex items-center gap-2 pt-2 border-t border-neutral-100">
+        <div className="h-5 w-5 rounded-full bg-neutral-200 flex items-center justify-center">
+          <Users className="h-3 w-3 text-neutral-500" />
+        </div>
+        <span className="text-xs text-neutral-600">
+          {prompt.user.fullName || prompt.user.username || 'Anonymous'}
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+
+// Compact List Item Component  
+const CompactPromptItem = ({ prompt }: { prompt: Prompt }) => (
+    <Link
+    href={`/${prompt.workspace.slug}/${prompt.slug}`}
+    className="group block bg-white rounded-lg border border-neutral-200 p-3 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
+    >
+    <div className="flex items-center gap-3">
+      {/* Main content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-neutral-900 truncate group-hover:text-neutral-700">
+            {prompt.title}
+          </h3>
+          
+          {/* Inline badges */}
+          <div className="flex items-center gap-1 shrink-0">
+            {prompt.isTemplate && (
+              <div className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                Template
+              </div>
+            )}
+            {prompt.isPublic && (
+              <div className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                Public
+              </div>
             )}
           </div>
         </div>
         
-        <p className="text-sm text-neutral-600 line-clamp-1">
-          {prompt.description || 'No description'}
-        </p>
+        {/* Meta row */}
+        <div className="flex items-center gap-4 text-xs text-neutral-500">
+          <div className="flex items-center gap-1">
+            <div className="h-3 w-3 rounded bg-neutral-200 flex items-center justify-center">
+              <span className="text-xs font-medium text-neutral-600">
+                {prompt.workspace.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span>{prompt.workspace.name}</span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            <span>{prompt._count.blocks}</span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>{prompt.user.fullName || prompt.user.username || 'Anonymous'}</span>
       </div>
 
-      {/* Metadata */}
-      <div className="hidden md:flex items-center gap-6 text-xs text-neutral-500">
-        <span className="flex items-center gap-1">
-          <div className="h-2 w-2 rounded bg-neutral-400"></div>
-          {prompt.workspace.name}
-        </span>
-        <span>{prompt._count?.blocks || 0} blocks</span>
-        <span>{formatDistanceToNow(new Date(prompt.updatedAt), { addSuffix: true })}</span>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{formatDistanceToNow(prompt.updatedAt)} ago</span>
+          </div>
+        </div>
+      </div>
       </div>
     </Link>
   )
-}
 
 // Main Client Component - Optimized for instant navigation
 export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSectionClientProps) {
   // Local state for instant filtering (no server round-trips)
   const [currentView, setCurrentView] = useState(initialSearchParams.view || 'list')
-  const [searchQuery, setSearchQuery] = useState(initialSearchParams.search || '')
   const [workspaceFilter, setWorkspaceFilter] = useState(initialSearchParams.workspace || 'all')
   const [typeFilter, setTypeFilter] = useState(initialSearchParams.type || 'all')
   const [sortBy, setSortBy] = useState(initialSearchParams.sort || 'updated')
@@ -191,18 +193,6 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
   // Optimized filtering with useMemo for performance
   const filteredPrompts = useMemo(() => {
     let filtered = prompts
-
-    // Search filter
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase()
-      filtered = filtered.filter(prompt =>
-        prompt.title.toLowerCase().includes(searchLower) ||
-        prompt.description?.toLowerCase().includes(searchLower) ||
-        prompt.workspace.name.toLowerCase().includes(searchLower) ||
-        prompt.user.fullName?.toLowerCase().includes(searchLower) ||
-        prompt.user.username?.toLowerCase().includes(searchLower)
-      )
-    }
 
     // Workspace filter
     if (workspaceFilter !== 'all') {
@@ -233,15 +223,14 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       }
     })
-  }, [prompts, searchQuery, workspaceFilter, typeFilter, sortBy])
+  }, [prompts, workspaceFilter, typeFilter, sortBy])
 
   // Current filters object for components
   const currentFilters = useMemo(() => ({
-    search: searchQuery,
     workspace: workspaceFilter,
     type: typeFilter,
     sort: sortBy
-  }), [searchQuery, workspaceFilter, typeFilter, sortBy])
+  }), [workspaceFilter, typeFilter, sortBy])
 
   // Content render - memoized for performance
   const renderContent = useMemo(() => {
@@ -252,18 +241,18 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
             <MessageSquare className="h-6 w-6 text-neutral-500" />
           </div>
           <h3 className="text-lg font-medium text-neutral-900 mb-2">
-            {searchQuery || workspaceFilter !== 'all' || typeFilter !== 'all' 
+            {workspaceFilter !== 'all' || typeFilter !== 'all' 
               ? 'No prompts found' 
               : 'No prompts yet'
             }
           </h3>
           <p className="text-neutral-600 mb-6">
-            {searchQuery || workspaceFilter !== 'all' || typeFilter !== 'all'
-              ? 'Try adjusting your search criteria or filters'
+            {workspaceFilter !== 'all' || typeFilter !== 'all'
+              ? 'Try adjusting your filters'
               : 'Start creating prompts to see them here'
             }
           </p>
-          {(!searchQuery && workspaceFilter === 'all' && typeFilter === 'all') && (
+          {(workspaceFilter === 'all' && typeFilter === 'all') && (
             <Link
               href="/prompts/new"
               className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
@@ -293,7 +282,7 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
         ))}
       </div>
     )
-  }, [filteredPrompts, currentView, searchQuery, workspaceFilter, typeFilter])
+  }, [filteredPrompts, currentView, workspaceFilter, typeFilter])
 
   return (
     <div>
@@ -307,7 +296,6 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
           <PromptFilters 
             workspaces={workspaces}
             currentFilters={currentFilters}
-            onSearchChange={setSearchQuery}
             onWorkspaceChange={setWorkspaceFilter}
             onTypeChange={setTypeFilter}
             onSortChange={setSortBy}

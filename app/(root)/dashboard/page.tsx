@@ -1,6 +1,4 @@
-import { getUserByAuthId } from '@/lib/db/users'
-import { getUserWorkspaces } from '@/lib/db/workspaces'
-import { getWorkspacePrompts } from '@/lib/db/prompts'
+import { getDashboardData } from '@/lib/db/dashboard'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -9,49 +7,15 @@ import { Search, Plus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { PromptsSectionClient } from '@/components/dashboard/prompts-section-client'
 
-async function getDashboardData() {
+async function getOptimizedDashboardData() {
   try {
     const supabase = await createClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
     
     if (!authUser) return null
 
-    const user = await getUserByAuthId(authUser.id)
-    if (!user) return null
-
-    const workspaces = await getUserWorkspaces(user.id)
-    
-    // Get all prompts from all workspaces
-    const allPrompts = []
-    for (const workspace of workspaces) {
-      try {
-        const { prompts } = await getWorkspacePrompts(workspace.id, user.id, {
-          page: 1,
-          limit: 50 // Get more prompts for the dashboard
-        })
-        allPrompts.push(...prompts.map(prompt => ({
-          ...prompt,
-          workspace: workspace
-        })))
-      } catch (error) {
-        console.error(`Error fetching prompts for workspace ${workspace.id}:`, error)
-      }
-    }
-
-    // Sort by updated date
-    allPrompts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-
-    return { 
-      user, 
-      workspaces, 
-      prompts: allPrompts,
-      stats: {
-        totalWorkspaces: workspaces.length,
-        totalPrompts: allPrompts.length,
-        totalTemplates: allPrompts.filter(p => p.isTemplate).length,
-        totalPublic: allPrompts.filter(p => p.isPublic).length
-      }
-    }
+    // Use the optimized parallel fetching function
+    return await getDashboardData(authUser.id)
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
     return null
@@ -69,7 +33,7 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const data = await getDashboardData()
+  const data = await getOptimizedDashboardData()
   
   if (!data) {
     redirect('/signin')
@@ -91,15 +55,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-              <input
-                type="text"
-                placeholder="Search prompts..."
-                className="w-64 rounded-md border border-neutral-200 bg-neutral-50/50 py-2 pl-9 pr-3 text-sm placeholder:text-neutral-500 focus:border-neutral-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-200"
-              />
-            </div>
-            
             <Link
               href="/prompts/new"
               className="flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"

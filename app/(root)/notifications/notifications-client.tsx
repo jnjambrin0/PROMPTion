@@ -148,19 +148,11 @@ export function NotificationsClient({
     }))
 
     try {
-      const response = await fetch('/api/notifications', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'mark_as_read',
-          notificationId
-        }),
-      })
+      const { markNotificationAsReadAction } = await import('@/lib/actions/notifications')
+      const result = await markNotificationAsReadAction(notificationId)
 
-      if (!response.ok) {
-        throw new Error('Failed to mark notification as read')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to mark notification as read')
       }
 
       setNotifications(prev => 
@@ -187,19 +179,11 @@ export function NotificationsClient({
     }))
 
     try {
-      const response = await fetch('/api/notifications', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'delete',
-          notificationId
-        }),
-      })
+      const { deleteNotificationAction } = await import('@/lib/actions/notifications')
+      const result = await deleteNotificationAction(notificationId)
 
-      if (!response.ok) {
-        throw new Error('Failed to delete notification')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete notification')
       }
 
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
@@ -222,18 +206,11 @@ export function NotificationsClient({
       setLoadingState(prev => ({ ...prev, bulkAction: true }))
 
       try {
-        const response = await fetch('/api/notifications', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'mark_all_as_read'
-          }),
-        })
+        const { markAllNotificationsAsReadAction } = await import('@/lib/actions/notifications')
+        const result = await markAllNotificationsAsReadAction()
 
-        if (!response.ok) {
-          throw new Error('Failed to mark all notifications as read')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to mark all notifications as read')
         }
 
         setNotifications(prev => 
@@ -256,18 +233,11 @@ export function NotificationsClient({
       setLoadingState(prev => ({ ...prev, bulkAction: true }))
 
       try {
-        const response = await fetch('/api/notifications', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'delete_all'
-          }),
-        })
+        const { deleteAllNotificationsAction } = await import('@/lib/actions/notifications')
+        const result = await deleteAllNotificationsAction()
 
-        if (!response.ok) {
-          throw new Error('Failed to clear all notifications')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to clear all notifications')
         }
 
         setNotifications([])

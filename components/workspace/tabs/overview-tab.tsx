@@ -123,13 +123,13 @@ function CompactListItem({
   label, 
   value, 
   trend,
-  href 
+  onClick 
 }: {
   icon: string
   label: string
   value: string | number
   trend?: string
-  href?: string
+  onClick?: () => void
 }) {
   const content = (
     <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/50 transition-colors">
@@ -146,10 +146,15 @@ function CompactListItem({
     </div>
   )
 
-  return href ? (
-    <Link href={href} className="block">
+  return onClick ? (
+    <Button 
+      size="sm" 
+      variant="ghost" 
+      className="h-6 px-2"
+      onClick={onClick}
+    >
       {content}
-    </Link>
+    </Button>
   ) : content
 }
 
@@ -206,19 +211,32 @@ export function OverviewTabSkeleton() {
   )
 }
 
-export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceTabProps) {
+export default function OverviewTab({ workspaceSlug, workspaceData, navigation }: WorkspaceTabProps) {
   const { workspace, categories, members, prompts, stats } = workspaceData
 
-  // Generate meaningful insights instead of basic stats
+  // Strategic insights with actionable data
   const insights = useMemo(() => {
-    const recentPromptsCount = prompts?.filter(p => {
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      return new Date(p.updatedAt) > weekAgo
-    }).length || 0
+    // Calculate weekly prompt creation rate
+    const recentPromptsCount = prompts 
+      ? prompts.filter(p => {
+          const createdDate = new Date(p.createdAt)
+          const weekAgo = new Date()
+          weekAgo.setDate(weekAgo.getDate() - 7)
+          return createdDate >= weekAgo
+        }).length
+      : 0
 
-    const activeMembers = members?.filter(m => m.role !== 'VIEWER').length || 0
-    const popularCategory = categories?.length > 0 
+    // Count active members (those with recent activity)
+    const activeMembers = members 
+      ? members.filter(m => {
+          // For now, count all members as active
+          // TODO: Implement actual activity tracking
+          return true
+        }).length
+      : 0
+
+    // Find most popular category
+    const popularCategory = categories && categories.length > 0 
       ? categories.reduce((prev, current) => 
           (prev._count?.prompts || 0) > (current._count?.prompts || 0) ? prev : current
         )
@@ -232,10 +250,12 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
         description: "prompts created or updated this week",
         trend: { value: "+12%", positive: true },
         action: (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/${workspaceSlug}?tab=prompts`}>
-              View all prompts
-            </Link>
+          <Button 
+            size="sm" 
+            variant="outline"
+            {...navigation.createNavigationButton('prompts')}
+          >
+            View all prompts
           </Button>
         )
       },
@@ -246,10 +266,12 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
         description: "active contributors in workspace",
         trend: { value: "+2", positive: true },
         action: (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/${workspaceSlug}?tab=members`}>
-              Manage team
-            </Link>
+          <Button 
+            size="sm" 
+            variant="outline"
+            {...navigation.createNavigationButton('members')}
+          >
+            Manage team
           </Button>
         )
       },
@@ -259,15 +281,17 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
         value: popularCategory?.name || "None",
         description: `${popularCategory?._count?.prompts || 0} prompts organized`,
         action: (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/${workspaceSlug}?tab=categories`}>
-              Organize prompts
-            </Link>
+          <Button 
+            size="sm" 
+            variant="outline"
+            {...navigation.createNavigationButton('categories')}
+          >
+            Organize prompts
           </Button>
         )
       }
     ]
-  }, [prompts, members, categories, workspaceSlug])
+  }, [prompts, members, categories, workspaceSlug, navigation])
 
   // Recent workspace activity (mix of prompts, members, etc.)
   const recentActivity = useMemo(() => {
@@ -284,7 +308,8 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
             description: `Updated "${prompt.title}"`,
             createdAt: prompt.updatedAt,
             user: { name: prompt.user?.fullName || 'Someone' },
-            href: `/${workspaceSlug}/${prompt.slug}`
+            href: `/${workspaceSlug}/${prompt.slug}`,
+            onClick: null // External link, keep href
           })
         })
     }
@@ -296,14 +321,14 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
         description: `${members[0].user.fullName || 'New member'} joined the workspace`,
         createdAt: new Date().toISOString(),
         user: null,
-        href: `/${workspaceSlug}?tab=members`
+        onClick: () => navigation.navigateToMembers()
       })
     }
 
     return activities
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 8)
-  }, [prompts, members, workspaceSlug])
+  }, [prompts, members, workspaceSlug, navigation])
 
   // Workspace summary for sidebar
   const workspaceSummary = useMemo(() => {
@@ -313,13 +338,28 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
     const categoriesCount = stats.totalCategories
 
     return [
-      { icon: '📝', label: 'Total Prompts', value: totalPrompts, href: `/${workspaceSlug}?tab=prompts` },
+      { 
+        icon: '📝', 
+        label: 'Total Prompts', 
+        value: totalPrompts, 
+        onClick: () => navigation.navigateToPrompts() 
+      },
       { icon: '📋', label: 'Templates', value: templatesCount, trend: '2' },
       { icon: '🌐', label: 'Public', value: publicCount },
-      { icon: '📁', label: 'Categories', value: categoriesCount, href: `/${workspaceSlug}?tab=categories` },
-      { icon: '👥', label: 'Members', value: stats.totalMembers, href: `/${workspaceSlug}?tab=members` }
+      { 
+        icon: '📁', 
+        label: 'Categories', 
+        value: categoriesCount, 
+        onClick: () => navigation.navigateToCategories() 
+      },
+      { 
+        icon: '👥', 
+        label: 'Members', 
+        value: stats.totalMembers, 
+        onClick: () => navigation.navigateToMembers() 
+      }
     ]
-  }, [stats, workspaceSlug])
+  }, [stats, workspaceSlug, navigation])
 
   return (
     <div className="space-y-6">
@@ -403,17 +443,23 @@ export default function OverviewTab({ workspaceSlug, workspaceData }: WorkspaceT
                   New Prompt
                 </Link>
               </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start h-8" asChild>
-                <Link href={`/${workspaceSlug}?tab=members`}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Invite Team
-                </Link>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full justify-start h-8"
+                onClick={() => navigation.navigateToMembers()}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Invite Team
               </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start h-8" asChild>
-                <Link href={`/${workspaceSlug}?tab=categories`}>
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Organize
-                </Link>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full justify-start h-8"
+                onClick={() => navigation.navigateToCategories()}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Organize
               </Button>
             </CardContent>
           </Card>

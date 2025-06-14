@@ -51,20 +51,12 @@ export function EditCategoryDialog({
   const handleUpdateCategory = async (data: any) => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/workspaces/${workspaceSlug}/categories/${category.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
+      const { updateCategoryAction } = await import('@/lib/actions/categories')
+      const result = await updateCategoryAction(workspaceSlug, category.id, data)
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to update category')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update category')
       }
-
-      const result = await response.json()
       
       toast.success('Category updated successfully')
       setDialogOpen(false)

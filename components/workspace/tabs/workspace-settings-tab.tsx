@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { DevelopmentNotice, INTEGRATIONS_NOTICE } from '@/components/ui/development-notice'
 
 interface WorkspaceSettingsTabProps {
   workspaceSlug: string
@@ -313,13 +314,19 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
         title="Integrations"
         description="Connect external tools and services"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <DevelopmentNotice 
+          {...INTEGRATIONS_NOTICE}
+          className="mb-4"
+        />
+        
+        {/* Preview of future integrations */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none">
           <IntegrationCard
             name="Slack"
             description="Team communication"
             icon="S"
             color="bg-purple-600"
-            connected={slackIntegration}
+            connected={false}
           />
           <IntegrationCard
             name="Notion"

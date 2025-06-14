@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { LayoutDashboard, MessageSquare, FolderOpen, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getWorkspaceDataAction } from '@/lib/actions/workspace'
+import { useWorkspaceNavigation } from '@/lib/hooks/use-workspace-navigation'
 import type { WorkspaceData, WorkspaceTab } from '@/lib/types/workspace'
 
 // Import tab components
@@ -39,6 +40,15 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [data, setData] = useState<WorkspaceData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // ============================================================================
+  // NAVIGATION HOOK - Nueva funcionalidad para navegación sin refresh
+  // ============================================================================
+  
+  const navigation = useWorkspaceNavigation({
+    workspaceSlug,
+    onTabChange: setActiveTab
+  })
 
   // ============================================================================
   // DATA FETCHING - Single optimized function
@@ -91,20 +101,28 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [params, fetchWorkspaceData])
 
   // ============================================================================
-  // TAB SWITCHING - Simplificado
+  // TAB SWITCHING - Optimizado para mejor UX
   // ============================================================================
   
   const handleTabChange = useCallback((tab: WorkspaceTab) => {
+    // Cambio inmediato de estado para UX instantánea
     setActiveTab(tab)
-    // Manejo de URL simplificado sin efectos secundarios
+    
+    // Actualización de URL con transición suave
     const url = new URL(window.location.href)
     if (tab === 'overview') {
       url.searchParams.delete('tab')
     } else {
       url.searchParams.set('tab', tab)
     }
-    // Usar pushState en lugar de replaceState para evitar problemas
-    window.history.pushState({}, '', url.toString())
+    
+    // Usar replaceState para evitar llenar el historial
+    // y transición más suave
+    window.history.replaceState(
+      { tab }, 
+      '', 
+      url.toString()
+    )
   }, [])
 
   // ============================================================================
@@ -122,7 +140,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [data])
 
   // ============================================================================
-  // RENDER HELPERS - Sin Suspense innecesario
+  // RENDER HELPERS - Con navegación mejorada
   // ============================================================================
   
   const renderActiveTab = useCallback(() => {
@@ -130,7 +148,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
     const commonProps = {
       workspaceSlug,
-      workspaceData: data
+      workspaceData: data,
+      navigation
     }
 
     switch (activeTab) {
@@ -147,7 +166,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       default:
         return <OverviewTab {...commonProps} />
     }
-  }, [activeTab, workspaceSlug, data])
+  }, [activeTab, workspaceSlug, data, navigation])
 
   // ============================================================================
   // ERROR & LOADING STATES - Enhanced UX
@@ -225,12 +244,17 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     className={`
-                      flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors
+                      flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-all duration-200
                       ${isActive 
                         ? 'border-gray-900 text-gray-900' 
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }
                     `}
+                    // Preload tab content on hover for better performance
+                    onMouseEnter={() => {
+                      // Optional: Preload data for better UX
+                      console.log(`Preloading ${tab.id} tab`)
+                    }}
                   >
                     <Icon className="h-4 w-4" />
                     {tab.label}

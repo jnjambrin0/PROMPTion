@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
 import { redirect } from 'next/navigation'
-import { ProfileClient } from './profile-client'
+import ProfileClient from './profile-client'
 
 
 // Server component - handles authentication and data fetching
@@ -32,9 +32,7 @@ export default async function ProfilePage() {
 
   return (
     <ProfileClient 
-      user={user}
-      authUser={authUser}
-      userStats={userStats}
+      initialProfile={user}
     />
   )
 } 

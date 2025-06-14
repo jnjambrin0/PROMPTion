@@ -54,16 +54,13 @@ export function DeleteCategoryDialog({
   const handleDeleteCategory = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/workspaces/${workspaceSlug}/categories/${category.id}`, {
-        method: 'DELETE',
-      })
+      const { deleteCategoryAction } = await import('@/lib/actions/categories')
+      const result = await deleteCategoryAction(workspaceSlug, category.id)
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to delete category')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete category')
       }
 
-      const result = await response.json()
       toast.success('Category deleted successfully')
       setDialogOpen(false)
       router.refresh() // Refresh to remove deleted category

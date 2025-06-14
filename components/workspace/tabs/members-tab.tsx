@@ -12,7 +12,9 @@ import {
   Search,
   Plus,
   Mail,
-  ArrowRight
+  ArrowRight,
+  UserMinus,
+  Settings2
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,14 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { InviteMemberDialog } from '@/components/workspace/invite-member-dialog'
 import type { WorkspaceTabProps } from '@/lib/types/workspace'
 
 const roleConfig = {
@@ -49,13 +59,37 @@ function StatCard({ icon: Icon, label, value }: {
 }
 
 // Compact member row instead of large cards
-function MemberRow({ member }: { member: any }) {
+function MemberRow({ member, workspaceSlug }: { member: any; workspaceSlug: string }) {
   const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
     label: member.role, 
     icon: Users,
     color: 'outline'
   }
   const RoleIcon = roleInfo.icon
+
+  const handleEmailMember = () => {
+    if (member.user.email) {
+      window.location.href = `mailto:${member.user.email}`
+    }
+  }
+
+  const handleMemberAction = (action: string) => {
+    console.log(`${action} member:`, member.id)
+    // TODO: Implement actual member actions
+    switch (action) {
+      case 'change-role':
+        // TODO: Show change role dialog
+        break
+      case 'remove':
+        // TODO: Show remove member confirmation
+        break
+      case 'view-activity':
+        // TODO: Show member activity
+        break
+      default:
+        break
+    }
+  }
 
   return (
     <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
@@ -90,20 +124,51 @@ function MemberRow({ member }: { member: any }) {
       
       <div className="flex items-center gap-2">
         {member.user.email && (
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 w-7 p-0"
+            onClick={handleEmailMember}
+            title="Send email"
+          >
             <Mail className="h-3 w-3" />
           </Button>
         )}
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleMemberAction('view-activity')}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Activity
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleMemberAction('change-role')}>
+              <Settings2 className="h-4 w-4 mr-2" />
+              Change Role
+            </DropdownMenuItem>
+            {!['OWNER'].includes(member.role) && (
+              <DropdownMenuItem 
+                onClick={() => handleMemberAction('remove')}
+                className="text-red-600 focus:text-red-600"
+              >
+                <UserMinus className="h-4 w-4 mr-2" />
+                Remove Member
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
 }
 
 // Alternative: Compact card for grid view
-function CompactMemberCard({ member }: { member: any }) {
+function CompactMemberCard({ member, workspaceSlug }: { member: any; workspaceSlug: string }) {
   const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
     label: member.role, 
     icon: Users,
@@ -111,8 +176,14 @@ function CompactMemberCard({ member }: { member: any }) {
   }
   const RoleIcon = roleInfo.icon
 
+  const handleEmailMember = () => {
+    if (member.user.email) {
+      window.location.href = `mailto:${member.user.email}`
+    }
+  }
+
   return (
-    <div className="border border-border rounded-lg p-3 hover:shadow-sm transition-all hover:border-border">
+    <div className="border border-border rounded-lg p-3 hover:shadow-sm transition-all hover:border-border group">
       <div className="flex items-center gap-3 mb-2">
         <Avatar className="h-8 w-8">
           <AvatarImage src={member.user.avatarUrl || undefined} />
@@ -128,9 +199,30 @@ function CompactMemberCard({ member }: { member: any }) {
             @{member.user.username || 'no-username'}
           </p>
         </div>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
-          <MoreHorizontal className="h-3 w-3" />
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
+              <MoreHorizontal className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Eye className="h-4 w-4 mr-2" />
+              View Activity
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings2 className="h-4 w-4 mr-2" />
+              Change Role
+            </DropdownMenuItem>
+            {!['OWNER'].includes(member.role) && (
+              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                <UserMinus className="h-4 w-4 mr-2" />
+                Remove
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="flex items-center justify-between">
@@ -139,7 +231,12 @@ function CompactMemberCard({ member }: { member: any }) {
           <span className="text-xs">{roleInfo.label}</span>
         </Badge>
         {member.user.email && (
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 px-2 text-xs"
+            onClick={handleEmailMember}
+          >
             <Mail className="h-3 w-3 mr-1" />
             Contact
           </Button>
@@ -152,11 +249,13 @@ function CompactMemberCard({ member }: { member: any }) {
 function EmptyState({ 
   searchQuery, 
   selectedRole, 
-  onClearFilters 
+  onClearFilters,
+  workspaceSlug 
 }: {
   searchQuery: string
   selectedRole: string
   onClearFilters: () => void
+  workspaceSlug: string
 }) {
   const hasFilters = searchQuery || selectedRole !== 'all'
 
@@ -179,10 +278,7 @@ function EmptyState({
           <p className="text-sm text-muted-foreground mb-4">
             Invite team members to collaborate on this workspace
           </p>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Invite first member
-          </Button>
+          <InviteMemberDialog workspaceSlug={workspaceSlug} />
         </>
       )}
     </div>
@@ -233,10 +329,15 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
             Manage workspace members and their permissions
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Invite members
-        </Button>
+        <InviteMemberDialog 
+          workspaceSlug={workspaceSlug}
+          trigger={
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Invite Members
+            </Button>
+          }
+        />
       </div>
 
       {/* Search and Filters - Improved with Select component */}
@@ -300,6 +401,7 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
         <EmptyState
           searchQuery={searchQuery}
           selectedRole={selectedRole}
+          workspaceSlug={workspaceSlug}
           onClearFilters={() => {
             setSearchQuery('')
             setSelectedRole('all')
@@ -312,14 +414,14 @@ export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTa
           </CardHeader>
           <CardContent className="p-0">
             {filteredMembers.map((member) => (
-              <MemberRow key={member.id} member={member} />
+              <MemberRow key={member.id} member={member} workspaceSlug={workspaceSlug} />
             ))}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {filteredMembers.map((member) => (
-            <CompactMemberCard key={member.id} member={member} />
+            <CompactMemberCard key={member.id} member={member} workspaceSlug={workspaceSlug} />
           ))}
         </div>
       )}

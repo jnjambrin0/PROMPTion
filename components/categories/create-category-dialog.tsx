@@ -39,20 +39,12 @@ export function CreateCategoryDialog({
   const handleCreateCategory = async (data: any) => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/workspaces/${workspaceSlug}/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
+      const { createCategoryAction } = await import('@/lib/actions/categories')
+      const result = await createCategoryAction(workspaceSlug, data)
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to create category')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create category')
       }
-
-      const result = await response.json()
       
       toast.success('Category created successfully')
       setDialogOpen(false)

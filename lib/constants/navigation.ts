@@ -12,7 +12,8 @@ import {
   Star,
   Users,
   Home,
-  BookOpen
+  BookOpen,
+  Layers
 } from 'lucide-react'
 import { NavigationItem, QuickAction } from '@/lib/types/navigation'
 
@@ -80,8 +81,8 @@ export const MAIN_NAVIGATION: NavigationItem[] = [
   {
     id: 'templates',
     label: 'Templates',
-    href: '/dashboard/templates',
-    icon: Users
+    href: '/templates',
+    icon: Layers
   },
   {
     id: 'guides',

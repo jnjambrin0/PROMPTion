@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, ArrowRight, Settings, List, Grid } from 'lucide-react'
+import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, ArrowRight, Settings, List, Grid, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,6 +32,7 @@ interface CategoriesTabProps {
     prompts?: any[]
     stats?: any
   }
+  navigation: any
 }
 
 interface CategoryWithCounts {
@@ -44,6 +45,7 @@ interface CategoryWithCounts {
   isDefault: boolean
   parentId?: string | null
   children?: CategoryWithCounts[]
+  role?: string
 }
 
 // Server Component for better performance
@@ -103,9 +105,10 @@ function CategoryViewSwitcher({
   )
 }
 
-function CategoryCard({ category, workspaceSlug }: { 
+function CategoryCard({ category, workspaceSlug, navigation }: { 
   category: CategoryWithCounts
   workspaceSlug: string 
+  navigation: any
 }) {
   return (
     <Card className="group hover:shadow-sm transition-all hover:border-border">
@@ -141,10 +144,10 @@ function CategoryCard({ category, workspaceSlug }: {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
-                  View Prompts ({category.promptCount})
-                </Link>
+              <DropdownMenuItem 
+                {...navigation.createNavigationButton('prompts', { category: category.id })}
+              >
+                View Prompts ({category.promptCount})
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <EditCategoryDialog
@@ -189,11 +192,9 @@ function CategoryCard({ category, workspaceSlug }: {
               size="sm" 
               variant="outline" 
               className="flex-1 h-7"
-              asChild
+              {...navigation.createNavigationButton('prompts', { category: category.id })}
             >
-              <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
-                View Prompts
-              </Link>
+              View Prompts
             </Button>
             <EditCategoryDialog
               category={category}
@@ -216,9 +217,10 @@ function CategoryCard({ category, workspaceSlug }: {
 }
 
 // Compact list view for categories
-function CategoryListItem({ category, workspaceSlug }: { 
+function CategoryListItem({ category, workspaceSlug, navigation }: { 
   category: CategoryWithCounts
   workspaceSlug: string 
+  navigation: any
 }) {
   return (
     <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
@@ -249,11 +251,9 @@ function CategoryListItem({ category, workspaceSlug }: {
           size="sm" 
           variant="outline" 
           className="h-7 px-3"
-          asChild
+          {...navigation.createNavigationButton('prompts', { category: category.id })}
         >
-          <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
-            View
-          </Link>
+          View
         </Button>
         <EditCategoryDialog
           category={category}
@@ -270,10 +270,10 @@ function CategoryListItem({ category, workspaceSlug }: {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/${workspaceSlug}?tab=prompts&category=${category.id}`}>
-                View All Prompts
-              </Link>
+            <DropdownMenuItem 
+              {...navigation.createNavigationButton('prompts', { category: category.id })}
+            >
+              View All Prompts
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <EditCategoryDialog
@@ -410,7 +410,7 @@ function QuickActionsSection({
   )
 }
 
-export default function CategoriesTab({ workspaceSlug, workspaceData }: CategoriesTabProps) {
+export default function CategoriesTab({ workspaceSlug, workspaceData, navigation }: CategoriesTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -561,6 +561,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
               key={category.id}
               category={category}
               workspaceSlug={workspaceSlug}
+              navigation={navigation}
             />
           ))}
         </div>
@@ -575,6 +576,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData }: Categori
                 key={category.id}
                 category={category}
                 workspaceSlug={workspaceSlug}
+                navigation={navigation}
               />
             ))}
           </CardContent>

@@ -102,7 +102,21 @@ export interface WorkspaceData {
 // Tab types
 export type WorkspaceTab = 'overview' | 'prompts' | 'categories' | 'members' | 'settings'
 
+// Navigation hook type
+export interface WorkspaceNavigation {
+  navigateToTab: (tab: WorkspaceTab, queryParams?: Record<string, string>) => void
+  navigateToPrompts: (categoryId?: string) => void
+  navigateToCategories: () => void
+  navigateToMembers: () => void
+  navigateToSettings: () => void
+  navigateToOverview: () => void
+  createNavigationButton: (tab: WorkspaceTab, queryParams?: Record<string, string>) => {
+    onClick: (e: React.MouseEvent) => void
+  }
+}
+
 export interface WorkspaceTabProps {
   workspaceSlug: string
   workspaceData: WorkspaceData
+  navigation: WorkspaceNavigation
 } 

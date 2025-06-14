@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Search, LogOut, Bell, Settings } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { MobileNav } from '@/components/layout/mobile-nav'
-import { NotificationPanel } from '@/components/ui/notification-panel'
+import { NotificationPanel } from '@/components/ui/notifications'
 import { UserMenu } from '@/components/ui/user-menu'
 import { getUserByAuthId } from '@/lib/db/users'
 import { createClient } from '@/utils/supabase/server'
@@ -35,28 +35,22 @@ export async function Topbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/80 backdrop-blur-sm">
       <div className="flex h-12 items-center justify-between px-4">
-        {/* Left section - Mobile nav + Search */}
-        <div className="flex items-center gap-3 flex-1">
+        {/* Left section - Mobile nav + Brand */}
+        <div className="flex items-center gap-3">
           {/* Mobile Navigation */}
           <MobileNav />
-          
-          {/* Brand - Mobile only */}
-          <div className="md:hidden">
-            <Link href="/home">
-              <h1 className="text-lg font-semibold text-neutral-900">Promption</h1>
-            </Link>
-          </div>
-          
-          {/* Search - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-              <input
-                type="text"
-                placeholder="Search prompts, templates..."
-                className="w-full rounded-md border border-neutral-200 bg-neutral-50/50 py-1.5 pl-9 pr-3 text-sm placeholder:text-neutral-500 focus:border-neutral-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-200"
-              />
-            </div>
+
+        </div>
+
+        {/* Center section - Main Search (Teams style) */}
+        <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-8">
+          <div className="relative w-full max-w-lg">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+            <input
+              type="text"
+              placeholder="Search prompts, templates, workspaces..."
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50/50 py-2 pl-9 pr-3 text-sm placeholder:text-neutral-500 focus:border-neutral-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-200 transition-all duration-200"
+            />
           </div>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Filter, Search, X, ChevronDown } from 'lucide-react'
+import { Filter, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,8 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { useDebounce } from '@/hooks/use-debounce'
 
 interface Workspace {
   id: string
@@ -24,12 +22,10 @@ interface Workspace {
 interface PromptFiltersProps {
   workspaces: Workspace[]
   currentFilters: {
-    search?: string
     workspace?: string
     type?: string
     sort?: string
   }
-  onSearchChange?: (value: string) => void
   onWorkspaceChange?: (value: string) => void
   onTypeChange?: (value: string) => void
   onSortChange?: (value: string) => void
@@ -38,35 +34,12 @@ interface PromptFiltersProps {
 export function PromptFilters({ 
   workspaces, 
   currentFilters, 
-  onSearchChange, 
   onWorkspaceChange, 
   onTypeChange, 
   onSortChange 
 }: PromptFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
-  // Search state
-  const [searchQuery, setSearchQuery] = useState(currentFilters.search || '')
-  const debouncedSearch = useDebounce(searchQuery, 500)
-
-  // Update search when debounced value changes
-  useEffect(() => {
-    if (onSearchChange) {
-      onSearchChange(debouncedSearch)
-    } else {
-      // Fallback to URL updates if no callback provided
-      const params = new URLSearchParams(searchParams.toString())
-      
-      if (debouncedSearch) {
-        params.set('search', debouncedSearch)
-      } else {
-        params.delete('search')
-      }
-      
-      router.push(`?${params.toString()}`)
-    }
-  }, [debouncedSearch, onSearchChange, router, searchParams])
 
   const updateFilter = (key: string, value: string) => {
     // Use callback if provided, otherwise fallback to URL
@@ -104,12 +77,10 @@ export function PromptFilters({
   }
 
   const clearAllFilters = () => {
-    setSearchQuery('')
     router.push(window.location.pathname)
   }
 
   const hasActiveFilters = Boolean(
-    currentFilters.search ||
     (currentFilters.workspace && currentFilters.workspace !== 'all') ||
     (currentFilters.type && currentFilters.type !== 'all')
   )
@@ -129,27 +100,6 @@ export function PromptFilters({
 
   return (
     <div className="flex items-center gap-2">
-      {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-        <Input
-          placeholder="Search prompts..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-64 pl-9 pr-9"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSearchQuery('')}
-            className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 text-neutral-500 hover:text-neutral-700"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
       {/* Workspace Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
