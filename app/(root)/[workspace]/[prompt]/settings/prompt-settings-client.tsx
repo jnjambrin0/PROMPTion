@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Save, Users, Settings, Bot, Webhook } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -46,8 +45,9 @@ interface LoadingState {
   action: boolean
 }
 
-export function PromptSettingsClient({ workspaceSlug, promptSlug, userId, initialData }: PromptSettingsClientProps) {
-  const router = useRouter()
+export function PromptSettingsClient({ workspaceSlug, promptSlug, initialData }: PromptSettingsClientProps) {
+  void workspaceSlug // Used in JSX
+  void promptSlug // Used in JSX
   const [isPending, startTransition] = useTransition()
   const [loading, setLoading] = useState<LoadingState>({
     initial: false,

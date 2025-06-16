@@ -1,12 +1,9 @@
 'use client'
 
 import React from 'react'
-import { CreditCard, Star, Check, ExternalLink, Clock, AlertTriangle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CreditCard, Star, Check, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import Link from 'next/link'
 import { SettingsSection } from './shared/settings-section'
 import { SettingsRow } from './shared/settings-row'
 import { CompactCard } from './shared/compact-card'
@@ -91,6 +88,9 @@ function PlanCard({
 }
 
 export function BillingSettings({ onUpdate }: BillingSettingsProps) {
+  // Handle onUpdate to avoid unused warning
+  void onUpdate
+
   return (
     <div className="space-y-6">
       {/* Current Status */}
@@ -212,7 +212,7 @@ export function BillingSettings({ onUpdate }: BillingSettingsProps) {
           <div className="space-y-1">
             <h4 className="text-sm font-medium text-foreground">Beta Access</h4>
             <p className="text-xs text-muted-foreground">
-              You're using Promption during our free beta period. All Pro and Team features are available at no cost. 
+              You&apos;re using Promption during our free beta period. All Pro and Team features are available at no cost. 
               Billing will be introduced gradually with plenty of advance notice.
             </p>
           </div>

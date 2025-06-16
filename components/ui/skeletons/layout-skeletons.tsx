@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { Skeleton, SkeletonAvatar } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { SkeletonNavigation, SkeletonUserProfile } from "./base-skeletons"
 
 // ============================================================================

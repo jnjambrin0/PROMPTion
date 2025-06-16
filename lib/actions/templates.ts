@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
-import { getTemplateStats, useTemplate, getPublicTemplates, getFeaturedTemplates, createTemplate } from '@/lib/db/templates'
+import { getTemplateStats, getPublicTemplates, getFeaturedTemplates, createTemplate } from '@/lib/db/templates'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Eye, Copy, Heart, Grid3X3, List, Search, Filter } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Eye, Copy, Heart, Grid3X3, List } from 'lucide-react'
 import { TemplatePreviewModal } from './template-preview-modal'
-import type { Template } from '@/lib/types/templates'
+import type { Template } from '@/lib/types/templates' 
 
 interface CommunityTemplatesProps {
   templates: Template[]
@@ -29,7 +29,11 @@ export function CommunityTemplates({ templates, searchParams, hasMore = false, t
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const viewMode = searchParams.view || 'grid'
   const currentSearch = searchParams.search || ''
-  const currentSort = searchParams.sort || 'popular'
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [sortBy, setSortBy] = useState('popular')
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
 
   const handleViewChange = (newView: 'grid' | 'list') => {
     const params = new URLSearchParams(urlSearchParams.toString())
@@ -43,15 +47,6 @@ export function CommunityTemplates({ templates, searchParams, hasMore = false, t
     params.set('page', (currentPage + 1).toString())
     router.push(`/templates?${params.toString()}`)
   }
-
-  // Memoized stats
-  const stats = useMemo(() => ({
-    total: templates.length,
-    totalUses: templates.reduce((sum, template) => sum + template.useCount, 0),
-    avgRating: templates.length > 0 
-      ? templates.reduce((sum, template) => sum + (template.averageScore || 0), 0) / templates.length 
-      : 0
-  }), [templates])
 
   const renderTemplateCard = (template: Template, isListView = false) => (
     <Card 

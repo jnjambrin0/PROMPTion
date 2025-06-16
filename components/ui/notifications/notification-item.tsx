@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns'
-import { MessageSquare, Star, Settings, Zap, Users, Globe, Clock, Check, Trash2 } from 'lucide-react'
+import { MessageSquare, Star, Settings, Zap, Users, Check, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Notification, NotificationType } from '@/lib/types/notifications'
 

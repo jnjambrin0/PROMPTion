@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { deletePromptAction } from '@/lib/actions/prompt-settings'
 import type { PromptSettingsData } from '@/lib/actions/prompt-settings'
@@ -55,7 +54,7 @@ export const AdvancedSettings = React.memo(({
       } else {
         toast.error(result.error || 'Failed to delete prompt')
       }
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred')
     } finally {
       setIsDeleting(false)
@@ -64,7 +63,7 @@ export const AdvancedSettings = React.memo(({
   }, [promptId, router, workspaceSlug])
 
   // Dummy handler for webhook since this is a future feature
-  const handleWebhookChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWebhookChange = useCallback(() => {
     // This is disabled for now - future feature
     // In the future, this would call onUpdate({ webhookUrl: e.target.value })
   }, [])

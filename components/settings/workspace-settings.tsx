@@ -1,27 +1,12 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { Building, Crown, Users, ExternalLink, LogOut, AlertTriangle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Building, Crown, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { toast } from 'sonner'
+
 import { leaveWorkspaceAction } from '@/lib/actions/user-settings'
 import Link from 'next/link'
 import { SettingsSection } from './shared/settings-section'
-import { SettingsRow } from './shared/settings-row'
 import { CompactCard } from './shared/compact-card'
 import { WorkspaceActions } from './forms/workspace-actions'
 
@@ -197,7 +182,7 @@ export function WorkspaceSettings({ workspaces, onUpdate }: WorkspaceSettingsPro
           <Building className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
           <h4 className="font-medium text-foreground mb-1">No Workspaces</h4>
           <p className="text-sm text-muted-foreground">
-            You haven't joined any workspaces yet.
+            You haven&apos;t joined any workspaces yet.
           </p>
         </CompactCard>
       )}

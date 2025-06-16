@@ -68,10 +68,10 @@ async function validateWorkspaceAccess(workspaceSlug: string, userId: string) {
     }
 
     return { workspace, categories, error: undefined }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error validating workspace access:', error)
     
-    if (error.message.includes('Access denied')) {
+    if (error instanceof Error && error.message.includes('Access denied')) {
       return { error: NextResponse.json({ error: 'Access denied' }, { status: 403 }) }
     }
     
@@ -101,7 +101,7 @@ export async function PATCH(
     const { workspace, categories } = validation
 
     // Parsear y validar request body
-    let body: any
+    let body: Record<string, unknown>
     try {
       body = await request.json()
     } catch {
@@ -207,7 +207,7 @@ export async function DELETE(
     const { workspace, categories } = validation
 
     // Parsear y validar request body
-    let body: any
+    let body: Record<string, unknown>
     try {
       body = await request.json()
     } catch {
@@ -263,7 +263,7 @@ export async function DELETE(
         if (result) {
           deletedCount++
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`Failed to delete category ${categoryId}:`, error)
         errors.push(`Failed to delete category ${categoryId}`)
       }
@@ -284,7 +284,7 @@ export async function DELETE(
     
     return response
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Bulk delete categories error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

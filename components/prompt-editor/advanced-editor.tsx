@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { 
   Plus, GripVertical, Type, Hash, Code, Heading, Variable, Trash2,
-  ChevronLeft, Settings, Eye, Copy, Check, Play, RotateCcw
+  Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 
 // Enhanced types for the advanced block system
 interface Variable {
@@ -36,10 +35,12 @@ interface Block {
 }
 
 interface AdvancedEditorProps {
-  blocks: Block[]
-  onChange: (blocks: Block[]) => void
-  onBackToSimple: () => void
-  title?: string
+  initialBlocks?: Block[]
+  onSave: (blocks: Block[]) => void
+  onCancel: () => void
+  isLoading?: boolean
+  showPreview?: boolean
+  onTogglePreview: () => void
 }
 
 // Hook for variable management
@@ -384,9 +385,17 @@ function PromptBlock({
   )
 }
 
-export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: AdvancedEditorProps) {
+export function AdvancedEditor({
+  initialBlocks = [],
+  onSave,
+  onCancel,
+  isLoading = false,
+  showPreview = false,
+  onTogglePreview,
+}: AdvancedEditorProps) {
+  const [blocks, setBlocks] = useState<Block[]>(initialBlocks)
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [showBlockSelector, setShowBlockSelector] = useState<number | null>(null)
-  const [showPreview, setShowPreview] = useState(true)
   const [testValues, setTestValues] = useState<Record<string, string>>({})
   const [copied, setCopied] = useState(false)
   const variables = useVariableDetection(blocks)
@@ -414,15 +423,15 @@ export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: Adva
       block.position = index
     })
     
-    onChange(newBlocks)
+    setBlocks(newBlocks)
     setShowBlockSelector(null)
-  }, [blocks, onChange])
+  }, [blocks, setBlocks])
 
   const updateBlock = useCallback((id: string, content: Block['content']) => {
-    onChange(blocks.map(block => 
+    setBlocks(blocks.map(block => 
       block.id === id ? { ...block, content } : block
     ))
-  }, [blocks, onChange])
+  }, [blocks, setBlocks])
 
   const removeBlock = useCallback((id: string) => {
     const newBlocks = blocks.filter(block => block.id !== id)
@@ -430,8 +439,8 @@ export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: Adva
     newBlocks.forEach((block, index) => {
       block.position = index
     })
-    onChange(newBlocks)
-  }, [blocks, onChange])
+    setBlocks(newBlocks)
+  }, [blocks, setBlocks])
 
   // Preview functions
   const generatePreview = useCallback(() => {
@@ -515,7 +524,6 @@ export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: Adva
             <CardTitle className="text-lg flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Advanced Editor
-              {title && <span className="text-sm font-normal text-neutral-500">- {title}</span>}
             </CardTitle>
             <CardDescription>
               Create complex prompts with specialized blocks and variables
@@ -607,7 +615,7 @@ export function AdvancedEditor({ blocks, onChange, onBackToSimple, title }: Adva
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowPreview(!showPreview)}
+                  onClick={onTogglePreview}
                   className="gap-2"
                 >
                   <Eye className="h-3 w-3" />

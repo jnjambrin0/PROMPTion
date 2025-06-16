@@ -60,10 +60,15 @@ interface LoadingState {
   saving: boolean
 }
 
-interface BlockContentData {
-  type: string
-  content?: {
-    text?: string
+interface PromptWithWorkspace {
+  id: string
+  title: string
+  description: string | null
+  blocks: Block[]
+  isPublic: boolean
+  isTemplate: boolean
+  workspace: {
+    name: string
   }
 }
 
@@ -93,7 +98,7 @@ export function PromptEditClient({
   const [showPreview, setShowPreview] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
-  const [promptData, setPromptData] = useState<Record<string, unknown> | null>(null)
+  const [promptData, setPromptData] = useState<PromptWithWorkspace | null>(null)
 
   // Check for unsaved changes
   const hasChanges = useMemo(() => {
@@ -102,12 +107,15 @@ export function PromptEditClient({
   }, [formData, originalData])
 
   // Convert blocks to simple content and vice versa
-  const blocksToContent = useCallback((blocks: BlockContentData[]): string => {
+  const blocksToContent = useCallback((blocks: Block[]): string => {
     if (!Array.isArray(blocks)) return ''
     
     return blocks
       .filter(block => block.type === 'TEXT' || block.type === 'PROMPT')
-      .map(block => block.content?.text || '')
+      .map(block => {
+        const content = block.content as { text?: string }
+        return content?.text || ''
+      })
       .join('\n\n')
       .trim()
   }, [])

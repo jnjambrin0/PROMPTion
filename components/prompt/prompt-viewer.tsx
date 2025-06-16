@@ -125,7 +125,7 @@ export function PromptViewer({ prompt }: PromptViewerProps) {
           No content yet
         </h3>
         <p className="text-gray-600">
-          This prompt doesn't have any content blocks yet.
+          This prompt doesn&apos;t have any content blocks yet.
         </p>
       </div>
     )

@@ -6,6 +6,7 @@ import { getCategoryById } from '@/lib/db/categories'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 
+
 // ==================== TIPOS Y ESQUEMAS ====================
 
 interface CategoryParams {
@@ -114,7 +115,7 @@ async function validateWorkspaceAndCategory(
     }
 
     return { workspace, category, error: undefined }
-  } catch (error: unknown) {
+  } catch (error: DetailedError | unknown) {
     console.error('Error validating workspace/category:', error)
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -212,8 +213,6 @@ export async function PATCH(
 
     if (validation.error) return validation.error
 
-    const { workspace, category } = validation
-
     // Parse y validar request body
     let body: UpdateCategoryRequest
     try {
@@ -307,7 +306,7 @@ export async function PATCH(
     
     return response
 
-  } catch (error: any) {
+  } catch (error: DetailedError | unknown) {
     console.error('Update category error:', error)
     
     // Manejar errores específicos
@@ -318,14 +317,16 @@ export async function PATCH(
       )
     }
     
-    if (error.message.includes('access denied')) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    if (errorMessage.includes('access denied')) {
       return NextResponse.json(
         { error: 'Insufficient permissions to update this category' },
         { status: 403 }
       )
     }
     
-    if (error.message.includes('slug already exists')) {
+    if (errorMessage.includes('slug already exists')) {
       return NextResponse.json(
         { error: 'A category with this name already exists in the workspace' },
         { status: 409 }
@@ -358,8 +359,6 @@ export async function DELETE(
 
     if (validation.error) return validation.error
 
-    const { workspace, category } = validation
-
     // Verificar que no sea una categoría por defecto (si existe esa lógica)
     // TODO: Implementar verificación de categorías por defecto si es necesario
 
@@ -378,18 +377,18 @@ export async function DELETE(
     
     return response
 
-  } catch (error: any) {
+  } catch (error: DetailedError | unknown) {
     console.error('Delete category error:', error)
     
     // Manejar errores específicos
-    if (error.message.includes('access denied')) {
+    if (error instanceof Error && error.message.includes('access denied')) {
       return NextResponse.json(
         { error: 'Insufficient permissions to delete this category' },
         { status: 403 }
       )
     }
     
-    if (error.message.includes('has prompts')) {
+    if (error instanceof Error && error.message.includes('has prompts')) {
       return NextResponse.json(
         { error: 'Cannot delete category that contains prompts. Move prompts to another category first.' },
         { status: 409 }

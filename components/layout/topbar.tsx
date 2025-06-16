@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { Search, LogOut, Bell, Settings } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Search, Settings } from 'lucide-react'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { NotificationPanel } from '@/components/ui/notifications'
 import { UserMenu } from '@/components/ui/user-menu'

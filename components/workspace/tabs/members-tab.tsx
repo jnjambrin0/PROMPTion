@@ -165,7 +165,7 @@ export default function MembersTab({ workspaceData }: WorkspaceTabProps) {
   const handleRoleChange = async (member: WorkspaceMember, newRole: MemberRole) => {
     if (!canPerformAction(userRole as MemberRole, member.role, 'changeRole')) {
       toast.error('Insufficient permissions', {
-        description: 'You cannot change this member\'s role'
+        description: 'You cannot change this member&apos;s role'
       })
       return
     }

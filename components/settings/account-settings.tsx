@@ -1,22 +1,8 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Shield, AlertTriangle, Trash2, Key, Clock, Smartphone, CheckCircle2 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Shield, AlertTriangle, Key, Clock, Smartphone, CheckCircle2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { deleteAccountAction } from '@/lib/actions/user-settings'
 import { SettingsSection } from './shared/settings-section'
@@ -52,6 +38,10 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
       setIsDeletingAccount(false)
     }
   }, [])
+
+  // Use the variables to avoid unused warnings
+  void isDeletingAccount
+  void handleDeleteAccount
 
   return (
     <div className="space-y-6">

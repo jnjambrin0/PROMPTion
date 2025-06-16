@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from './button'
-import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Label } from './label'
 import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export type CategoryColor = 'gray' | 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'pink' | 'indigo'
 

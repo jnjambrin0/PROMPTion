@@ -78,7 +78,14 @@ export function CreateCategoryDialog({
           </DialogDescription>
         </DialogHeader>
         <CategoryForm
-          onSubmit={handleCreateCategory}
+          onSubmit={(data) => {
+            handleCreateCategory({
+              name: data.name,
+              icon: data.icon,
+              color: data.color,
+              slug: data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+            })
+          }}
           isLoading={isLoading}
           submitLabel="Create Category"
           onCancel={() => setDialogOpen(false)}

@@ -1,15 +1,8 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { User, Camera, Save } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
+import { User } from 'lucide-react'
+
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
 import { updateUserProfileAction, type UserProfileData } from '@/lib/actions/user-settings'
 import { SettingsSection } from './shared/settings-section'
 import { SettingsRow } from './shared/settings-row'

@@ -4,13 +4,28 @@ import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
 import { getTemplateCategories } from '@/lib/db/templates'
 import prisma from '@/lib/prisma'
+import type { ActionResult } from '@/lib/types/shared'
 
 // ==================== INTERFACES ====================
 
-interface ActionResult<T = any> {
-  success: boolean
-  data?: T
-  error?: string
+interface DatabaseUser {
+  id: string
+  email: string
+  username: string | null
+  fullName: string | null
+  avatarUrl: string | null
+  bio: string | null
+  authId: string
+  emailVerified: boolean
+  isActive: boolean
+  lastActiveAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface SupabaseUser {
+  id: string
+  email?: string
 }
 
 interface Workspace {
@@ -26,10 +41,12 @@ interface TemplateCategory {
   icon: string | null
 }
 
+
+
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: any; authUser: any; error?: never }
+  | { user: DatabaseUser; authUser: SupabaseUser; error?: never }
   | { user?: never; authUser?: never; error: string }
 > {
   try {
@@ -123,7 +140,17 @@ export async function getTemplateCategoriesAction(): Promise<ActionResult<Templa
 
 // ==================== WORKSPACE CATEGORIES ====================
 
-export async function getWorkspaceCategoriesAction(workspaceId: string): Promise<ActionResult<any[]>> {
+interface WorkspaceCategory {
+  id: string
+  name: string
+  icon: string | null
+  color: string | null
+  _count: {
+    prompts: number
+  }
+}
+
+export async function getWorkspaceCategoriesAction(workspaceId: string): Promise<ActionResult<WorkspaceCategory[]>> {
   try {
     const auth = await getAuthenticatedUser()
     if (auth.error) {
@@ -371,7 +398,7 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
         isTemplate: false,
         isPublic: false,
         blocks: {
-          create: template.blocks.map((block: any) => ({
+          create: template.blocks.map((block: { type: string; content: string; position: number }) => ({
             type: block.type,
             content: block.content,
             position: block.position,

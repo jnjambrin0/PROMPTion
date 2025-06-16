@@ -312,7 +312,7 @@ export function TemplatePreviewModal({
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-medium text-neutral-900 mb-2">How to use this template</h3>
               <div className="text-sm text-neutral-600 space-y-2">
-                <p>1. Click "Use Template" to create a copy in your workspace</p>
+                <p>1. Click &quot;Use Template&quot; to create a copy in your workspace</p>
                 <p>2. Customize the content and variables to fit your needs</p>
                 <p>3. Test and iterate on the prompt for best results</p>
               </div>

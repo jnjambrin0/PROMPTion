@@ -26,11 +26,22 @@ interface Category {
 }
 
 interface EditCategoryDialogProps {
-  category: Category
-  workspaceSlug: string
-  trigger?: React.ReactNode
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+  category: {
+    id: string
+    name: string
+    icon: string | null
+    color: string | null
+    description?: string | null
+  }
+  isOpen: boolean
+  onClose: () => void
+  onEditCategory: (data: {
+    name: string
+    icon: string
+    color: string
+    description?: string
+  }) => Promise<void>
+  isLoading?: boolean
 }
 
 export function EditCategoryDialog({

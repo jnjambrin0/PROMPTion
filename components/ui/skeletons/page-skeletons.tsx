@@ -3,7 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { 
   SkeletonStatsGrid, 
   SkeletonSearchAndFilters, 
-  SkeletonList,
   SkeletonCard,
   SkeletonGrid
 } from "./base-skeletons"

@@ -1,5 +1,6 @@
+import React from 'react'
 import { Separator } from '@/components/ui/separator'
-import { TrendingUpIcon, TrendingDownIcon, Plus, PlusCircle } from 'lucide-react'
+import { TrendingUpIcon, TrendingDownIcon, PlusCircle } from 'lucide-react'
 import { getQuickStatsFormatted, getRecentActivity, formatTimeAgo, getActivityIcon, getActivityDescription } from '@/lib/db/stats'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'

@@ -14,7 +14,7 @@ export function CTASection() {
               </span>
             </h2>
             <p className="mx-auto max-w-[700px] text-lg md:text-xl text-gray-600 leading-relaxed">
-              Join thousands of prompt engineers, content creators, and AI enthusiasts who've already 
+              Join thousands of prompt engineers, content creators, and AI enthusiasts who&apos;ve already 
               made the switch to organized, efficient prompt management.
             </p>
           </div>

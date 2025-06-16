@@ -1,5 +1,4 @@
 import prisma from '../prisma'
-import type { MemberRole } from '../generated/prisma'
 
 /**
  * Obtiene categorías de un workspace

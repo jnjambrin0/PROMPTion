@@ -1,10 +1,12 @@
+import React from 'react'
 import { useState, useCallback, useMemo } from 'react'
-import { Variable, Eye, Wand2 } from 'lucide-react'
+import { Variable, Eye, Wand2, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PreviewPopup } from './preview-popup'
+import { Label } from '@/components/ui/label'
 
 interface Variable {
   name: string
@@ -19,6 +21,8 @@ interface SimpleEditorProps {
   onTogglePreview: () => void
   title?: string
   isAdvancedMode?: boolean
+  placeholder?: string
+  isLoading?: boolean
 }
 
 // Hook to extract variables from text
@@ -80,14 +84,13 @@ function VariableHelper({
   )
 }
 
-export function SimpleEditor({ 
-  content, 
-  onChange, 
+export function SimpleEditor({
+  content = '',
+  onChange,
   onToggleAdvanced,
-  showPreview,
-  onTogglePreview,
   title,
-  isAdvancedMode = false
+  placeholder = 'Write your prompt here...',
+  isLoading = false
 }: SimpleEditorProps) {
   const variables = useVariableExtraction(content)
 
@@ -141,7 +144,7 @@ export function SimpleEditor({
                 className="gap-2"
               >
                 <Wand2 className="h-4 w-4" />
-                {isAdvancedMode ? 'Simple Mode' : 'Advanced'}
+                Advanced
               </Button>
             </div>
           </div>
@@ -151,14 +154,7 @@ export function SimpleEditor({
             id="simple-editor"
             value={content}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Write your prompt here...
-
-Example:
-Hello {{name}}, please help me with {{task}}. 
-
-I want you to be {{tone}} and focus on {{topic}}.
-
-Make sure to include {{requirements}} in your response."
+            placeholder={placeholder}
             className="min-h-[300px] resize-none font-mono text-sm leading-relaxed"
           />
           

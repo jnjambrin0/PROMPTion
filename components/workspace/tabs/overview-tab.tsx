@@ -2,18 +2,13 @@ import React, { useMemo } from 'react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { 
-  MessageSquare, 
   FolderOpen, 
   Users, 
   Activity,
   Plus,
   Clock,
-  Eye,
   TrendingUp,
-  Hash,
-  Crown,
   ArrowRight,
-  BarChart3,
   Zap,
   Target,
   Calendar,
@@ -21,8 +16,6 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { WorkspaceTabProps } from '@/lib/types/workspace'
 
 // Insight Card - Server Component for better performance

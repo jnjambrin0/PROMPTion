@@ -65,7 +65,7 @@ export function BenefitsSection() {
             Why teams choose Promption
           </h2>
           <p className="mx-auto max-w-[600px] text-lg text-gray-600">
-            Join thousands of prompt engineers and AI teams who've transformed their workflows with organized, accessible prompt management.
+            Join thousands of prompt engineers and AI teams who&apos;ve transformed their workflows with organized, accessible prompt management.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function BenefitsSection() {
                   {benefit.title}
                 </h3>
                 
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                <p className="text-neutral-600">
                   {benefit.description}
                 </p>
                 
