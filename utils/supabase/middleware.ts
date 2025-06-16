@@ -1,36 +1,54 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextRequest, NextResponse } from 'next/server'
 
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+// ==================== SUPABASE MIDDLEWARE CLIENT ====================
+// Designed specifically for middleware where cookie setting is allowed
 
-export const createClient = (request: NextRequest) => {
-  // Create an unmodified response
-  let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  const supabase = createServerClient(
+export function createMiddlewareClient(request: NextRequest, response: NextResponse) {
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
+        get(name: string) {
+          return request.cookies.get(name)?.value
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
+        set(name: string, value: string, options = {}) {
+          // Apply secure cookie settings in middleware
+          const secureOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const,
+            path: '/',
+            maxAge: name.includes('access') ? 3600 : 86400, // 1 hour for access, 24h for refresh
+            ...options
+          }
+          
+          response.cookies.set(name, value, secureOptions)
+        },
+        remove(name: string, options = {}) {
+          const secureOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const,
+            path: '/',
+            ...options
+          }
+          
+          response.cookies.set(name, '', { 
+            ...secureOptions,
+            expires: new Date(0),
+            maxAge: 0
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
         },
       },
-    },
-  );
-
-  return supabaseResponse
-};
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+        flowType: 'pkce'
+      }
+    }
+  )
+}
 

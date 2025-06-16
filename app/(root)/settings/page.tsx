@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db/users'
+import { getCurrentUser } from '@/lib/dal'
 import { SettingsClient } from './settings-client'
 import { getUserSettingsAction } from '@/lib/actions/user-settings'
 
@@ -8,17 +6,8 @@ import { getUserSettingsAction } from '@/lib/actions/user-settings'
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-  
-  if (!authUser) {
-    redirect('/sign-in')
-  }
-
-  const user = await getUserByAuthId(authUser.id)
-  if (!user) {
-    redirect('/sign-in')
-  }
+  // Use new DAL for secure authentication - this handles all security checks
+  const user = await getCurrentUser()
 
   // Fetch initial settings data
   const settingsResult = await getUserSettingsAction()

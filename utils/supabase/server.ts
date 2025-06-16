@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// ==================== SUPABASE SERVER CLIENT ====================
+// Simplified to prevent cookie setting errors in Server Components
+
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -14,16 +17,22 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Use default options - don't override for Server Components
               cookieStore.set(name, value, options)
-            )
+            })
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // Silently ignore cookie setting errors in Server Components
+            // This is expected behavior when Supabase tries to refresh tokens
           }
         },
       },
+      auth: {
+        // Disable auto refresh to prevent cookie setting in Server Components
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false
+      }
     }
   )
 }
