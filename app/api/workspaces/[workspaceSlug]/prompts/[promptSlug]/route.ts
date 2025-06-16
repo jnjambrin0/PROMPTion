@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
 import { z } from 'zod'
-import { PrismaClient } from '@prisma/client'
+
 import type { JsonValue } from '@/lib/types/shared'
+import { PrismaClient } from '@/lib/generated/prisma'
 
 const prisma = new PrismaClient()
 
