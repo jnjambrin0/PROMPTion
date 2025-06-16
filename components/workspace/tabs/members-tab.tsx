@@ -1,481 +1,577 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { formatDistanceToNow } from 'date-fns'
-import { 
-  Users, 
-  Crown, 
-  Shield, 
-  Edit3, 
-  Eye, 
+import { useState, useTransition } from 'react'
+import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
+import {
   MoreHorizontal,
-  Search,
-  Plus,
   Mail,
-  ArrowRight,
-  UserMinus,
-  Settings2
+  Crown,
+  Shield,
+  Edit3,
+  Eye,
+  User,
+  UserPlus,
+  Activity,
+  Settings,
+  Trash2,
+  Search,
+  Users
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+
 import { InviteMemberDialog } from '@/components/workspace/invite-member-dialog'
-import type { WorkspaceTabProps } from '@/lib/types/workspace'
+import { MemberActivityModal } from '@/components/workspace/member-activity-modal'
+import { updateMemberRoleAction, removeMemberAction } from '@/lib/actions/members'
+import { hasPermission, canPerformAction, getRoleHierarchy } from '@/lib/types/members'
+import type { WorkspaceTabProps, WorkspaceMember } from '@/lib/types/workspace'
+import type { MemberRole } from '@/lib/types/members'
+import { formatLastActive, formatJoinDate } from '@/lib/utils/date-format'
+
+// ============================================================================
+// TYPE ALIAS FOR MEMBER DATA
+// ============================================================================
+
+// ============================================================================
+// ROLE CONFIGURATIONS
+// ============================================================================
 
 const roleConfig = {
-  OWNER: { label: 'Owner', icon: Crown, color: 'default' },
-  ADMIN: { label: 'Admin', icon: Shield, color: 'secondary' },
-  EDITOR: { label: 'Editor', icon: Edit3, color: 'outline' },
-  VIEWER: { label: 'Viewer', icon: Eye, color: 'outline' }
+  OWNER: {
+    label: 'Owner',
+    icon: Crown,
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    description: 'Full access to workspace'
+  },
+  ADMIN: {
+    label: 'Admin',
+    icon: Shield,
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    description: 'Manage workspace and members'
+  },
+  EDITOR: {
+    label: 'Editor',
+    icon: Edit3,
+    color: 'bg-green-100 text-green-800 border-green-200',
+    description: 'Create and edit all prompts'
+  },
+  MEMBER: {
+    label: 'Member',
+    icon: User,
+    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    description: 'Create and collaborate'
+  },
+  VIEWER: {
+    label: 'Viewer',
+    icon: Eye,
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    description: 'View only access'
+  }
 }
 
-// Server Component for better performance
-function StatCard({ icon: Icon, label, value }: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string | number
-}) {
-  return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="flex items-center gap-2 mb-1">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{label}</span>
-        </div>
-        <p className="text-lg font-semibold text-foreground">{value}</p>
-      </CardContent>
-    </Card>
-  )
-}
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
-// Compact member row instead of large cards
-function MemberRow({ member, workspaceSlug }: { member: any; workspaceSlug: string }) {
-  const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
-    label: member.role, 
-    icon: Users,
-    color: 'outline'
-  }
-  const RoleIcon = roleInfo.icon
-
-  const handleEmailMember = () => {
-    if (member.user.email) {
-      window.location.href = `mailto:${member.user.email}`
-    }
-  }
-
-  const handleMemberAction = (action: string) => {
-    console.log(`${action} member:`, member.id)
-    // TODO: Implement actual member actions
-    switch (action) {
-      case 'change-role':
-        // TODO: Show change role dialog
-        break
-      case 'remove':
-        // TODO: Show remove member confirmation
-        break
-      case 'view-activity':
-        // TODO: Show member activity
-        break
-      default:
-        break
-    }
-  }
-
-  return (
-    <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={member.user.avatarUrl || undefined} />
-          <AvatarFallback className="text-xs">
-            {(member.user.fullName || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-foreground truncate">
-              {member.user.fullName || member.user.username || 'Unknown User'}
-            </p>
-            <Badge variant={roleInfo.color as any} className="flex items-center gap-1">
-              <RoleIcon className="h-3 w-3" />
-              <span className="text-xs">{roleInfo.label}</span>
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>@{member.user.username || 'no-username'}</span>
-            {member.joinedAt && (
-              <>
-                <span>•</span>
-                <span>Joined {formatDistanceToNow(new Date(member.joinedAt), { addSuffix: true })}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        {member.user.email && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 p-0"
-            onClick={handleEmailMember}
-            title="Send email"
-          >
-            <Mail className="h-3 w-3" />
-          </Button>
-        )}
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleMemberAction('view-activity')}>
-              <Eye className="h-4 w-4 mr-2" />
-              View Activity
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleMemberAction('change-role')}>
-              <Settings2 className="h-4 w-4 mr-2" />
-              Change Role
-            </DropdownMenuItem>
-            {!['OWNER'].includes(member.role) && (
-              <DropdownMenuItem 
-                onClick={() => handleMemberAction('remove')}
-                className="text-red-600 focus:text-red-600"
-              >
-                <UserMinus className="h-4 w-4 mr-2" />
-                Remove Member
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  )
-}
-
-// Alternative: Compact card for grid view
-function CompactMemberCard({ member, workspaceSlug }: { member: any; workspaceSlug: string }) {
-  const roleInfo = roleConfig[member.role as keyof typeof roleConfig] || { 
-    label: member.role, 
-    icon: Users,
-    color: 'outline'
-  }
-  const RoleIcon = roleInfo.icon
-
-  const handleEmailMember = () => {
-    if (member.user.email) {
-      window.location.href = `mailto:${member.user.email}`
-    }
-  }
-
-  return (
-    <div className="border border-border rounded-lg p-3 hover:shadow-sm transition-all hover:border-border group">
-      <div className="flex items-center gap-3 mb-2">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={member.user.avatarUrl || undefined} />
-          <AvatarFallback className="text-xs">
-            {(member.user.fullName || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">
-            {member.user.fullName || member.user.username || 'Unknown User'}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">
-            @{member.user.username || 'no-username'}
-          </p>
-        </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
-              <MoreHorizontal className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Eye className="h-4 w-4 mr-2" />
-              View Activity
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings2 className="h-4 w-4 mr-2" />
-              Change Role
-            </DropdownMenuItem>
-            {!['OWNER'].includes(member.role) && (
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
-                <UserMinus className="h-4 w-4 mr-2" />
-                Remove
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <Badge variant={roleInfo.color as any} className="flex items-center gap-1">
-          <RoleIcon className="h-3 w-3" />
-          <span className="text-xs">{roleInfo.label}</span>
-        </Badge>
-        {member.user.email && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 px-2 text-xs"
-            onClick={handleEmailMember}
-          >
-            <Mail className="h-3 w-3 mr-1" />
-            Contact
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function EmptyState({ 
-  searchQuery, 
-  selectedRole, 
-  onClearFilters,
-  workspaceSlug 
-}: {
-  searchQuery: string
-  selectedRole: string
-  onClearFilters: () => void
-  workspaceSlug: string
-}) {
-  const hasFilters = searchQuery || selectedRole !== 'all'
-
-  return (
-    <div className="text-center py-8">
-      <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-      {hasFilters ? (
-        <>
-          <h3 className="text-base font-medium text-foreground mb-2">No members found</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Try adjusting your search criteria or filters
-          </p>
-          <Button variant="outline" onClick={onClearFilters}>
-            Clear filters
-          </Button>
-        </>
-      ) : (
-        <>
-          <h3 className="text-base font-medium text-foreground mb-2">No members yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Invite team members to collaborate on this workspace
-          </p>
-          <InviteMemberDialog workspaceSlug={workspaceSlug} />
-        </>
-      )}
-    </div>
-  )
-}
-
-export default function MembersTab({ workspaceSlug, workspaceData }: WorkspaceTabProps) {
+export default function MembersTab({ workspaceData }: WorkspaceTabProps) {
+  const params = useParams()
+  const currentWorkspaceSlug = params.workspace as string
+  
+  const [isPending, startTransition] = useTransition()
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(null)
+  const [isRemoving, setIsRemoving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedRole, setSelectedRole] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [activityModalOpen, setActivityModalOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null)
 
-  const { members, stats } = workspaceData
+  // Get data from workspaceData
+  const members = workspaceData?.members || []
+  const currentUser = workspaceData?.currentUser
+  
+  // Get current user role from members list
+  const currentUserMember = members.find((m: WorkspaceMember) => m.user.id === currentUser?.id)
+  const userRole = currentUserMember?.role || 'VIEWER'
 
-  // Filter members
-  const filteredMembers = useMemo(() => {
-    if (!members || members.length === 0) return []
+  // ============================================================================
+  // PERMISSIONS CHECK
+  // ============================================================================
+
+  const canInvite = hasPermission(userRole as MemberRole, 'canInviteMembers')
+  const canRemove = hasPermission(userRole as MemberRole, 'canRemoveMembers') 
+  const canChangeRoles = hasPermission(userRole as MemberRole, 'canChangeRoles')
+
+  // ============================================================================
+  // FILTERING
+  // ============================================================================
+
+  const filteredMembers = members.filter((member: WorkspaceMember) => {
+    const matchesSearch = !searchQuery || 
+      member.user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     
-    return members.filter(member => {
-      const matchesSearch = searchQuery === '' || 
-        (member.user.fullName && member.user.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (member.user.username && member.user.username.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (member.user.email && member.user.email.toLowerCase().includes(searchQuery.toLowerCase()))
-      
-      const matchesRole = selectedRole === 'all' || member.role === selectedRole
+    const matchesRole = roleFilter === 'all' || member.role === roleFilter
 
-      return matchesSearch && matchesRole
-    })
-  }, [members, searchQuery, selectedRole])
+    return matchesSearch && matchesRole
+  })
 
-  // Calculate role counts
-  const roleCounts = useMemo(() => {
-    if (!members) return { admins: 0, editors: 0, viewers: 0 }
-    
-    return {
-      admins: members.filter(m => ['OWNER', 'ADMIN'].includes(m.role)).length,
-      editors: members.filter(m => m.role === 'EDITOR').length,
-      viewers: members.filter(m => m.role === 'VIEWER').length
+  // ============================================================================
+  // MEMBER ACTIONS
+  // ============================================================================
+
+  const handleRoleChange = async (member: WorkspaceMember, newRole: MemberRole) => {
+    if (!canPerformAction(userRole as MemberRole, member.role, 'changeRole')) {
+      toast.error('Insufficient permissions', {
+        description: 'You cannot change this member\'s role'
+      })
+      return
     }
-  }, [members])
+
+    startTransition(async () => {
+      try {
+        const result = await updateMemberRoleAction(currentWorkspaceSlug, {
+          memberId: member.id,
+          role: newRole
+        })
+
+        if (result.success) {
+          toast.success('Role updated successfully', {
+            description: `${member.user.fullName || member.user.username} is now ${newRole.toLowerCase()}`
+          })
+        } else {
+          toast.error('Failed to update role', {
+            description: result.error || 'Something went wrong'
+          })
+        }
+      } catch (error) {
+        console.error('Error updating role:', error)
+        toast.error('Unexpected error', {
+          description: 'Failed to update member role'
+        })
+      }
+    })
+  }
+
+  const handleRemoveMember = (member: WorkspaceMember) => {
+    if (!canPerformAction(userRole as MemberRole, member.role, 'remove')) {
+      toast.error('Insufficient permissions', {
+        description: 'You cannot remove this member'
+      })
+      return
+    }
+
+    setMemberToRemove(member)
+    setRemoveDialogOpen(true)
+  }
+
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove || isRemoving) return
+
+    setIsRemoving(true)
+
+    try {
+      const result = await removeMemberAction(currentWorkspaceSlug, {
+        memberId: memberToRemove.id,
+        reason: 'Removed by workspace admin'
+      })
+
+      if (result.success) {
+        toast.success('Member removed successfully', {
+          description: `${memberToRemove.user.fullName || memberToRemove.user.username} has been removed from the workspace`
+        })
+        setRemoveDialogOpen(false)
+        setMemberToRemove(null)
+      } else {
+        toast.error('Failed to remove member', {
+          description: result.error || 'Something went wrong'
+        })
+      }
+    } catch (error) {
+      console.error('Error removing member:', error)
+      toast.error('Unexpected error', {
+        description: 'Failed to remove member'
+      })
+    } finally {
+      setIsRemoving(false)
+    }
+  }
+
+  const handleViewActivity = (member: WorkspaceMember) => {
+    setSelectedMember(member)
+    setActivityModalOpen(true)
+  }
+
+  const handleEmailMember = (email: string) => {
+    window.open(`mailto:${email}`, '_blank')
+  }
+
+  // ============================================================================
+  // UTILITY FUNCTIONS - REMOVED AND USING UTILS
+  // ============================================================================
+
+  const getAvailableRoles = (targetMemberRole: MemberRole): MemberRole[] => {
+    const allRoles = getRoleHierarchy()
+    
+    // Owner can change anyone to any role except Owner
+    if (userRole === 'OWNER') {
+      return allRoles.filter(role => role !== 'OWNER')
+    }
+    
+    // Admin can change roles but not to Owner
+    if (userRole === 'ADMIN') {
+      return allRoles.filter(role => role !== 'OWNER' && targetMemberRole !== 'OWNER')
+    }
+    
+    return []
+  }
+
+  // ============================================================================
+  // RENDER COMPONENTS
+  // ============================================================================
+
+  const renderRoleSelect = (member: WorkspaceMember) => {
+    const availableRoles = getAvailableRoles(member.role)
+    
+    if (availableRoles.length === 0 || member.role === 'OWNER') {
+      return null
+    }
+
+    return (
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
+          <Settings className="h-4 w-4 mr-2" />
+          Change Role
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent>
+          {availableRoles.map((role) => {
+            const config = roleConfig[role]
+            const Icon = config.icon
+            
+            return (
+              <DropdownMenuItem
+                key={role}
+                onClick={() => handleRoleChange(member, role)}
+                disabled={isPending}
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                <div className="flex flex-col">
+                  <span>{config.label}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {config.description}
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            )
+          })}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+    )
+  }
+
+  const renderMemberActions = (member: WorkspaceMember) => {
+    const isOwner = member.role === 'OWNER'
+    const isCurrentUser = member.user.id === currentUser?.id
+    
+    // Don't show actions dropdown for current user or if no actions available
+    const hasViewActivity = true // Everyone can view activity
+    const hasEmailAction = !!member.user.email
+    const hasRoleChange = canChangeRoles && !isOwner && !isCurrentUser && getAvailableRoles(member.role).length > 0
+    const hasRemoveAction = canRemove && !isOwner && !isCurrentUser
+    
+    // If no actions available, don't show dropdown
+    if (!hasViewActivity && !hasEmailAction && !hasRoleChange && !hasRemoveAction) {
+      return null
+    }
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            disabled={isPending}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          
+          {/* View Activity - Available for all */}
+          {hasViewActivity && (
+            <DropdownMenuItem onClick={() => handleViewActivity(member)}>
+              <Activity className="h-4 w-4 mr-2" />
+              View Activity
+            </DropdownMenuItem>
+          )}
+          
+          {/* Email Member - Only if email exists */}
+          {hasEmailAction && (
+            <DropdownMenuItem onClick={() => handleEmailMember(member.user.email)}>
+              <Mail className="h-4 w-4 mr-2" />
+              Send Email
+            </DropdownMenuItem>
+          )}
+          
+          {/* Separator only if management actions exist */}
+          {(hasRoleChange || hasRemoveAction) && <DropdownMenuSeparator />}
+          
+          {/* Change Role - Only for eligible members */}
+          {hasRoleChange && renderRoleSelect(member)}
+          
+          {/* Remove Member - Only for non-owners, non-self */}
+          {hasRemoveAction && (
+            <DropdownMenuItem
+              onClick={() => handleRemoveMember(member)}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove Member
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Members</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-2xl font-semibold">Team Members</h2>
+          <p className="text-muted-foreground">
             Manage workspace members and their permissions
           </p>
         </div>
-        <InviteMemberDialog 
-          workspaceSlug={workspaceSlug}
-          trigger={
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Invite Members
-            </Button>
-          }
-        />
+        
+        {/* Invite Member Button */}
+        {canInvite && (
+          <Button onClick={() => setInviteDialogOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
+        )}
       </div>
 
-      {/* Search and Filters - Improved with Select component */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Filters */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search members..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9"
+            className="pl-8"
           />
         </div>
-        <Select value={selectedRole} onValueChange={setSelectedRole}>
-          <SelectTrigger className="w-40 h-9">
-            <SelectValue placeholder="All Roles" />
+        
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by role" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="OWNER">Owner</SelectItem>
             <SelectItem value="ADMIN">Admin</SelectItem>
             <SelectItem value="EDITOR">Editor</SelectItem>
+            <SelectItem value="MEMBER">Member</SelectItem>
             <SelectItem value="VIEWER">Viewer</SelectItem>
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
-        >
-          {viewMode === 'list' ? 'Grid' : 'List'}
-        </Button>
       </div>
 
-      {/* Compact Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          icon={Users}
-          label="Total Members"
-          value={stats.totalMembers}
-        />
-        <StatCard
-          icon={Crown}
-          label="Admins"
-          value={roleCounts.admins}
-        />
-        <StatCard
-          icon={Edit3}
-          label="Editors"
-          value={roleCounts.editors}
-        />
-        <StatCard
-          icon={Eye}
-          label="Viewers"
-          value={roleCounts.viewers}
-        />
+      {/* Members Table */}
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Member</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead>Last Active</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredMembers.map((member: WorkspaceMember) => {
+              const config = roleConfig[member.role as keyof typeof roleConfig]
+              const Icon = config?.icon || User
+              
+              return (
+                <TableRow key={member.id}>
+                  {/* Member Info */}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.user.avatarUrl || ''} />
+                        <AvatarFallback>
+                          {(member.user.fullName || member.user.username || member.user.email)
+                            .charAt(0)
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {member.user.fullName || member.user.username || 'Unknown User'}
+                          {member.user.id === currentUser?.id && (
+                            <span className="ml-2 text-xs text-muted-foreground">(You)</span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {member.user.email}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Role Badge */}
+                  <TableCell>
+                    <Badge variant="outline" className={config?.color}>
+                      <Icon className="h-3 w-3 mr-1" />
+                      {config?.label || member.role}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Joined Date */}
+                  <TableCell>
+                    <div className="text-sm">
+                      {formatJoinDate(member.joinedAt)}
+                    </div>
+                  </TableCell>
+
+                  {/* Last Active */}
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {formatLastActive(member.lastActiveAt)}
+                    </div>
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell>
+                    {renderMemberActions(member)}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       </div>
 
-      {/* Members List/Grid */}
-      {filteredMembers.length === 0 ? (
-        <EmptyState
-          searchQuery={searchQuery}
-          selectedRole={selectedRole}
-          workspaceSlug={workspaceSlug}
-          onClearFilters={() => {
-            setSearchQuery('')
-            setSelectedRole('all')
-          }}
-        />
-      ) : viewMode === 'list' ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Team Members ({filteredMembers.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredMembers.map((member) => (
-              <MemberRow key={member.id} member={member} workspaceSlug={workspaceSlug} />
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {filteredMembers.map((member) => (
-            <CompactMemberCard key={member.id} member={member} workspaceSlug={workspaceSlug} />
-          ))}
+      {/* Empty State */}
+      {filteredMembers.length === 0 && (
+        <div className="text-center py-8">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">
+            {searchQuery || roleFilter !== 'all' ? 'No members found' : 'No members yet'}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {searchQuery || roleFilter !== 'all' 
+              ? 'Try adjusting your search or filters'
+              : 'Start building your team by inviting members'
+            }
+          </p>
+          {!searchQuery && roleFilter === 'all' && canInvite && (
+            <Button onClick={() => setInviteDialogOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Invite Your First Member
+            </Button>
+          )}
         </div>
       )}
-    </div>
-  )
-}
 
-export function MembersTabSkeleton() {
-  return (
-    <div className="space-y-6">
-      {/* Header skeleton */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="h-6 w-32 bg-muted rounded animate-pulse" />
-          <div className="h-4 w-48 bg-muted rounded animate-pulse" />
-        </div>
-        <div className="h-9 w-32 bg-muted rounded animate-pulse" />
-      </div>
+      {/* Invite Member Dialog */}
+      <InviteMemberDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+      />
 
-      {/* Search skeleton */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-9 bg-muted rounded animate-pulse" />
-        <div className="h-9 w-40 bg-muted rounded animate-pulse" />
-        <div className="h-9 w-16 bg-muted rounded animate-pulse" />
-      </div>
-      
-      {/* Stats skeleton */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="border rounded-lg p-3">
-            <div className="h-4 w-20 bg-muted rounded animate-pulse mb-1" />
-            <div className="h-5 w-8 bg-muted rounded animate-pulse" />
-          </div>
-        ))}
-      </div>
+      {/* Member Activity Modal */}
+      {selectedMember && (
+        <MemberActivityModal
+          open={activityModalOpen}
+          onOpenChange={setActivityModalOpen}
+          member={selectedMember}
+          workspaceSlug={currentWorkspaceSlug}
+        />
+      )}
 
-      {/* Members list skeleton */}
-      <div className="border rounded-lg">
-        <div className="p-4 border-b">
-          <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-        </div>
-        <div className="divide-y">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-4">
-              <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
-              <div className="space-y-1 flex-1">
-                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-                <div className="h-3 w-24 bg-muted rounded animate-pulse" />
-              </div>
-              <div className="h-6 w-16 bg-muted rounded animate-pulse" />
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove{' '}
+              <strong>
+                {memberToRemove?.user.fullName || memberToRemove?.user.username}
+              </strong>{' '}
+              from this workspace? This action cannot be undone and they will lose access 
+              to all workspace content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveMember}
+              disabled={isRemoving}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isRemoving ? 'Removing...' : 'Remove Member'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

@@ -41,10 +41,13 @@ export async function getDashboardData(userId: string): Promise<DashboardData | 
           id: prompt.id,
           title: prompt.title,
           slug: prompt.slug,
+          description: prompt.description,
           isTemplate: prompt.isTemplate,
           isPublic: prompt.isPublic,
           updatedAt: prompt.updatedAt,
           createdAt: prompt.createdAt,
+          _count: prompt._count || { blocks: 0 },
+          user: prompt.user,
           workspace: {
             id: workspace.id,
             name: workspace.name,

@@ -152,7 +152,7 @@ export default async function HomePage() {
                   No prompts yet
                 </h3>
                 <p className="text-sm md:text-base text-neutral-600 mb-6 max-w-sm mx-auto">
-                  Start creating prompts and they'll appear here. Your recent activity will help you 
+                  Start creating prompts and they&apos;ll appear here. Your recent activity will help you 
                   pick up where you left off.
                 </p>
                 <QuickActionButton 

@@ -30,12 +30,24 @@ interface CreatePromptFormProps {
   defaultCategoryId?: string
 }
 
+interface Category {
+  id: string
+  name: string
+  icon?: string | null
+}
+
+interface Workspace {
+  id: string
+  name: string
+}
+
 export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [workspaces, setWorkspaces] = useState<any[]>([])
-  const [categories, setCategories] = useState<any[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true)
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [formData, setFormData] = useState<CreatePromptData>({
     title: '',
     slug: '',
@@ -47,7 +59,6 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
     icon: '📝'
   })
   const [errors, setErrors] = useState<Partial<CreatePromptData>>({})
-  const [isSlugValid, setIsSlugValid] = useState(true)
   const [isCustomSlug, setIsCustomSlug] = useState(false)
 
   // Load user workspaces on mount
@@ -89,11 +100,14 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
     if (formData.workspaceId) {
       const loadCategories = async () => {
         try {
+          setIsLoadingCategories(true)
           const data = await getWorkspaceData(formData.workspaceId)
           setCategories(data.categories)
         } catch (error) {
           console.error('Error loading categories:', error)
           setCategories([])
+        } finally {
+          setIsLoadingCategories(false)
         }
       }
       loadCategories()
@@ -133,7 +147,6 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
   }
 
   const handleSlugValidation = (isValid: boolean, error?: string) => {
-    setIsSlugValid(isValid)
     if (error) {
       setErrors(prev => ({ ...prev, slug: error }))
     } else {
@@ -317,7 +330,7 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No category</SelectItem>
-                  {categories.length === 0 && formData.workspaceId ? (
+                  {isLoadingCategories ? (
                     <SelectItem value="loading" disabled>
                       Loading categories...
                     </SelectItem>

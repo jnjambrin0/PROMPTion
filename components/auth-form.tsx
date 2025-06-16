@@ -65,7 +65,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}/auth/confirm?next=/home`,
           },
         })
 
@@ -82,8 +82,12 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         router.push('/home')
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('An unexpected error occurred')
+      }
     } finally {
       setLoading(false)
     }
@@ -102,8 +106,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       })
 
       if (error) throw error
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('An unexpected error occurred')
+      }
       setGoogleLoading(false)
     }
   }

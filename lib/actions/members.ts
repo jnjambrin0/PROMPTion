@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db'
+import { getUserByAuthId, getUserByEmail } from '@/lib/db'
+import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import {
   createWorkspaceInvitation,
   updateMemberRole,
@@ -11,7 +12,9 @@ import {
   getUserRole,
   hasWorkspaceAccess
 } from '@/lib/db/members'
-import { hasPermission, canPerformAction, isValidRoleTransition } from '@/lib/types/members'
+import { createNotification } from '@/lib/db/notifications'
+import { sendWorkspaceInvitationEmail } from '@/lib/email/send-invitation'
+import { hasPermission } from '@/lib/types/members'
 import type {
   InviteMemberData,
   InviteMemberResult,
@@ -20,7 +23,8 @@ import type {
   RemoveMemberData,
   RemoveMemberResult,
   MemberActivityResult,
-  MemberRole
+  MemberRole,
+  InvitationStatus
 } from '@/lib/types/members'
 
 // ============================================================================
@@ -41,6 +45,23 @@ async function getAuthenticatedUser() {
   }
 
   return user
+}
+
+// ============================================================================
+// WORKSPACE HELPER
+// ============================================================================
+
+async function getWorkspaceIdFromSlug(workspaceSlug: string, userId: string): Promise<string> {
+  if (!workspaceSlug || typeof workspaceSlug !== 'string') {
+    throw new Error('Invalid workspace slug')
+  }
+
+  const workspace = await getWorkspaceBySlug(workspaceSlug, userId)
+  if (!workspace) {
+    throw new Error('Workspace not found or access denied')
+  }
+
+  return workspace.id
 }
 
 // ============================================================================
@@ -75,9 +96,8 @@ export async function inviteMemberAction(
     // Autenticación
     const user = await getAuthenticatedUser()
 
-    // Obtener workspace ID desde slug (simplificado para el ejemplo)
-    // En producción, necesitarías una función para obtener workspace por slug
-    const workspaceId = workspaceSlug // Temporal, necesita implementación real
+    // Obtener workspace ID desde slug
+    const workspaceId = await getWorkspaceIdFromSlug(workspaceSlug, user.id)
 
     // Verificar permisos del usuario actual
     const userRole = await getUserRole(workspaceId, user.id)
@@ -100,8 +120,40 @@ export async function inviteMemberAction(
       data.permissions || []
     )
 
-    // TODO: Enviar email de invitación
-    // await sendInvitationEmail(invitation)
+    // Enviar email de invitación
+    try {
+      await sendWorkspaceInvitationEmail({
+        workspaceName: invitation.workspace.name,
+        inviterName: invitation.invitedBy.fullName || invitation.invitedBy.username || 'Team Member',
+        inviterEmail: invitation.invitedBy.email,
+        recipientEmail: invitation.email,
+        role: invitation.role,
+        message: invitation.message || undefined,
+        invitationToken: invitation.token
+      })
+    } catch (emailError) {
+      // Log error but don't fail the invitation process
+      console.error('Failed to send invitation email:', emailError)
+    }
+
+    // Crear notificación si el usuario ya existe en la plataforma
+    try {
+      const existingUser = await getUserByEmail(invitation.email)
+      if (existingUser) {
+        await createNotification({
+          type: 'WORKSPACE_INVITE',
+          title: `Invitation to join ${invitation.workspace.name}`,
+          message: `${invitation.invitedBy.fullName || invitation.invitedBy.username} invited you to join ${invitation.workspace.name} as ${invitation.role}`,
+          recipientId: existingUser.id,
+          actorId: invitation.invitedById,
+          workspaceId: invitation.workspaceId,
+          actionUrl: `/invitations/${invitation.token}`
+        })
+      }
+    } catch (notificationError) {
+      // Log error but don't fail the invitation process
+      console.error('Failed to create notification:', notificationError)
+    }
 
     // Revalidar cache
     revalidatePath(`/${workspaceSlug}`)
@@ -116,7 +168,7 @@ export async function inviteMemberAction(
         permissions: invitation.permissions as string[],
         message: invitation.message,
         token: invitation.token,
-        status: invitation.status as any,
+        status: invitation.status as InvitationStatus,
         createdAt: invitation.createdAt,
         updatedAt: invitation.updatedAt,
         expiresAt: invitation.expiresAt,
@@ -130,7 +182,17 @@ export async function inviteMemberAction(
     console.error('Error inviting member:', error)
     
     if (error instanceof Error) {
-      return { success: false, error: error.message }
+      // Provide more specific error messages
+      switch (error.message) {
+        case 'ALREADY_MEMBER':
+          return { success: false, error: 'This user is already a member of the workspace' }
+        case 'PENDING_INVITATION':
+          return { success: false, error: 'This user already has a pending invitation' }
+        case 'Inviter does not have access to this workspace':
+          return { success: false, error: 'You do not have access to this workspace' }
+        default:
+          return { success: false, error: error.message }
+      }
     }
     
     return { success: false, error: 'Failed to invite member' }
@@ -158,7 +220,7 @@ export async function updateMemberRoleAction(
     const user = await getAuthenticatedUser()
 
     // Obtener workspace ID desde slug
-    const workspaceId = workspaceSlug // Temporal
+    const workspaceId = await getWorkspaceIdFromSlug(workspaceSlug, user.id)
 
     // Verificar permisos del usuario actual
     const userRole = await getUserRole(workspaceId, user.id)
@@ -226,7 +288,7 @@ export async function removeMemberAction(
     const user = await getAuthenticatedUser()
 
     // Obtener workspace ID desde slug
-    const workspaceId = workspaceSlug // Temporal
+    const workspaceId = await getWorkspaceIdFromSlug(workspaceSlug, user.id)
 
     // Verificar permisos del usuario actual
     const userRole = await getUserRole(workspaceId, user.id)
@@ -268,18 +330,18 @@ export async function removeMemberAction(
 // ============================================================================
 
 /**
- * Obtiene la actividad de un miembro
+ * Obtiene la actividad de un miembro (BLINDADO: Solo OWNER/ADMIN pueden ver actividad de otros)
  */
 export async function getMemberActivityAction(
   workspaceSlug: string,
-  memberId: string,
+  targetUserId: string, // Cambio: ahora recibe userId directamente
   page: number = 1,
   limit: number = 20
 ): Promise<MemberActivityResult> {
   try {
     // Validación de entrada
-    if (!memberId) {
-      return { success: false, error: 'Member ID is required' }
+    if (!targetUserId) {
+      return { success: false, error: 'Target user ID is required' }
     }
 
     if (page < 1 || limit < 1 || limit > 100) {
@@ -290,7 +352,7 @@ export async function getMemberActivityAction(
     const user = await getAuthenticatedUser()
 
     // Obtener workspace ID desde slug
-    const workspaceId = workspaceSlug // Temporal
+    const workspaceId = await getWorkspaceIdFromSlug(workspaceSlug, user.id)
 
     // Verificar acceso al workspace
     const hasAccess = await hasWorkspaceAccess(workspaceId, user.id)
@@ -298,10 +360,10 @@ export async function getMemberActivityAction(
       return { success: false, error: 'Access denied to workspace' }
     }
 
-    // Obtener actividad del miembro
+    // Obtener actividad del miembro (usando userId)
     const result = await getMemberActivity(
       workspaceId,
-      memberId,
+      targetUserId,
       user.id,
       { page, limit }
     )
@@ -312,7 +374,7 @@ export async function getMemberActivityAction(
         id: activity.id,
         type: activity.type,
         description: activity.description,
-        metadata: activity.metadata as Record<string, any>,
+        metadata: activity.metadata as Record<string, unknown>,
         createdAt: activity.createdAt,
         user: activity.user
       })),
@@ -339,7 +401,7 @@ export async function getMemberActivityAction(
 export async function checkUserPermissionsAction(workspaceSlug: string) {
   try {
     const user = await getAuthenticatedUser()
-    const workspaceId = workspaceSlug // Temporal
+    const workspaceId = await getWorkspaceIdFromSlug(workspaceSlug, user.id)
 
     const userRole = await getUserRole(workspaceId, user.id)
     if (!userRole) {

@@ -44,6 +44,7 @@ export interface WorkspacePrompt {
   category: {
     id: string
     name: string
+    color: string | null
   } | null
   user: {
     id: string

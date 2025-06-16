@@ -162,7 +162,42 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       case 'members':
         return <MembersTab {...commonProps} />
       case 'settings':
-        return <WorkspaceSettingsTab {...commonProps} />
+        // Adaptar los datos para WorkspaceSettingsTab
+        const settingsProps = {
+          workspaceSlug,
+          workspaceData: {
+            workspace: data.workspace,
+            categories: data.categories?.map(cat => ({
+              id: cat.id,
+              name: cat.name,
+              color: cat.color,
+              icon: cat.icon
+            })) || [],
+            members: data.members?.map(member => ({
+              id: member.id,
+              role: member.role,
+              joinedAt: member.joinedAt || new Date(),
+              user: member.user
+            })) || [],
+            prompts: data.prompts?.map(prompt => ({
+              id: prompt.id,
+              title: prompt.title,
+              slug: prompt.slug,
+              description: prompt.description,
+              isPublic: prompt.isPublic,
+              isTemplate: prompt.isTemplate,
+              createdAt: prompt.createdAt,
+              updatedAt: prompt.updatedAt
+            })) || [],
+            stats: data.stats ? {
+              totalPrompts: data.stats.totalPrompts,
+              totalMembers: data.stats.totalMembers,
+              totalCategories: data.stats.totalCategories,
+              publicPrompts: data.stats.publicPromptsCount || 0
+            } : undefined
+          }
+        }
+        return <WorkspaceSettingsTab {...settingsProps} />
       default:
         return <OverviewTab {...commonProps} />
     }
@@ -219,7 +254,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Workspace not found</h2>
-          <p className="text-gray-600">The workspace you're looking for doesn't exist or you don't have access.</p>
+          <p className="text-gray-600">The workspace you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.</p>
         </div>
       </div>
     )

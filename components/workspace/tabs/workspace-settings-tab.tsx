@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Globe, Lock, Bell, Trash2, Save, AlertTriangle, Users, BarChart3, Shield } from 'lucide-react'
+import { Settings, Globe, Lock, Bell, Save, AlertTriangle, Users, BarChart3, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,14 +11,72 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { DevelopmentNotice, INTEGRATIONS_NOTICE } from '@/components/ui/development-notice'
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface WorkspaceData {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  logoUrl: string | null
+  plan: string
+  createdAt: Date
+  ownerId: string
+  _count: {
+    prompts: number
+    members: number
+    categories: number
+  }
+}
+
+interface CategoryData {
+  id: string
+  name: string
+  color: string | null
+  icon: string | null
+}
+
+interface MemberData {
+  id: string
+  role: string
+  joinedAt: Date
+  user: {
+    id: string
+    username: string | null
+    fullName: string | null
+    email: string
+    avatarUrl: string | null
+  }
+}
+
+interface PromptData {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  isPublic: boolean
+  isTemplate: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface WorkspaceStats {
+  totalPrompts: number
+  totalMembers: number
+  totalCategories: number
+  publicPrompts: number
+}
+
 interface WorkspaceSettingsTabProps {
   workspaceSlug: string
   workspaceData: {
-    workspace: any
-    categories: any[]
-    members: any[]
-    prompts?: any[]
-    stats?: any
+    workspace: WorkspaceData
+    categories: CategoryData[]
+    members: MemberData[]
+    prompts?: PromptData[]
+    stats?: WorkspaceStats
   }
 }
 
@@ -150,7 +208,7 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
   
   const [workspaceName, setWorkspaceName] = useState(workspace.name || '')
   const [workspaceDescription, setWorkspaceDescription] = useState(workspace.description || '')
-  const [isPublic, setIsPublic] = useState(workspace.isPublic || false)
+  const [isPublic, setIsPublic] = useState(false)
   const [allowComments, setAllowComments] = useState(true)
   const [allowTemplates, setAllowTemplates] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -316,7 +374,7 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
       >
         <DevelopmentNotice 
           {...INTEGRATIONS_NOTICE}
-          className="mb-4"
+          className="mb-4 w-full"
         />
         
         {/* Preview of future integrations */}

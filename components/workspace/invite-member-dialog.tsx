@@ -214,16 +214,20 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
                     disabled={isSubmitting}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] py-2">
                       {roleOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{option.label}</span>
-                            <span className="text-sm text-muted-foreground">
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value}
+                          className="py-3 px-3"
+                        >
+                          <div className="flex flex-col gap-1 w-full">
+                            <span className="font-medium text-sm">{option.label}</span>
+                            <span className="text-xs text-muted-foreground leading-relaxed">
                               {option.description}
                             </span>
                           </div>

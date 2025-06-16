@@ -115,6 +115,41 @@ export async function updateUser(
 }
 
 /**
+ * Obtiene un usuario por email (para verificar existencia en invitaciones)
+ * @param email - Email del usuario
+ * @returns Usuario básico sin datos sensibles
+ */
+export async function getUserByEmail(email: string): Promise<Omit<User, 'authId'> | null> {
+  if (!email || typeof email !== 'string') {
+    throw new Error('Invalid email')
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        fullName: true,
+        avatarUrl: true,
+        bio: true,
+        emailVerified: true,
+        isActive: true,
+        lastActiveAt: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    })
+    
+    return user
+  } catch (error) {
+    console.error('Error fetching user by email:', error)
+    throw new Error('Failed to fetch user')
+  }
+}
+
+/**
  * Actualiza la última actividad del usuario
  * @param id - ID del usuario
  */

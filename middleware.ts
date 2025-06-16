@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request,
   })
 
@@ -45,9 +45,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/sign-in', request.url))
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages (but allow auth/confirm)
   if (user && (request.nextUrl.pathname.startsWith('/sign-in') || request.nextUrl.pathname.startsWith('/sign-up'))) {
     return NextResponse.redirect(new URL('/home', request.url))
+  }
+
+  // Allow auth confirmation routes for all users (authenticated or not)
+  if (request.nextUrl.pathname.startsWith('/auth/confirm') || 
+      request.nextUrl.pathname.startsWith('/auth/callback') ||
+      request.nextUrl.pathname.startsWith('/auth/auth-code-error')) {
+    return supabaseResponse
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

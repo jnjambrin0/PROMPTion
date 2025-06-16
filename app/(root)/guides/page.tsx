@@ -62,7 +62,7 @@ export default function GuidesPage() {
               Pro Tip
             </h3>
             <p className="text-sm text-blue-800">
-              Start with "Prompt Engineering 101" if you're new to prompting, 
+              Start with &quot;Prompt Engineering 101&quot; if you&apos;re new to prompting, 
               then progress through the guides based on your experience level.
             </p>
           </div>

@@ -19,7 +19,6 @@ import {
   User,
   RefreshCcw,
   Hash,
-  ArrowRight,
   Trash2,
   Copy,
   Share2
@@ -34,15 +33,62 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+interface WorkspaceData {
+  workspace: {
+    id: string
+    name: string
+    slug: string
+  }
+  categories: Array<{
+    id: string
+    name: string
+    color: string | null
+    icon: string | null
+  }>
+  members: Array<{
+    id: string
+    role: string
+    user: {
+      id: string
+      fullName: string | null
+      username: string | null
+    }
+  }>
+  prompts?: Array<{
+    id: string
+    slug: string
+    title: string
+    description: string | null
+    isPublic: boolean
+    isTemplate: boolean
+    createdAt: string | Date
+    updatedAt: string | Date
+    user: {
+      id: string
+      fullName: string | null
+      username: string | null
+      avatarUrl: string | null
+    }
+    category: {
+      id: string
+      name: string
+      color: string | null
+    } | null
+    _count: {
+      blocks: number
+    }
+  }>
+  stats?: {
+    totalPrompts: number
+    totalViews: number
+    templatesCount: number
+    publicPromptsCount: number
+  }
+}
+
 interface PromptsTabProps {
   workspaceSlug: string
-  workspaceData: {
-    workspace: any
-    categories: any[]
-    members: any[]
-    prompts?: any[]
-    stats?: any
-  }
+  workspaceData: WorkspaceData
 }
 
 interface TransformedPrompt {
@@ -52,6 +98,7 @@ interface TransformedPrompt {
   description: string
   category: string
   categoryId: string
+  categoryColor: string | null
   isPublic: boolean
   isTemplate: boolean
   blocks: number
@@ -62,11 +109,6 @@ interface TransformedPrompt {
   }
   updatedAt: Date
   createdAt: Date
-}
-
-interface FilterCategory {
-  id: string
-  name: string
 }
 
 // Server Component for better performance
@@ -117,54 +159,70 @@ function usePromptFilters(prompts: TransformedPrompt[], selectedCategory: string
 function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; workspaceSlug: string }) {
   const [isPending, startTransition] = useTransition()
 
-  const handleAction = useCallback((action: string) => {
+  const handleAction = (action: string) => {
     startTransition(() => {
-      console.log(`${action} prompt:`, prompt.id)
-      // TODO: Implement actual actions
-      switch (action) {
-        case 'edit':
-          window.location.href = `/${workspaceSlug}/${prompt.slug}/edit`
-          break
-        case 'duplicate':
-          // TODO: Implement duplicate action
-          break
-        case 'share':
-          // TODO: Implement share action
-          break
-        case 'delete':
-          // TODO: Implement delete confirmation dialog
-          break
-        default:
-          break
-      }
+      // Handle actions here
+      console.log(`Action: ${action} for prompt: ${prompt.id}`)
     })
-  }, [prompt.id, prompt.slug, workspaceSlug])
+  }
+
+  // Convert color name to hex value
+  const getColorHex = (colorName: string | null): string => {
+    if (!colorName) return '#6b7280' // default gray
+    
+    const colorMap: Record<string, string> = {
+      'gray': '#6b7280',
+      'blue': '#3b82f6', 
+      'green': '#22c55e',
+      'yellow': '#eab308',
+      'red': '#ef4444',
+      'purple': '#a855f7',
+      'pink': '#ec4899',
+      'indigo': '#6366f1'
+    }
+    
+    // If it's already a hex color, return it
+    if (colorName.startsWith('#')) return colorName
+    
+    // Otherwise, look up the color name
+    return colorMap[colorName.toLowerCase()] || '#6b7280'
+  }
 
   return (
-    <Card className="group hover:shadow-sm transition-all hover:border-border">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+    <Card className="group hover:shadow-sm transition-all hover:border-border h-full flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <CardTitle className="text-base line-clamp-1">{prompt.name}</CardTitle>
-                <div className="flex gap-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                <CardTitle className="text-sm sm:text-base line-clamp-1 order-1">{prompt.name}</CardTitle>
+                <div className="flex gap-1 order-2 sm:order-2">
                   {prompt.isTemplate && (
-                    <Badge variant="secondary" className="text-xs">
-                      Template
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs px-1.5 py-0.5"
+                      style={{ backgroundColor: '#dbeafe', color: '#1e40af' }}
+                    >
+                      <span className="hidden sm:inline">Template</span>
+                      <span className="sm:hidden">T</span>
                     </Badge>
                   )}
                   {prompt.isPublic && (
-                    <Badge variant="outline" className="text-xs">
-                      Public
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs px-1.5 py-0.5"
+                      style={{ backgroundColor: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }}
+                    >
+                      <span className="hidden sm:inline">Public</span>
+                      <span className="sm:hidden">P</span>
                     </Badge>
                   )}
                 </div>
               </div>
-              <CardDescription className="text-sm line-clamp-1">
+              <CardDescription className="text-xs sm:text-sm line-clamp-2 leading-relaxed h-8 sm:h-10">
                 {prompt.description}
               </CardDescription>
             </div>
@@ -172,13 +230,12 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
+              <Button 
+                variant="ghost" 
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                disabled={isPending}
+                className="h-6 w-6 sm:h-7 sm:w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -188,23 +245,33 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
                   View Prompt
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction('edit')}>
+              <DropdownMenuItem 
+                disabled={isPending}
+                onClick={() => handleAction('edit')}
+              >
                 <Edit3 className="h-4 w-4 mr-2" />
                 Edit Prompt
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction('duplicate')}>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                disabled={isPending}
+                onClick={() => handleAction('duplicate')}
+              >
                 <Copy className="h-4 w-4 mr-2" />
                 Duplicate
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleAction('share')}>
+              <DropdownMenuItem 
+                disabled={isPending}
+                onClick={() => handleAction('share')}
+              >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
+                disabled={isPending}
                 onClick={() => handleAction('delete')}
-                className="text-red-600 focus:text-red-600"
+                className="text-red-600"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
@@ -214,17 +281,29 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
         </div>
       </CardHeader>
         
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 flex-1 flex flex-col justify-between">
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between gap-2 text-sm">
             <div className="flex items-center gap-3 text-muted-foreground">
-              <span>{prompt.blocks} blocks</span>
+              <div className="flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                <span>{prompt.blocks} blocks</span>
+              </div>
               <div className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
-                {prompt.views} views
+                <span>{prompt.views} views</span>
               </div>
             </div>
-            <Badge variant="outline" className="text-xs">
+            <Badge 
+              variant="outline" 
+              className="text-xs px-2 py-1 font-medium shrink-0"
+              style={{ 
+                backgroundColor: `${getColorHex(prompt.categoryColor)}20`,
+                color: getColorHex(prompt.categoryColor),
+                borderColor: `${getColorHex(prompt.categoryColor)}60`,
+                fontWeight: '500'
+              }}
+            >
               {prompt.category}
             </Badge>
           </div>
@@ -232,30 +311,33 @@ function PromptCard({ prompt, workspaceSlug }: { prompt: TransformedPrompt; work
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(prompt.updatedAt, { addSuffix: true })}</span>
+            <span>•</span>
+            <User className="h-3 w-3" />
+            <span className="truncate">{prompt.author.name}</span>
           </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="flex-1 h-7"
-              asChild
-            >
-              <Link href={`/${workspaceSlug}/${prompt.slug}`}>
-                <Eye className="h-3 w-3 mr-1" />
-                View
-              </Link>
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-7 px-2"
-              disabled={isPending}
-              onClick={() => handleAction('edit')}
-            >
-              <Edit3 className="h-3 w-3" />
-            </Button>
-          </div>
+        </div>
+        
+        <div className="flex gap-2 mt-3">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="flex-1 h-7 text-xs"
+            asChild
+          >
+            <Link href={`/${workspaceSlug}/${prompt.slug}`}>
+              <Eye className="h-3 w-3 mr-1" />
+              View
+            </Link>
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="h-7 px-2"
+            disabled={isPending}
+            onClick={() => handleAction('edit')}
+          >
+            <Edit3 className="h-3 w-3" />
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -312,7 +394,7 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  const { workspace, categories, prompts, stats } = workspaceData
+  const { categories, prompts, stats } = workspaceData
 
   // Memoized data transformations
   const transformedPrompts = useMemo(() => {
@@ -325,6 +407,7 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
       description: prompt.description || 'No description available',
       category: prompt.category?.name || 'Uncategorized',
       categoryId: prompt.category?.id || 'uncategorized',
+      categoryColor: prompt.category?.color || null,
       isPublic: prompt.isPublic,
       isTemplate: prompt.isTemplate,
       blocks: prompt._count?.blocks || 0,
@@ -371,16 +454,16 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Prompts</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Prompts</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage and organize all your prompts
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="self-start sm:self-auto">
           <Link href={`/${workspaceSlug}/prompts/new`}>
             <Plus className="h-4 w-4 mr-2" />
             New Prompt
@@ -389,7 +472,7 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
       </div>
 
       {/* Search and Filters */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -399,44 +482,46 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
             className="pl-9 h-9"
           />
         </div>
-        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-          <SelectTrigger className="w-[200px] h-9">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
+        <div className="flex gap-2">
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-full sm:w-[200px] h-9">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
             {filterCategories.map(category => (
-              <SelectItem key={category.id} value={category.id}>
+                <SelectItem key={category.id} value={category.id}>
                 {category.name}
-              </SelectItem>
+                </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="sm">
-          <Filter className="h-4 w-4" />
-        </Button>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" className="shrink-0">
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Compact Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <StatCard
           icon={MessageSquare}
           label="Prompts"
-          value={stats.totalPrompts}
+          value={stats?.totalPrompts || 0}
         />
         <StatCard
           icon={Eye}
           label="Total Views"
-          value={stats.totalViews}
+          value={stats?.totalViews || 0}
         />
         <StatCard
           icon={Filter}
           label="Templates"
-          value={stats.templatesCount}
+          value={stats?.templatesCount || 0}
         />
         <StatCard
           icon={User}
           label="Public"
-          value={stats.publicPromptsCount}
+          value={stats?.publicPromptsCount || 0}
         />
       </div>
 
@@ -449,7 +534,7 @@ export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabP
           workspaceSlug={workspaceSlug}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredPrompts.map((prompt) => (
             <PromptCard
               key={prompt.id}

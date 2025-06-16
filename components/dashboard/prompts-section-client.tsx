@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Plus, MessageSquare, FileText, Globe, Users, Clock } from 'lucide-react'
+import { Plus, MessageSquare, FileText, Globe, Users, Clock } from 'lucide-react'
 import { PromptViewSwitcher } from './prompt-view-switcher'
 import { PromptFilters } from './prompt-filters'
-import { PromptsSkeleton } from './prompts-skeleton'
 import { formatDistanceToNow } from '@/lib/utils'
 
 interface Prompt {
@@ -45,62 +44,63 @@ interface PromptsSectionClientProps {
 
 // Enhanced Prompt Card Component
 const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => (
-    <Link
+  <Link
     href={`/${prompt.workspace.slug}/${prompt.slug}`}
-    className="group block bg-white rounded-lg border border-neutral-200 p-4 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
-    >
-    <div className="space-y-3">
+    className="group block bg-white rounded-lg border border-neutral-200 p-3 sm:p-4 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
+  >
+    <div className="space-y-2 sm:space-y-3">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-neutral-900 line-clamp-2 group-hover:text-neutral-700">
+          <h3 className="font-medium text-neutral-900 line-clamp-2 group-hover:text-neutral-700 text-sm sm:text-base">
             {prompt.title}
           </h3>
           {prompt.description && (
-            <p className="text-sm text-neutral-600 mt-1 line-clamp-2">
+            <p className="text-xs sm:text-sm text-neutral-600 mt-1 line-clamp-2">
               {prompt.description}
             </p>
           )}
         </div>
         
-        {/* Status badges */}
-        <div className="flex items-center gap-1 ml-3 shrink-0">
-            {prompt.isTemplate && (
-            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+        {/* Status badges - Stack on mobile */}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
+          {prompt.isTemplate && (
+            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded-md">
               <FileText className="h-3 w-3" />
-                Template
+              <span className="hidden sm:inline">Template</span>
             </div>
-            )}
-            {prompt.isPublic && (
-            <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-md">
+          )}
+          {prompt.isPublic && (
+            <div className="flex items-center gap-1 text-xs text-green-600 border border-green-600 bg-green-50 px-1.5 sm:px-2 py-0.5 rounded-md">
               <Globe className="h-3 w-3" />
-                Public
+              <span className="hidden sm:inline">Public</span>
             </div>
-            )}
+          )}
         </div>
       </div>
 
-      {/* Meta info */}
-      <div className="flex items-center justify-between text-xs text-neutral-500">
-        <div className="flex items-center gap-4">
+      {/* Meta info - Responsive layout */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-neutral-500">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-1">
             <div className="h-4 w-4 rounded bg-neutral-200 flex items-center justify-center">
               <span className="text-xs font-medium text-neutral-600">
                 {prompt.workspace.name.charAt(0).toUpperCase()}
-          </span>
+              </span>
             </div>
-            <span className="truncate">{prompt.workspace.name}</span>
+            <span className="truncate max-w-[100px] sm:max-w-none">{prompt.workspace.name}</span>
           </div>
           
           <div className="flex items-center gap-1">
             <MessageSquare className="h-3 w-3" />
-            <span>{prompt._count.blocks} blocks</span>
+            <span>{prompt._count?.blocks || 0}</span>
+            <span className="hidden sm:inline">blocks</span>
           </div>
         </div>
         
         <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-          <span>{formatDistanceToNow(prompt.updatedAt)} ago</span>
+          <Clock className="h-3 w-3" />
+          <span className="truncate">{formatDistanceToNow(prompt.updatedAt)} ago</span>
         </div>
       </div>
 
@@ -109,25 +109,25 @@ const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => (
         <div className="h-5 w-5 rounded-full bg-neutral-200 flex items-center justify-center">
           <Users className="h-3 w-3 text-neutral-500" />
         </div>
-        <span className="text-xs text-neutral-600">
+        <span className="text-xs text-neutral-600 truncate">
           {prompt.user.fullName || prompt.user.username || 'Anonymous'}
-          </span>
-        </div>
+        </span>
       </div>
-    </Link>
-  )
+    </div>
+  </Link>
+)
 
 // Compact List Item Component  
 const CompactPromptItem = ({ prompt }: { prompt: Prompt }) => (
-    <Link
+  <Link
     href={`/${prompt.workspace.slug}/${prompt.slug}`}
-    className="group block bg-white rounded-lg border border-neutral-200 p-3 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
-    >
-    <div className="flex items-center gap-3">
+    className="group block bg-white rounded-lg border border-neutral-200 p-2 sm:p-3 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
+  >
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
       {/* Main content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-medium text-neutral-900 truncate group-hover:text-neutral-700">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <h3 className="font-medium text-neutral-900 truncate group-hover:text-neutral-700 text-sm sm:text-base">
             {prompt.title}
           </h3>
           
@@ -135,47 +135,49 @@ const CompactPromptItem = ({ prompt }: { prompt: Prompt }) => (
           <div className="flex items-center gap-1 shrink-0">
             {prompt.isTemplate && (
               <div className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                Template
+                <span className="hidden sm:inline">Template</span>
+                <span className="sm:hidden">T</span>
               </div>
             )}
             {prompt.isPublic && (
               <div className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
-                Public
+                <span className="hidden sm:inline">Public</span>
+                <span className="sm:hidden">P</span>
               </div>
             )}
           </div>
         </div>
         
-        {/* Meta row */}
-        <div className="flex items-center gap-4 text-xs text-neutral-500">
+        {/* Meta row - Responsive grid */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 sm:gap-4 text-xs text-neutral-500">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-neutral-200 flex items-center justify-center">
               <span className="text-xs font-medium text-neutral-600">
                 {prompt.workspace.name.charAt(0).toUpperCase()}
               </span>
             </div>
-            <span>{prompt.workspace.name}</span>
+            <span className="truncate">{prompt.workspace.name}</span>
           </div>
           
           <div className="flex items-center gap-1">
             <MessageSquare className="h-3 w-3" />
-            <span>{prompt._count.blocks}</span>
+            <span>{prompt._count?.blocks || 0}</span>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 col-span-2 sm:col-span-1">
             <Users className="h-3 w-3" />
-            <span>{prompt.user.fullName || prompt.user.username || 'Anonymous'}</span>
-      </div>
+            <span className="truncate">{prompt.user.fullName || prompt.user.username || 'Anonymous'}</span>
+          </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 justify-end sm:justify-start">
             <Clock className="h-3 w-3" />
-            <span>{formatDistanceToNow(prompt.updatedAt)} ago</span>
+            <span className="truncate">{formatDistanceToNow(prompt.updatedAt)} ago</span>
           </div>
         </div>
       </div>
-      </div>
-    </Link>
-  )
+    </div>
+  </Link>
+)
 
 // Main Client Component - Optimized for instant navigation
 export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSectionClientProps) {
@@ -267,7 +269,7 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
 
     if (currentView === 'grid') {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredPrompts.map((prompt) => (
             <EnhancedPromptCard key={prompt.id} prompt={prompt} />
           ))}
@@ -276,7 +278,7 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1 sm:space-y-2">
         {filteredPrompts.map((prompt) => (
           <CompactPromptItem key={prompt.id} prompt={prompt} />
         ))}
@@ -287,12 +289,12 @@ export function PromptsSectionClient({ prompts, initialSearchParams }: PromptsSe
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
         <h2 className="text-lg font-medium text-neutral-900">
           All prompts ({filteredPrompts.length})
         </h2>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <PromptFilters 
             workspaces={workspaces}
             currentFilters={currentFilters}

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import prisma from '../prisma'
 import crypto from 'crypto'
-import { MemberRole, InvitationStatus } from '../types/members'
+import { MemberRole } from '../types/members'
 
 // ============================================================================
 // WORKSPACE MEMBERS MANAGEMENT
@@ -238,33 +239,42 @@ export async function createWorkspaceInvitation(
   permissions: string[] = []
 ) {
   if (!workspaceId || !email || !role || !invitedById) {
-    throw new Error('Missing required parameters')
+    throw new Error('Missing required parameters for invitation')
   }
 
   try {
-    // Verificar que el usuario no ya es miembro
+    // Verificar que el usuario que invita tiene permisos
+    const inviterRole = await getUserRole(workspaceId, invitedById)
+    if (!inviterRole) {
+      throw new Error('Inviter does not have access to this workspace')
+    }
+
+    // Normalizar email
+    const normalizedEmail = email.trim().toLowerCase()
+
+    // Verificar si el usuario ya es miembro
     const existingMember = await prisma.workspaceMember.findFirst({
       where: {
         workspaceId,
-        user: { email }
+        user: { email: normalizedEmail }
       }
     })
 
     if (existingMember) {
-      throw new Error('User is already a member of this workspace')
+      throw new Error('ALREADY_MEMBER')
     }
 
     // Verificar que no hay invitación pendiente
     const existingInvitation = await prisma.workspaceInvitation.findFirst({
       where: {
         workspaceId,
-        email,
+        email: normalizedEmail,
         status: 'PENDING'
       }
     })
 
     if (existingInvitation) {
-      throw new Error('User already has a pending invitation')
+      throw new Error('PENDING_INVITATION')
     }
 
     // Generar token seguro
@@ -358,7 +368,7 @@ export async function acceptWorkspaceInvitation(token: string, userId: string) {
           userId,
           workspaceId: invitation.workspaceId,
           role: invitation.role,
-          permissions: invitation.permissions
+          permissions: invitation.permissions as any
         }
       })
 
@@ -669,11 +679,11 @@ export async function removeMemberFromWorkspace(
 }
 
 /**
- * Obtiene la actividad de un miembro específico
+ * Obtiene la actividad de un miembro específico (BLINDADO CONTRA ACCESO NO AUTORIZADO)
  */
 export async function getMemberActivity(
   workspaceId: string,
-  memberId: string,
+  targetUserId: string, // Cambiado de memberId a targetUserId para mayor claridad
   requestingUserId: string,
   options: {
     page?: number
@@ -682,78 +692,148 @@ export async function getMemberActivity(
 ) {
   const { page = 1, limit = 20 } = options
 
-  if (!workspaceId || !memberId || !requestingUserId) {
+  if (!workspaceId || !targetUserId || !requestingUserId) {
     throw new Error('Invalid parameters')
   }
 
   try {
-    // Verificar acceso al workspace
-    const hasAccess = await hasWorkspaceAccess(workspaceId, requestingUserId)
-    if (!hasAccess) {
+    // =====================================================================
+    // VALIDACIÓN OPTIMIZADA DE SEGURIDAD (COMBINANDO QUERIES CRÍTICOS)
+    // =====================================================================
+    
+    // OPTIMIZACIÓN: Combinar validaciones en queries paralelos
+    const [workspaceAccess, targetMemberInfo, requestingUserRole] = await Promise.all([
+      // Verificar acceso al workspace (simplificado)
+      prisma.workspace.findFirst({
+        where: {
+          id: workspaceId,
+          isActive: true,
+          OR: [
+            { ownerId: requestingUserId },
+            { members: { some: { userId: requestingUserId } } }
+          ]
+        },
+        select: { id: true, ownerId: true }
+      }),
+      
+      // Obtener info del usuario objetivo (owner + miembro en paralelo)
+      Promise.all([
+        // Verificar si es owner
+        prisma.workspace.findFirst({
+          where: { id: workspaceId, ownerId: targetUserId },
+          select: {
+            ownerId: true,
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                username: true,
+                email: true
+              }
+            }
+          }
+        }),
+        // Verificar si es miembro
+        prisma.workspaceMember.findFirst({
+          where: { userId: targetUserId, workspaceId },
+          select: {
+            id: true,
+            userId: true,
+            role: true,
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                username: true,
+                email: true
+              }
+            }
+          }
+        })
+      ]),
+      
+      // Obtener rol del solicitante
+      getUserRole(workspaceId, requestingUserId)
+    ])
+
+    // Validar acceso al workspace
+    if (!workspaceAccess) {
       throw new Error('Access denied to workspace')
     }
 
-    // Obtener información del miembro
-    const member = await prisma.workspaceMember.findFirst({
-      where: {
-        id: memberId,
-        workspaceId
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            username: true
-          }
-        }
-      }
-    })
+    // Determinar información del usuario objetivo
+    const [ownerInfo, memberInfo] = targetMemberInfo
+    let finalMemberInfo
 
-    if (!member) {
-      throw new Error('Member not found')
+    if (ownerInfo && ownerInfo.ownerId === targetUserId) {
+      finalMemberInfo = {
+        id: `owner-${targetUserId}`,
+        userId: targetUserId,
+        role: 'OWNER',
+        user: ownerInfo.owner
+      }
+    } else if (memberInfo) {
+      finalMemberInfo = memberInfo
+    } else {
+      throw new Error('Target user is not a member of this workspace')
     }
 
-    // Obtener actividades
-    const activities = await prisma.activity.findMany({
-      where: {
-        userId: member.userId,
-        OR: [
-          { metadata: { path: ['workspaceId'], equals: workspaceId } },
-          { prompt: { workspaceId } }
-        ]
-      },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            username: true
-          }
-        },
-        prompt: {
-          select: {
-            id: true,
-            title: true,
-            slug: true
+    // Verificar permisos: solo OWNER y ADMIN pueden ver actividad de otros
+    if (targetUserId !== requestingUserId && !requestingUserRole) {
+      throw new Error('Unable to determine requesting user role')
+    }
+
+    if (targetUserId !== requestingUserId && !['OWNER', 'ADMIN'].includes(requestingUserRole!)) {
+      throw new Error('Insufficient permissions to view other member activity')
+    }
+
+    // =====================================================================
+    // OBTENER ACTIVIDADES DEL USUARIO ESPECÍFICO EN ESTE WORKSPACE
+    // =====================================================================
+
+    // =====================================================================
+    // QUERY OPTIMIZADO DE ACTIVIDADES (COMBINADO + PARALELO)
+    // =====================================================================
+
+    // OPTIMIZACIÓN: Combinar query principal + count en paralelo
+    const whereClause = {
+      userId: finalMemberInfo.userId, // Usar el userId del miembro verificado
+      OR: [
+        { metadata: { path: ['workspaceId'], equals: workspaceId } },
+        { prompt: { workspaceId } }
+      ]
+    }
+
+    const [activities, total] = await Promise.all([
+      // Query principal de actividades
+      prisma.activity.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              username: true
+            }
+          },
+          prompt: {
+            select: {
+              id: true,
+              title: true,
+              slug: true
+            }
           }
         }
-      }
-    })
-
-    // Contar total
-    const total = await prisma.activity.count({
-      where: {
-        userId: member.userId,
-        OR: [
-          { metadata: { path: ['workspaceId'], equals: workspaceId } },
-          { prompt: { workspaceId } }
-        ]
-      }
-    })
+      }),
+      
+      // Count en paralelo
+      prisma.activity.count({
+        where: whereClause
+      })
+    ])
 
     return {
       activities,

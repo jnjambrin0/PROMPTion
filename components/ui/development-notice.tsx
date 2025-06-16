@@ -1,9 +1,10 @@
 'use client'
 
 import React from 'react'
-import { AlertTriangle, Construction, Code, Clock } from 'lucide-react'
+import { AlertTriangle, Construction, Clock } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface DevelopmentNoticeProps {
   title?: string
@@ -18,7 +19,7 @@ export function DevelopmentNotice({
   description = "This feature is currently being developed and will be available soon.",
   type = 'development',
   estimatedDate,
-  className = ""
+  className
 }: DevelopmentNoticeProps) {
   const getConfig = () => {
     switch (type) {
@@ -27,21 +28,21 @@ export function DevelopmentNotice({
           icon: Clock,
           badge: 'Coming Soon',
           badgeVariant: 'secondary' as const,
-          alertClass: 'border-blue-200 bg-blue-50/50'
+          alertClass: 'border-blue-200 bg-blue-50/30 dark:bg-blue-950/20 dark:border-blue-800'
         }
       case 'maintenance':
         return {
           icon: AlertTriangle,
           badge: 'Maintenance',
           badgeVariant: 'destructive' as const,
-          alertClass: 'border-orange-200 bg-orange-50/50'
+          alertClass: 'border-orange-200 bg-orange-50/30 dark:bg-orange-950/20 dark:border-orange-800'
         }
       default: // development
         return {
           icon: Construction,
           badge: 'In Development',
           badgeVariant: 'outline' as const,
-          alertClass: 'border-gray-200 bg-gray-50/50'
+          alertClass: 'border-gray-200 bg-gray-50/30 dark:bg-gray-950/20 dark:border-gray-700'
         }
     }
   }
@@ -50,35 +51,39 @@ export function DevelopmentNotice({
   const Icon = config.icon
 
   return (
-    <Alert className={`${config.alertClass} ${className}`}>
-      <div className="flex items-start gap-3">
-        <Icon className="h-4 w-4 mt-0.5 text-muted-foreground" />
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
-            <AlertTitle className="text-sm font-medium">{title}</AlertTitle>
-            <Badge variant={config.badgeVariant} className="text-xs">
-              {config.badge}
-            </Badge>
+    <div className={cn("w-full", className)}>
+      <Alert className={cn("border-l-4 w-full", config.alertClass)}>
+        <div className="flex items-start gap-3 w-full">
+          <Icon className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
+          <div className="flex-1 min-w-0 space-y-2 w-full">
+            <div className="flex items-start justify-between gap-2 w-full">
+              <AlertTitle className="text-sm font-medium text-foreground leading-5 flex-1">
+                {title}
+              </AlertTitle>
+              <Badge variant={config.badgeVariant} className="text-xs shrink-0">
+                {config.badge}
+              </Badge>
+            </div>
+            <AlertDescription className="text-sm text-muted-foreground leading-relaxed w-full">
+              {description}
+              {estimatedDate && (
+                <div className="mt-2 text-xs font-medium text-foreground">
+                  <span className="text-muted-foreground">Estimated availability:</span> {estimatedDate}
+                </div>
+              )}
+            </AlertDescription>
           </div>
-          <AlertDescription className="text-sm text-muted-foreground">
-            {description}
-            {estimatedDate && (
-              <span className="block mt-1 text-xs">
-                <strong>Estimated availability:</strong> {estimatedDate}
-              </span>
-            )}
-          </AlertDescription>
         </div>
-      </div>
-    </Alert>
+      </Alert>
+    </div>
   )
 }
 
 // Predefined notices for common cases
 export const INTEGRATIONS_NOTICE = {
   title: "Integrations Coming Soon",
-  description: "We're working on powerful integrations with popular tools like Slack, GitHub, and more. Stay tuned for updates!",
-  type: 'development' as const,
+  description: "We're working on powerful integrations with popular tools like Slack, GitHub, Notion, and more. Stay tuned for updates!",
+  type: 'coming-soon' as const,
   estimatedDate: "Q2 2024"
 }
 
@@ -93,5 +98,5 @@ export const ANALYTICS_NOTICE = {
   title: "Advanced Analytics Coming Soon",
   description: "Detailed usage analytics and insights are being developed to help you understand your prompt performance.",
   type: 'coming-soon' as const,
-  estimatedDate: "Q2 2024"
+  estimatedDate: "Q3 2024"
 } 

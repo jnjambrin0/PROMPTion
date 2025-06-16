@@ -3,11 +3,19 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
-import { getPromptById } from '@/lib/db/prompts'
 import { getWorkspaceCategories } from '@/lib/db/categories'
 import prisma from '@/lib/prisma'
 
 // ==================== TYPES ====================
+
+interface ModelConfig {
+  temperature?: number
+  maxTokens?: number
+  topP?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
+  [key: string]: unknown // Para compatibilidad con Prisma JSON
+}
 
 export interface PromptSettingsData {
   // Basic Information
@@ -22,13 +30,7 @@ export interface PromptSettingsData {
   
   // AI Configuration
   aiModel: string | null
-  modelConfig: {
-    temperature?: number
-    maxTokens?: number
-    topP?: number
-    frequencyPenalty?: number
-    presencePenalty?: number
-  }
+  modelConfig: ModelConfig
   
   // Advanced Settings
   apiAccess: boolean
@@ -191,7 +193,7 @@ export async function getPromptSettingsAction(
       isTemplate: prompt.isTemplate,
       isPinned: prompt.isPinned,
       aiModel: prompt.aiModel,
-      modelConfig: (prompt.modelConfig as any) || {},
+      modelConfig: (prompt.modelConfig as ModelConfig) || {},
       apiAccess: false, // TODO: Add to schema if needed
       webhookUrl: null // TODO: Add to schema if needed
     }
@@ -315,7 +317,7 @@ export async function updatePromptSettingsAction(
         isTemplate: updates.isTemplate,
         isPinned: updates.isPinned,
         aiModel: updates.aiModel,
-        modelConfig: updates.modelConfig,
+        modelConfig: JSON.parse(JSON.stringify(updates.modelConfig)),
         updatedAt: new Date()
       }
     })
@@ -327,7 +329,7 @@ export async function updatePromptSettingsAction(
         description: `Updated prompt settings: ${updates.title || prompt.title}`,
         userId: user.id,
         promptId: promptId,
-        metadata: { settingsUpdated: updates }
+        metadata: JSON.parse(JSON.stringify({ settingsUpdated: updates }))
       }
     })
 

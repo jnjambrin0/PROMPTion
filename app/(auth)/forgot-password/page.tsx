@@ -24,14 +24,14 @@ export default function ForgotPasswordPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password`,
       })
 
       if (error) throw error
 
       setMessage('Check your email for the password reset link!')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
             Reset your password
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset your password.
           </p>
         </div>
 

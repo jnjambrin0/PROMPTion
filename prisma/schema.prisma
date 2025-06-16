@@ -620,6 +620,8 @@ model Activity {
   @@index([userId])
   @@index([promptId])
   @@index([createdAt])
+  @@index([userId, createdAt])     // OPTIMIZACIÓN: Para queries ordenadas por usuario
+  @@index([promptId, createdAt])   // OPTIMIZACIÓN: Para filtros por workspace
   @@map("activities")
 }
 
