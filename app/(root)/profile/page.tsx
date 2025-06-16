@@ -20,15 +20,6 @@ export default async function ProfilePage() {
 
   // Calculate user stats (in a real app, these could come from separate DB queries)
   // TODO: Implement actual stats calculation with database queries
-  const userStats = {
-    promptsCreated: 0, // TODO: Count user's prompts
-    templatesShared: 0, // TODO: Count public prompts
-    workspacesJoined: 0, // TODO: Count workspaces user is member of
-    joinedDate: user.createdAt.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long' 
-    })
-  }
 
   return (
     <ProfileClient 

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ArrowLeft, Bell } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
@@ -44,7 +43,7 @@ export default async function NotificationsPage() {
     redirect('/sign-in')
   }
 
-  const { user, authUser, notifications, pagination } = data
+  const { user, notifications, pagination } = data
 
   // Calculate summary stats
   const totalNotifications = pagination.total

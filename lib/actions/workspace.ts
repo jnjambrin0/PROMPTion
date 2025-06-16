@@ -32,12 +32,12 @@ interface WorkspaceDataResult {
   success: boolean
   error?: string
   data?: {
-    workspace: any
-    categories: any[]
-    members: any[]
-    prompts: any[]
+    workspace: Record<string, unknown>
+    categories: Record<string, unknown>[]
+    members: Record<string, unknown>[]
+    prompts: Record<string, unknown>[]
     stats: WorkspaceStats
-    currentUser: any
+    currentUser: Record<string, unknown>
   }
 }
 
@@ -178,7 +178,7 @@ function generateSlugFromName(name: string): string {
  * Calculate workspace statistics efficiently
  * No mock data, pure calculation from real data
  */
-function calculateWorkspaceStats(prompts: any[], members: any[], categories: any[]): WorkspaceStats {
+function calculateWorkspaceStats(prompts: Record<string, unknown>[], members: Record<string, unknown>[], categories: Record<string, unknown>[]): WorkspaceStats {
   const now = new Date()
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 

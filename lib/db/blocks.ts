@@ -1,5 +1,5 @@
 import prisma from '../prisma'
-import type { Block, BlockType } from '../generated/prisma'
+import type { BlockType } from '../generated/prisma'
 
 /**
  * Obtiene bloques de un prompt con verificación de acceso
@@ -86,7 +86,7 @@ export async function createBlock(
   data: {
     promptId: string
     type: BlockType
-    content: any
+    content: Record<string, unknown>
     position?: number
     parentId?: string
     indentLevel?: number
@@ -193,7 +193,7 @@ export async function updateBlock(
   id: string,
   data: {
     type?: BlockType
-    content?: any
+    content?: Record<string, unknown>
     position?: number
     indentLevel?: number
   },

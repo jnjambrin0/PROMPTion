@@ -8,10 +8,10 @@ export function QuickStartFooter() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
-          What's Next?
+          What&apos;s Next?
         </CardTitle>
         <CardDescription>
-          Once you've completed the basics, here are some advanced features to explore
+          Once you&apos;ve completed the basics, here are some advanced features to explore
         </CardDescription>
       </CardHeader>
       <CardContent>

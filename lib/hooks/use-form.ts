@@ -4,14 +4,14 @@ import type { z } from 'zod'
 
 // ==================== TYPES ====================
 
-interface UseFormOptions<T extends Record<string, any>> {
+interface UseFormOptions<T extends Record<string, unknown>> {
   initialData: T
   schema?: z.ZodSchema<T>
   onSubmit: (data: T) => Promise<{ success: boolean; error?: string; redirectTo?: string }>
   generateSlug?: boolean
   slugField?: keyof T
   titleField?: keyof T
-  onSuccess?: (result: any) => void
+  onSuccess?: (result: Record<string, unknown>) => void
   onError?: (error: string) => void
 }
 
@@ -44,7 +44,7 @@ export function getFieldError<T>(errors: z.ZodError | null, field: keyof T): str
 
 // ==================== MAIN HOOK ====================
 
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, unknown>>({
   initialData,
   schema,
   onSubmit,
@@ -75,7 +75,7 @@ export function useForm<T extends Record<string, any>>({
         data: { ...prev.data, [slugField]: generatedSlug }
       }))
     }
-  }, [state.data[titleField], state.isCustomSlug, shouldGenerateSlug, slugField, titleField])
+  }, [state.data, state.isCustomSlug, shouldGenerateSlug, slugField, titleField])
 
   // Validate form whenever data changes (after interaction)
   useEffect(() => {
@@ -102,7 +102,7 @@ export function useForm<T extends Record<string, any>>({
 
   // ==================== ACTIONS ====================
 
-  const updateField = useCallback((field: keyof T, value: any) => {
+  const updateField = useCallback((field: keyof T, value: unknown) => {
     setState(prev => ({
       ...prev,
       data: { ...prev.data, [field]: value },

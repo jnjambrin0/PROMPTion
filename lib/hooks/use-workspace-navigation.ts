@@ -10,7 +10,7 @@ interface UseWorkspaceNavigationProps {
 }
 
 export function useWorkspaceNavigation({ 
-  workspaceSlug, 
+ 
   onTabChange 
 }: UseWorkspaceNavigationProps) {
   

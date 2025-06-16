@@ -9,7 +9,7 @@ import prisma from '@/lib/prisma'
 
 // ==================== INTERFACES ====================
 
-interface ActionResult<T = any> {
+interface ActionResult<T = unknown> {
   success: boolean
   data?: T
   error?: string
@@ -25,7 +25,7 @@ interface TemplateStats {
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: any; authUser: any; error?: never }
+  | { user: Record<string, unknown>; authUser: Record<string, unknown>; error?: never }
   | { user?: never; authUser?: never; error: string }
 > {
   try {
@@ -93,7 +93,7 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
     }
 
     // Lógica de negocio
-    const result = await useTemplate(templateId, auth.user.id)
+    const result = await getTemplateById(templateId, auth.user.id)
 
     if (!result.success) {
       return {
@@ -142,7 +142,7 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
 
 // ==================== GET TEMPLATE DETAILS ACTION ====================
 
-export async function getTemplateDetailsAction(templateId: string): Promise<ActionResult<any>> {
+export async function getTemplateDetailsAction(templateId: string): Promise<ActionResult<Record<string, unknown>>> {
   try {
     if (!templateId || typeof templateId !== 'string') {
       return {
@@ -223,7 +223,7 @@ export async function getPublicTemplatesAction(input: {
   page?: number
   limit?: number
 }): Promise<ActionResult<{
-  templates: any[]
+  templates: Record<string, unknown>[]
   totalCount: number
   hasMore: boolean
 }>> {
@@ -252,7 +252,7 @@ export async function getPublicTemplatesAction(input: {
   }
 }
 
-export async function getFeaturedTemplatesAction(): Promise<ActionResult<any[]>> {
+export async function getFeaturedTemplatesAction(): Promise<ActionResult<Record<string, unknown>[]>> {
   try {
     const templates = await getFeaturedTemplates()
 
@@ -272,7 +272,7 @@ export async function getFeaturedTemplatesAction(): Promise<ActionResult<any[]>>
 
 // ==================== TEMPLATE DETAIL ACTION ====================
 
-export async function getTemplateByIdAction(templateId: string): Promise<ActionResult<any>> {
+export async function getTemplateByIdAction(templateId: string): Promise<ActionResult<Record<string, unknown>>> {
   try {
     if (!templateId || typeof templateId !== 'string') {
       return {

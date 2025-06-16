@@ -31,7 +31,7 @@ export function CreateWorkspaceForm() {
     description: ''
   })
   const [errors, setErrors] = useState<{[key: string]: string}>({})
-  const [isSlugValid, setIsSlugValid] = useState(true)
+  const [, setIsSlugValid] = useState(true)
   const [isCustomSlug, setIsCustomSlug] = useState(false)
 
   // Auto-generate slug from name unless user has customized it

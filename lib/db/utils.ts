@@ -147,7 +147,7 @@ export async function generateUniqueSlug(
  * @param error - Error de Prisma
  * @returns Mensaje de error seguro para el usuario
  */
-export function formatDatabaseError(error: any): string {
+export function formatDatabaseError(error: Record<string, unknown>): string {
   if (error?.code === 'P2002') {
     return 'A record with this information already exists'
   }
@@ -167,7 +167,7 @@ export function formatDatabaseError(error: any): string {
 /**
  * Estructura de respuesta estándar para APIs
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string

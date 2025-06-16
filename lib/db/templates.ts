@@ -166,7 +166,7 @@ export async function getPublicTemplates(filters: import('../types/templates').T
   const skip = (page - 1) * limit
 
   // Construir condiciones WHERE optimizadas
-  const where: any = {
+  const where: Record<string, unknown> = {
     isTemplate: true,
     isPublic: true
   }
@@ -184,7 +184,7 @@ export async function getPublicTemplates(filters: import('../types/templates').T
   }
 
   // Definir ordenamiento optimizado
-  const orderBy: any = 
+  const orderBy: Record<string, unknown> = 
     sort === 'recent' ? { createdAt: 'desc' }
     : sort === 'favorites' ? { favorites: { _count: 'desc' } }
     : sort === 'alphabetical' ? { title: 'asc' }

@@ -204,7 +204,7 @@ export async function createNotification(data: {
   workspaceId?: string
   promptId?: string
   actionUrl?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }) {
   const {
     type,

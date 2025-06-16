@@ -5,7 +5,6 @@ import {
   Plus, 
   Search, 
   Zap,
-  Calendar,
   Settings,
   Bell,
   Archive,

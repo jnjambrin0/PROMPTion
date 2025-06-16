@@ -7,13 +7,12 @@ import { ArrowLeft, Save, Loader2, Settings, ChevronDown, ChevronUp, Wand2 } fro
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { getPromptPageDataAction, updatePromptAction } from '@/lib/actions/prompt'
 import { SimpleEditor, PreviewPanel } from '@/components/prompt-editor'
-import { PreviewPopup } from '@/components/prompt-editor/preview-popup'
 import { AdvancedEditor } from '@/components/prompt-editor/advanced-editor'
 
 // Simplified types for basic editing
@@ -52,8 +51,8 @@ interface PromptEditClientProps {
   workspaceSlug: string
   promptSlug: string
   userId: string
-  initialPrompt?: any
-  initialWorkspace?: any
+  initialPrompt?: Record<string, unknown>
+  initialWorkspace?: Record<string, unknown>
 }
 
 interface LoadingState {
@@ -64,9 +63,7 @@ interface LoadingState {
 export function PromptEditClient({ 
   workspaceSlug, 
   promptSlug, 
-  userId,
-  initialPrompt,
-  initialWorkspace
+  userId
 }: PromptEditClientProps) {
   const router = useRouter()
   
@@ -89,7 +86,7 @@ export function PromptEditClient({
   const [showPreview, setShowPreview] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
-  const [promptData, setPromptData] = useState<any>(null)
+  const [promptData, setPromptData] = useState<Record<string, unknown> | null>(null)
 
   // Check for unsaved changes
   const hasChanges = useMemo(() => {

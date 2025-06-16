@@ -165,7 +165,7 @@ export interface MemberActivity {
   id: string
   type: string
   description: string
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   createdAt: Date
   user: {
     id: string

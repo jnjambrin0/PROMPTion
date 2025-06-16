@@ -65,8 +65,8 @@ export default function ResetPasswordPage() {
       if (error) throw error
 
       router.push('/home')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An unexpected error occurred")
     } finally {
       setLoading(false)
     }

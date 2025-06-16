@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Clock, Users, Shield, GitBranch, MessageSquare, ArrowRight, Target, CheckCircle, AlertTriangle, Star, Zap, Settings, Lock, TrendingUp, Beaker, GitMerge, Building, BookCopy, LineChart, CircleDollarSign, Calendar } from 'lucide-react'
+import { ArrowLeft, Clock, Users, Shield, GitBranch, ArrowRight, Target, CheckCircle, Star, Settings, Beaker, GitMerge, Building, BookCopy, LineChart, CircleDollarSign } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function TeamCollaborationPage() {
@@ -53,7 +53,7 @@ export default function TeamCollaborationPage() {
           <div className="flex items-start gap-3">
             <Target className="h-5 w-5 mt-0.5" style={{ color: '#1d4ed8' }} />
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Collaboration Capabilities You'll Enable</h3>
+              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Collaboration Capabilities You&apos;ll Enable</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm" style={{ color: '#1e3a8a' }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -264,7 +264,7 @@ export default function TeamCollaborationPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#16a34a' }}></div>
-                      <span>Weekly "Prompt Showcase" meetings.</span>
+                      <span>Weekly &quot;Prompt Showcase&quot; meetings.</span>
                     </div>
                   </div>
                 </div>
@@ -278,7 +278,7 @@ export default function TeamCollaborationPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#16a34a' }}></div>
-                      <span>Maintain a "Prompt Cookbook" with best practices.</span>
+                      <span>Maintain a &quot;Prompt Cookbook&quot; with best practices.</span>
                     </div>
                   </div>
                 </div>
@@ -536,7 +536,7 @@ export default function TeamCollaborationPage() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Implementation Roadmap</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              A practical 90-day plan to transform your organization's prompt engineering capabilities 
+              A practical 90-day plan to transform your organization&apos;s prompt engineering capabilities 
               from individual expertise to enterprise-scale collaborative advantage.
             </p>
           </div>
@@ -622,8 +622,8 @@ export default function TeamCollaborationPage() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Complete Your Journey</h4>
                 <p className="text-gray-600 mb-6">
-                  You've mastered the complete prompt engineering ecosystem! From individual skills to enterprise collaboration, 
-                  you're ready to transform how your organization leverages AI.
+                  You&apos;ve mastered the complete prompt engineering ecosystem! From individual skills to enterprise collaboration, 
+                  you&apos;re ready to transform how your organization leverages AI.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Link 

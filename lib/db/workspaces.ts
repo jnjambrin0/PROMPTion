@@ -1,5 +1,5 @@
 import prisma from '../prisma'
-import type { Workspace, MemberRole } from '../generated/prisma'
+import type { MemberRole } from '../generated/prisma'
 
 /**
  * Obtiene un workspace por ID con verificación de acceso

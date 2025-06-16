@@ -1,5 +1,5 @@
 import prisma from '../prisma'
-import type { Prompt, BlockType } from '../generated/prisma'
+// import type { BlockType } from '../generated/prisma'
 
 /**
  * Obtiene un prompt por ID con verificación de acceso
@@ -251,7 +251,7 @@ export async function getWorkspacePrompts(
       throw new Error('Access denied to workspace')
     }
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       workspaceId,
       deletedAt: null
     }

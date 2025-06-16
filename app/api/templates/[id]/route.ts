@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { getTemplateById } from '@/lib/db/templates'
 import { z } from 'zod'
 

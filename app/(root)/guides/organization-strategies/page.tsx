@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Clock, FolderTree, Tag, Search, Star, ArrowRight, Target, CheckCircle, Lightbulb, Users, Workflow, Database, BarChart3, Shield } from 'lucide-react'
+import { ArrowLeft, Clock, FolderTree, Tag, Star, ArrowRight, Target, CheckCircle, Lightbulb, Users, Workflow, Database, BarChart3, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function OrganizationStrategiesPage() {
@@ -53,7 +53,7 @@ export default function OrganizationStrategiesPage() {
           <div className="flex items-start gap-3">
             <Target className="h-5 w-5 mt-0.5" style={{ color: '#1d4ed8' }} />
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Organization Mastery You'll Gain</h3>
+              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Organization Mastery You&apos;ll Gain</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm" style={{ color: '#1e3a8a' }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -92,8 +92,8 @@ export default function OrganizationStrategiesPage() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Building Your Prompt Architecture</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              A well-organized prompt library isn't just about folders and tags—it's about creating a system that scales 
-              with your team's complexity while remaining intuitive and efficient for daily use.
+              A well-organized prompt library isn&apos;t just about folders and tags—it&apos;s about creating a system that scales 
+              with your team&apos;s complexity while remaining intuitive and efficient for daily use.
             </p>
           </div>
 
@@ -349,7 +349,7 @@ export default function OrganizationStrategiesPage() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Workflow Automation & Integration</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              The most effective prompt libraries aren't just storage—they're integrated into daily workflows, 
+              The most effective prompt libraries aren&apos;t just storage—they&apos;re integrated into daily workflows, 
               automatically evolving and improving based on usage patterns and outcomes.
             </p>
           </div>
@@ -826,7 +826,7 @@ export default function OrganizationStrategiesPage() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Your Organization Journey</h4>
                 <p className="text-gray-600 mb-6">
-                  You've learned enterprise-grade organization strategies! Now master team collaboration to scale your success across your entire organization.
+                  You&apos;ve learned enterprise-grade organization strategies! Now master team collaboration to scale your success across your entire organization.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Link 

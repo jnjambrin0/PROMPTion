@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, ArrowRight, Lightbulb, Users, Star, Target } from 'lucide-react'
+import { ArrowRight, Lightbulb, Users, Star, Target } from 'lucide-react'
 import Link from 'next/link'
 
 export default function TemplateGuidePage() {
@@ -144,9 +144,9 @@ export default function TemplateGuidePage() {
               <div className="bg-green-50 rounded-lg p-4">
                 <p className="text-sm text-green-800 font-medium mb-2">Good title examples:</p>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>• "Blog Post Writer - SEO Optimized Content"</li>
-                  <li>• "Email Campaign Generator - High Converting"</li>
-                  <li>• "Code Review Assistant - Security Focused"</li>
+                  <li>• &quot;Blog Post Writer - SEO Optimized Content&quot;</li>
+                  <li>• &quot;Email Campaign Generator - High Converting&quot;</li>
+                  <li>• &quot;Code Review Assistant - Security Focused&quot;</li>
                 </ul>
               </div>
             </div>

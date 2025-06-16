@@ -52,7 +52,7 @@ export function useNotifications(): UseNotificationsResult {
       }
       
       // Transform Server Action data to component format
-      const transformedNotifications: Notification[] = result.data!.notifications.map((notif: any) => ({
+      const transformedNotifications: Notification[] = result.data!.notifications.map((notif: Record<string, unknown>) => ({
         id: notif.id,
         type: getNotificationTypeFromDB(notif.type),
         title: notif.title,

@@ -1,5 +1,4 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
 import { TemplatesHeader } from '@/components/templates/templates-header'
 import { TemplatesStats } from '@/components/templates/templates-stats'
 import { FeaturedTemplates } from '@/components/templates/featured-templates'
@@ -30,7 +29,7 @@ interface PageProps {
 export default async function TemplatesPage({ searchParams }: PageProps) {
   // Get authenticated user usando el cliente correcto
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
   
   // Await searchParams antes de usar sus propiedades
   const params = await searchParams

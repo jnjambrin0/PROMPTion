@@ -23,9 +23,9 @@ interface PromptData {
   isTemplate: boolean
   isPublic: boolean
   isPinned: boolean
-  blocks?: any[]
-  variables?: any[]
-  modelConfig?: any
+  blocks?: Record<string, unknown>[]
+  variables?: Record<string, unknown>[]
+  modelConfig?: Record<string, unknown>
   userId: string
   createdAt: string
   updatedAt: string
@@ -81,7 +81,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
             {message}
           </h3>
           <p className="text-gray-600 mb-6">
-            We couldn't load this prompt. Please try again.
+            We couldn&apos;t load this prompt. Please try again.
           </p>
           <div className="flex justify-center gap-3">
             <Button onClick={onRetry} variant="outline">
@@ -113,7 +113,7 @@ function NotFoundState({ workspaceSlug }: { workspaceSlug: string }) {
             Prompt not found
           </h3>
           <p className="text-gray-600 mb-6">
-            This prompt doesn't exist or you don't have access to it.
+            This prompt doesn&apos;t exist or you don&apos;t have access to it.
           </p>
           <div className="flex justify-center gap-3">
             <Link href={`/${workspaceSlug}`}>
@@ -267,7 +267,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
               ? "Anyone with this link can view the prompt" 
               : "Only workspace members can view this prompt",
           })
-        } catch (clipboardError) {
+        } catch {
           // Fallback for browsers that don't support clipboard API
           toast.success("Share link generated", {
             description: `Link: ${result.shareUrl}`,
@@ -524,7 +524,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
                 title: promptData.title,
                 description: promptData.description,
                 blocks: promptData.blocks || [],
-                variables: Array.isArray(promptData.variables) ? promptData.variables as any[] : [],
+                variables: Array.isArray(promptData.variables) ? promptData.variables as Record<string, unknown>[] : [],
                 modelConfig: promptData.modelConfig
               }} />
             </CardContent>
@@ -544,7 +544,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {(promptData.variables as any[]).map((variable: any, index: number) => (
+                  {(promptData.variables as Record<string, unknown>[]).map((variable: Record<string, unknown>, index: number) => (
                     <div key={index} className="p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-sm">
@@ -579,7 +579,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
-                  {Object.entries(promptData.modelConfig as any).map(([key, value]) => (
+                  {Object.entries(promptData.modelConfig as Record<string, unknown>).map(([key, value]) => (
                     <div key={key} className="flex justify-between">
                       <span className="text-gray-600 capitalize">
                         {key.replace(/([A-Z])/g, ' $1').toLowerCase()}:

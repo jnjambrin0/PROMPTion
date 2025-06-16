@@ -14,7 +14,7 @@ interface FavoriteResult {
  * Toggle favorite status for a prompt
  */
 export const toggleFavoritePromptAction = withAuth(async (
-  user: any,
+  user: Record<string, unknown>,
   promptId: string
 ): Promise<FavoriteResult> => {
   try {
@@ -75,7 +75,7 @@ export const toggleFavoritePromptAction = withAuth(async (
  * Check if a prompt is favorited by the user
  */
 export const checkPromptFavoriteAction = withAuth(async (
-  user: any,
+  user: Record<string, unknown>,
   promptId: string
 ): Promise<FavoriteResult> => {
   try {

@@ -12,7 +12,6 @@ import {
   SlugField 
 } from '@/components/ui/base-form'
 import { FieldGroup } from '@/components/ui/field-group'
-import { type CreateTemplateInput } from '@/lib/validation-schemas'
 import { createTemplateAction, getWorkspacesAction, getTemplateCategoriesAction } from '@/lib/actions/data'
 import { toast } from 'sonner'
 

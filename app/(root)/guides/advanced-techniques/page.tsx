@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Clock, Brain, Layers, Zap, CheckCircle, Code, Users, ArrowRight, Target, Lightbulb, AlertTriangle, Star, Play } from 'lucide-react'
+import { ArrowLeft, Clock, Brain, Layers, CheckCircle, ArrowRight, Target, Lightbulb, AlertTriangle, Star, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function AdvancedTechniquesPage() {
@@ -56,7 +56,7 @@ export default function AdvancedTechniquesPage() {
               <h3 className="font-semibold mb-2" style={{ color: '#92400e' }}>Prerequisites</h3>
               <p className="text-sm mb-3" style={{ color: '#a16207' }}>
                 This guide assumes solid understanding of basic prompting principles. 
-                If you're new to prompt engineering, start with our 
+                If you&apos;re new to prompt engineering, start with our 
                 <Link href="/guides/prompt-engineering-101" className="underline font-medium hover:text-yellow-800">
                   foundational guide
                 </Link> first.
@@ -76,7 +76,7 @@ export default function AdvancedTechniquesPage() {
           <div className="flex items-start gap-3">
             <Target className="h-5 w-5 mt-0.5" style={{ color: '#1d4ed8' }} />
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Advanced Skills You'll Master</h3>
+              <h3 className="font-semibold mb-3" style={{ color: '#1e40af' }}>Advanced Skills You&apos;ll Master</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm" style={{ color: '#1e3a8a' }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -125,7 +125,7 @@ export default function AdvancedTechniquesPage() {
             <h3 className="text-xl font-semibold text-gray-900">The Science Behind Chain-of-Thought</h3>
             <p className="text-gray-700 leading-relaxed">
               Research shows that when AI models are prompted to show their reasoning process, they activate different neural pathways 
-              that lead to more accurate and consistent outputs. The "thinking out loud" approach mirrors human problem-solving.
+              that lead to more accurate and consistent outputs. The &quot;thinking out loud&quot; approach mirrors human problem-solving.
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
@@ -138,10 +138,10 @@ export default function AdvancedTechniquesPage() {
                   className="p-4 rounded-lg font-mono text-sm mb-3"
                   style={{ backgroundColor: '#ffffff', color: '#374151' }}
                 >
-                  "What's 15% of 240 plus 30% of 180?"
+                  &quot;What&apos;s 15% of 240 plus 30% of 180?&quot;
                 </div>
                 <p className="text-sm" style={{ color: '#7f1d1d' }}>
-                  Result: Often incorrect or inconsistent answers like "90" without explanation.
+                  Result: Often incorrect or inconsistent answers like &quot;90&quot; without explanation.
                 </p>
               </div>
               
@@ -154,10 +154,10 @@ export default function AdvancedTechniquesPage() {
                   className="p-4 rounded-lg font-mono text-sm mb-3"
                   style={{ backgroundColor: '#ffffff', color: '#374151' }}
                 >
-                  "What's 15% of 240 plus 30% of 180? Let's work through this step by step."
+                  &quot;What&apos;s 15% of 240 plus 30% of 180? Let&apos;s work through this step by step.&quot;
                 </div>
                 <p className="text-sm" style={{ color: '#166534' }}>
-                  Result: Accurate calculation with clear reasoning: "15% of 240 = 36, 30% of 180 = 54, so 36 + 54 = 90"
+                  Result: Accurate calculation with clear reasoning: &quot;15% of 240 = 36, 30% of 180 = 54, so 36 + 54 = 90&quot;
                 </p>
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function AdvancedTechniquesPage() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Few-Shot Learning Mastery</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Few-shot learning leverages the AI's pattern recognition abilities by providing examples of the desired input-output relationship. 
+              Few-shot learning leverages the AI&apos;s pattern recognition abilities by providing examples of the desired input-output relationship. 
               When done correctly, this technique can achieve near-perfect task performance with just a few examples.
             </p>
           </div>
@@ -260,26 +260,26 @@ export default function AdvancedTechniquesPage() {
                 >
                   <div className="font-mono text-sm space-y-3">
                     <div>
-                      <span style={{ color: '#166534' }}>Email:</span> "Hi Sarah, just wanted to follow up on our meeting yesterday. When can we schedule the next phase review?"<br/>
+                      <span style={{ color: '#166534' }}>Email:</span> &quot;Hi Sarah, just wanted to follow up on our meeting yesterday. When can we schedule the next phase review?&quot;<br/>
                       <span style={{ color: '#b91c1c' }}>Category:</span> Work - Follow-up<br/>
                       <span style={{ color: '#7e22ce' }}>Priority:</span> Medium
                     </div>
                     
                     <div>
-                      <span style={{ color: '#166534' }}>Email:</span> "URGENT: Your account will be suspended in 24 hours unless you verify your payment information immediately!"<br/>
+                      <span style={{ color: '#166534' }}>Email:</span> &quot;URGENT: Your account will be suspended in 24 hours unless you verify your payment information immediately!&quot;<br/>
                       <span style={{ color: '#b91c1c' }}>Category:</span> Spam - Phishing<br/>
                       <span style={{ color: '#7e22ce' }}>Priority:</span> Delete
                     </div>
                     
                     <div>
-                      <span style={{ color: '#166534' }}>Email:</span> "Thanks for the great dinner last night! Let's do it again soon. How about next weekend?"<br/>
+                      <span style={{ color: '#166534' }}>Email:</span> &quot;Thanks for the great dinner last night! Let&apos;s do it again soon. How about next weekend?&quot;<br/>
                       <span style={{ color: '#b91c1c' }}>Category:</span> Personal - Social<br/>
                       <span style={{ color: '#7e22ce' }}>Priority:</span> Low
                     </div>
                     
                     <div style={{ color: '#b45309', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
                       <span>Now classify this email:</span><br/>
-                      "The project deadline has been moved up to Friday. Please confirm you can deliver the deliverables by then."
+                      &quot;The project deadline has been moved up to Friday. Please confirm you can deliver the deliverables by then.&quot;
                     </div>
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function AdvancedTechniquesPage() {
                 className="rounded-xl p-6"
                 style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: '1px' }}
               >
-                <h4 className="font-semibold text-gray-900 mb-4">The "Critique and Revise" Pattern</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">The &quot;Critique and Revise&quot; Pattern</h4>
                 <div className="space-y-4">
                   <div 
                     className="p-4 rounded-lg"
@@ -370,12 +370,12 @@ export default function AdvancedTechniquesPage() {
                   >
                     <div className="font-mono text-sm space-y-2">
                       <div><strong>Step 1:</strong> Generate initial response</div>
-                      <div><strong>Step 2:</strong> "Now critique your response. What could be improved?"</div>
-                      <div><strong>Step 3:</strong> "Based on your critique, provide a revised answer."</div>
+                      <div><strong>Step 2:</strong> &quot;Now critique your response. What could be improved?&quot;</div>
+                      <div><strong>Step 3:</strong> &quot;Based on your critique, provide a revised answer.&quot;</div>
                     </div>
                   </div>
                   <p className="text-sm text-gray-600">
-                    This pattern often produces significantly higher quality outputs by leveraging the AI's ability to self-evaluate.
+                    This pattern often produces significantly higher quality outputs by leveraging the AI&apos;s ability to self-evaluate.
                   </p>
                 </div>
               </div>
@@ -389,7 +389,7 @@ export default function AdvancedTechniquesPage() {
                   className="p-4 rounded-lg font-mono text-sm"
                   style={{ backgroundColor: '#f8fafc' }}
                 >
-                  "On a scale of 1-10, how confident are you in this answer? If below 8, explain your uncertainty and provide alternative approaches."
+                  &quot;On a scale of 1-10, how confident are you in this answer? If below 8, explain your uncertainty and provide alternative approaches.&quot;
                 </div>
                 <p className="text-sm text-gray-600 mt-3">
                   Helps identify when the AI is uncertain and encourages exploration of alternatives.
@@ -546,7 +546,7 @@ export default function AdvancedTechniquesPage() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Debugging & Optimization</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              When advanced prompts don't work as expected, systematic debugging and optimization techniques 
+              When advanced prompts don&apos;t work as expected, systematic debugging and optimization techniques 
               can help identify and fix the issues.
             </p>
           </div>
@@ -685,7 +685,7 @@ export default function AdvancedTechniquesPage() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Your Advanced Journey Continues</h4>
                 <p className="text-gray-600 mb-6">
-                  You've mastered sophisticated prompting techniques! Now apply these skills to organizational and collaborative contexts.
+                  You&apos;ve mastered sophisticated prompting techniques! Now apply these skills to organizational and collaborative contexts.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Link 

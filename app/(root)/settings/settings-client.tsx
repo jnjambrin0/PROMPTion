@@ -11,7 +11,6 @@ import {
   BillingSettings 
 } from '@/components/settings'
 import { getUserSettingsAction, type UserSettingsData } from '@/lib/actions/user-settings'
-import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
 const settingsTabs = [
@@ -58,7 +57,7 @@ interface SettingsClientProps {
   userId: string
 }
 
-export function SettingsClient({ initialData, userId }: SettingsClientProps) {
+export function SettingsClient({ initialData }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState('profile')
   const [settingsData, setSettingsData] = useState<UserSettingsData>(initialData)
   const [isRefreshing, setIsRefreshing] = useState(false)

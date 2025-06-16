@@ -64,7 +64,7 @@ export function createErrorResponse(message: string, status: number = 500) {
  * @returns Response con datos
  */
 export function createSuccessResponse(
-  data: any, 
+  data: Record<string, unknown>, 
   options: {
     cache?: string
     status?: number

@@ -33,7 +33,7 @@ export default async function QuickStartPage() {
     redirect('/sign-in')
   }
 
-  const { user, workspaces } = userData
+  const { workspaces } = userData
   const primaryWorkspace = workspaces.length > 0 ? workspaces[0] : null
 
   return (

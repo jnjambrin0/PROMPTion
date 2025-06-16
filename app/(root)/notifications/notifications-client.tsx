@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Search, Filter, MoreHorizontal, Check, Trash2, Settings, Users, MessageSquare, Star, Zap } from 'lucide-react'
+import { Search, Check, Trash2, Settings, Users, MessageSquare, Star, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -98,12 +98,11 @@ const getTypeLabel = (type: string) => {
 export function NotificationsClient({ 
   initialNotifications, 
   initialPagination, 
-  userId, 
   stats 
 }: NotificationsClientProps) {
   const [notifications, setNotifications] = useState(initialNotifications)
-  const [pagination, setPagination] = useState(initialPagination)
-  const [isPending, startTransition] = useTransition()
+  const [pagination] = useState(initialPagination)
+  const [, startTransition] = useTransition()
   const [loadingState, setLoadingState] = useState<LoadingState>({
     markingAsRead: new Set(),
     deleting: new Set(),

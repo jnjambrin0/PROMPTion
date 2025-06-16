@@ -2,8 +2,7 @@ import { getDashboardData } from '@/lib/db/dashboard'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { formatDistanceToNow, formatDate } from '@/lib/utils'
-import { Search, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { PromptsSectionClient } from '@/components/dashboard/prompts-section-client'
 
@@ -39,7 +38,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect('/signin')
   }
 
-  const { user, workspaces, prompts, stats } = data
+  const { workspaces, prompts, stats } = data
   const params = await searchParams
 
   return (

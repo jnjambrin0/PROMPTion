@@ -6,7 +6,7 @@ import { CreateFormLayout } from '@/components/ui/create-form-layout'
 import { FieldGroup } from '@/components/ui/field-group'
 import { SlugInput } from '@/components/ui/slug-input'
 import { IconPicker } from '@/components/ui/icon-picker'
-import { ColorPicker, type CategoryColor } from '@/components/ui/color-picker'
+import { ColorPicker } from '@/components/ui/color-picker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -46,7 +46,7 @@ export function CreateCollectionForm({ defaultWorkspaceId }: CreateCollectionFor
     color: 'gray'
   })
   const [errors, setErrors] = useState<z.ZodError | null>(null)
-  const [isSlugValid, setIsSlugValid] = useState(true)
+  // const [isSlugValid] = useState(true)
   const [isCustomSlug, setIsCustomSlug] = useState(false)
 
   // Auto-generate slug from name unless user has customized it
@@ -87,8 +87,8 @@ export function CreateCollectionForm({ defaultWorkspaceId }: CreateCollectionFor
     })
   }
 
-  const handleSlugValidation = (isValid: boolean, error?: string) => {
-    setIsSlugValid(isValid)
+  const handleSlugValidation = (isValid: boolean) => {
+    console.log('Slug validation:', isValid)
   }
 
   const getError = (field: keyof CreateCategoryInput) => {

@@ -10,9 +10,9 @@ interface DashboardStats {
 }
 
 interface DashboardData {
-  user: any
-  workspaces: any[]
-  prompts: any[]
+  user: Record<string, unknown>
+  workspaces: Record<string, unknown>[]
+  prompts: Record<string, unknown>[]
   stats: DashboardStats
 }
 
@@ -64,7 +64,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData | 
     const promptsResults = await Promise.allSettled(promptsPromises)
     
     const allPrompts = promptsResults
-      .filter((result): result is PromiseFulfilledResult<any[]> => 
+      .filter((result): result is PromiseFulfilledResult<Record<string, unknown>[]> => 
         result.status === 'fulfilled'
       )
       .flatMap(result => result.value)

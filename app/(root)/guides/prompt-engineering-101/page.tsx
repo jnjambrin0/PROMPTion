@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Clock, Target, CheckCircle, Lightbulb, AlertCircle, Star, Book, Zap, ArrowRight, Copy, Play } from 'lucide-react'
+import { ArrowLeft, Clock, Target, CheckCircle, Lightbulb, AlertCircle, Star, Book, Zap, ArrowRight, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function PromptEngineering101Page() {
@@ -53,7 +53,7 @@ export default function PromptEngineering101Page() {
           <div className="flex items-start gap-3">
             <Target className="h-5 w-5 mt-0.5" style={{ color: '#0284c7' }} />
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: '#0c4a6e' }}>What you'll master</h3>
+              <h3 className="font-semibold mb-3" style={{ color: '#0c4a6e' }}>What you&apos;ll master</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm" style={{ color: '#0369a1' }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -131,7 +131,7 @@ export default function PromptEngineering101Page() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">The Fundamentals</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Prompt engineering is both an art and a science. At its core, it's about understanding how AI models process language 
+              Prompt engineering is both an art and a science. At its core, it&apos;s about understanding how AI models process language 
               and crafting instructions that leverage this understanding to achieve specific outcomes.
             </p>
           </div>
@@ -140,8 +140,8 @@ export default function PromptEngineering101Page() {
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-900">Why Prompts Matter</h3>
             <p className="text-gray-700 leading-relaxed">
-              Modern AI models like GPT-4, Claude, and others are trained on vast amounts of text data. They don't "understand" 
-              in the human sense, but they've learned incredibly sophisticated patterns about how language works. The prompt 
+              Modern AI models like GPT-4, Claude, and others are trained on vast amounts of text data. They don&apos;t &quot;understand&quot; 
+              in the human sense, but they&apos;ve learned incredibly sophisticated patterns about how language works. The prompt 
               is your interface to this vast knowledge.
             </p>
             
@@ -154,7 +154,7 @@ export default function PromptEngineering101Page() {
                 <div>
                   <h4 className="font-semibold mb-2" style={{ color: '#92400e' }}>The 80/20 Rule of Prompting</h4>
                   <p className="text-sm" style={{ color: '#a16207' }}>
-                    80% of your prompt's effectiveness comes from 20% of your effort: being specific about what you want, 
+                    80% of your prompt&apos;s effectiveness comes from 20% of your effort: being specific about what you want, 
                     providing relevant context, and clearly defining the output format. Master these basics before moving to advanced techniques.
                   </p>
                 </div>
@@ -172,15 +172,15 @@ export default function PromptEngineering101Page() {
               >
                 <h4 className="font-medium text-gray-900 mb-3">Think of AI as a Highly Capable Intern</h4>
                 <p className="text-sm text-gray-600 mb-3">
-                  Brilliant and knowledgeable, but needs clear direction and context. You wouldn't tell an intern 
-                  "do marketing stuff" — you'd give specific tasks, deadlines, and examples.
+                  Brilliant and knowledgeable, but needs clear direction and context. You wouldn&apos;t tell an intern 
+                  &quot;do marketing stuff&quot; — you&apos;d give specific tasks, deadlines, and examples.
                 </p>
                 <div 
                   className="p-3 rounded font-mono text-sm"
                   style={{ backgroundColor: '#f3f4f6' }}
                 >
-                  ❌ "Write content for our website"<br/>
-                  ✅ "Write a 150-word 'About Us' section for a B2B SaaS company that helps restaurants manage inventory. Tone: professional but approachable. Include our 5-year track record."
+                  ❌ &quot;Write content for our website&quot;<br/>
+                  ✅ &quot;Write a 150-word &apos;About Us&apos; section for a B2B SaaS company that helps restaurants manage inventory. Tone: professional but approachable. Include our 5-year track record.&quot;
                 </div>
               </div>
 
@@ -197,7 +197,7 @@ export default function PromptEngineering101Page() {
                   className="p-3 rounded font-mono text-sm"
                   style={{ backgroundColor: '#f3f4f6' }}
                 >
-                  ✅ "Format like this example: [Problem] → [Solution] → [Benefit]"
+                  ✅ &quot;Format like this example: [Problem] → [Solution] → [Benefit]&quot;
                 </div>
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function PromptEngineering101Page() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Anatomy of Great Prompts</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Every effective prompt has five core components. Master these building blocks, and you'll be able to construct 
+              Every effective prompt has five core components. Master these building blocks, and you&apos;ll be able to construct 
               prompts for any situation.
             </p>
           </div>
@@ -333,7 +333,7 @@ export default function PromptEngineering101Page() {
                   { letter: "C", word: "Context", desc: "Background info" },
                   { letter: "L", word: "Length", desc: "Output size" },
                   { letter: "E", word: "Examples", desc: "Show patterns" },
-                  { letter: "A", word: "Audience", desc: "Who it's for" },
+                  { letter: "A", word: "Audience", desc: "Who it&apos;s for" },
                   { letter: "R", word: "Role", desc: "Your expertise" }
                 ].map((item) => (
                   <div key={item.letter} className="text-center">
@@ -367,7 +367,7 @@ export default function PromptEngineering101Page() {
               </div>
               <div className="grid md:grid-cols-6 gap-4 mb-4">
                 {[
-                  { letter: "C", word: "Character", desc: "Who's writing" },
+                  { letter: "C", word: "Character", desc: "Who&apos;s writing" },
                   { letter: "R", word: "Request", desc: "What you want" },
                   { letter: "E", word: "Examples", desc: "Show style" },
                   { letter: "A", word: "Adjustments", desc: "Specific tweaks" },
@@ -416,7 +416,7 @@ export default function PromptEngineering101Page() {
                   >
                     <h4 className="font-medium text-gray-900 mb-2">❌ Poor Prompt</h4>
                     <div className="text-sm text-gray-600 font-mono">
-                      "Write product descriptions for eco-friendly products"
+                      &quot;Write product descriptions for eco-friendly products&quot;
                     </div>
                   </div>
                   <div 
@@ -457,7 +457,7 @@ export default function PromptEngineering101Page() {
               {
                 title: "Iterative Refinement", 
                 description: "Build prompts through multiple iterations",
-                tip: "Start simple, test output, add constraints based on what's missing or wrong"
+                tip: "Start simple, test output, add constraints based on what&apos;s missing or wrong"
               },
               {
                 title: "Context Window Management",
@@ -466,8 +466,8 @@ export default function PromptEngineering101Page() {
               },
               {
                 title: "Output Priming",
-                description: "Start the AI's response",
-                tip: "End your prompt with 'Here's a detailed analysis:' to set the tone"
+                description: "Start the AI&apos;s response",
+                tip: "End your prompt with &apos;Here&apos;s a detailed analysis:&apos; to set the tone"
               }
             ].map((technique, index) => (
               <div 
@@ -509,20 +509,20 @@ export default function PromptEngineering101Page() {
             {[
               {
                 mistake: "Being Too Vague",
-                problem: "\"Write me something good about productivity\"",
-                solution: "\"Write a 500-word blog post for busy entrepreneurs about 3 specific productivity techniques that save at least 2 hours per day\"",
+                problem: "&quot;Write me something good about productivity&quot;",
+                solution: "&quot;Write a 500-word blog post for busy entrepreneurs about 3 specific productivity techniques that save at least 2 hours per day&quot;",
                 lesson: "Specificity trumps brevity every time"
               },
               {
                 mistake: "Assuming Context",
-                problem: "\"Improve this email\" (without showing the email)",
-                solution: "\"Here's the current email: [paste email]. Improve it by making the subject line more compelling and the CTA clearer\"",
+                problem: "&quot;Improve this email&quot; (without showing the email)",
+                solution: "&quot;Here&apos;s the current email: [paste email]. Improve it by making the subject line more compelling and the CTA clearer&quot;",
                 lesson: "Always provide complete context"
               },
               {
                 mistake: "Ignoring Output Format",
-                problem: "\"Analyze our competition\"",
-                solution: "\"Create a competitive analysis table with columns: Company, Strengths, Weaknesses, Market Share, Pricing\"",
+                problem: "&quot;Analyze our competition&quot;",
+                solution: "&quot;Create a competitive analysis table with columns: Company, Strengths, Weaknesses, Market Share, Pricing&quot;",
                 lesson: "Define exactly how you want the output structured"
               }
             ].map((item, index) => (
@@ -575,7 +575,7 @@ export default function PromptEngineering101Page() {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-gray-900">Practice Exercises</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Apply what you've learned with these real-world scenarios. Try crafting prompts before looking at the solutions.
+              Apply what you&apos;ve learned with these real-world scenarios. Try crafting prompts before looking at the solutions.
             </p>
           </div>
 
@@ -597,7 +597,7 @@ export default function PromptEngineering101Page() {
                 scenario: "Customer Support",
                 challenge: "Create email templates for handling refund requests",
                 requirements: ["Maintain brand voice", "Address common objections", "Provide clear next steps", "Multiple scenarios"],
-                hint: "Think about the customer's emotional state and what information they need most"
+                hint: "Think about the customer&apos;s emotional state and what information they need most"
               }
             ].map((exercise, index) => (
               <div 
@@ -643,7 +643,7 @@ export default function PromptEngineering101Page() {
 
         {/* Next Steps */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-gray-900">What's Next?</h2>
+          <h2 className="text-3xl font-bold text-gray-900">What&apos;s Next?</h2>
           
           <div 
             className="rounded-xl p-6"
@@ -654,7 +654,7 @@ export default function PromptEngineering101Page() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Continue Your Journey</h4>
                 <p className="text-gray-600 mb-6">
-                  You've mastered the fundamentals! Now you're ready to explore more advanced techniques and specialized applications.
+                  You&apos;ve mastered the fundamentals! Now you&apos;re ready to explore more advanced techniques and specialized applications.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <Link 

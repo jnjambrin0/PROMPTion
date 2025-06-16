@@ -31,7 +31,7 @@ export async function validatePromptSlug(
     }
 
     // Build where clause
-    const whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       slug: slug,
       workspaceId: workspaceId,
       deletedAt: null
@@ -63,7 +63,7 @@ export async function generateUniquePromptSlug(
   workspaceId: string,
   excludePromptId?: string
 ): Promise<string> {
-  let baseSlug = generateSlugFromTitle(baseTitle)
+  const baseSlug = generateSlugFromTitle(baseTitle)
   let finalSlug = baseSlug
   let counter = 1
 

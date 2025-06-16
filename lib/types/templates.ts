@@ -11,8 +11,8 @@ export interface Template {
   isPublic: boolean
   isPinned: boolean
   aiModel?: string | null
-  modelConfig: any
-  variables: any
+  modelConfig: Record<string, unknown>
+  variables: Record<string, unknown>
   viewCount: number
   useCount: number
   forkCount: number
@@ -47,7 +47,7 @@ export interface Template {
   blocks: Array<{
     id: string
     type: string
-    content: any
+    content: Record<string, unknown>
     position: number
     indentLevel: number
     createdAt: Date

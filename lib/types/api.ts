@@ -1,160 +1,124 @@
 // API Response Types
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-  message?: string;
-  success?: boolean;
-}
-
-// Error Types
 export interface ApiError {
-  message: string;
-  code?: string;
-  status?: number;
-  details?: Record<string, unknown>;
+  message: string
+  code?: string
+  field?: string
 }
 
-// Form Types
-export interface FormState<T = unknown> {
-  data: T | null;
-  errors: Record<string, string>;
-  isSubmitting: boolean;
-  isValid: boolean;
+export interface PaginationMetadata {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
+export interface ApiResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: ApiError | string
+  metadata?: PaginationMetadata
+}
+
+// Request/Response Bodies
+export interface CategoryRequestBody {
+  name: string
+  description?: string
+  color?: string
+  icon?: string
+  workspaceId: string
+}
+
+export interface PromptRequestBody {
+  title: string
+  content: string
+  description?: string
+  categoryId?: string
+  workspaceId: string
+  isPublic?: boolean
+  tags?: string[]
+}
+
+export interface WorkspaceRequestBody {
+  name: string
+  description?: string
+  slug: string
+  visibility?: 'private' | 'public'
+}
+
+export interface MemberInviteBody {
+  email: string
+  role: 'ADMIN' | 'MEMBER' | 'VIEWER'
+  workspaceId: string
+}
+
+// Form Data Types
 export interface FormData {
-  [key: string]: string | number | boolean | File | null | undefined;
+  [key: string]: string | number | boolean | File | null | undefined
+}
+
+export interface ValidationResult {
+  isValid: boolean
+  errors: Record<string, string>
+}
+
+// Database Operation Results
+export interface DatabaseResult<T = unknown> {
+  success: boolean
+  data?: T
+  error?: string
+  count?: number
 }
 
 // Event Handler Types
-export interface ChangeEvent {
-  target: {
-    name: string;
-    value: string | number | boolean;
-  };
+export interface FormSubmitHandler {
+  (data: FormData): Promise<ApiResponse>
 }
 
-export interface SubmitEvent {
-  preventDefault: () => void;
+export interface ClickHandler {
+  (event: React.MouseEvent): void
 }
 
-// Database Record Types
-export interface DatabaseRecord {
-  id: string;
-  created_at: string;
-  updated_at: string;
+export interface ChangeHandler {
+  (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void
 }
 
-// User Context Types
-export interface UserContextData {
-  id: string;
-  email: string;
-  name?: string;
-  avatar_url?: string;
-  role?: string;
-}
-
-// Request Types
-export interface RequestParams {
-  [key: string]: string | string[] | undefined;
-}
-
-export interface SearchParams {
-  q?: string;
-  page?: string;
-  limit?: string;
-  sort?: string;
-  filter?: string;
-}
-
-// Component Props Types
+// Component Props Base Types
 export interface BaseComponentProps {
-  className?: string;
-  children?: React.ReactNode;
+  className?: string
+  children?: React.ReactNode
 }
 
-export interface FormComponentProps extends BaseComponentProps {
-  onSubmit?: (data: FormData) => void | Promise<void>;
-  initialData?: FormData;
-  isLoading?: boolean;
+export interface BaseFormProps extends BaseComponentProps {
+  onSubmit?: FormSubmitHandler
+  onCancel?: () => void
+  isLoading?: boolean
 }
 
-// Notification Types
-export interface NotificationData {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message?: string;
-  timestamp: string;
-  read: boolean;
+// Search and Filter Types
+export interface SearchFilters {
+  query?: string
+  category?: string
+  tags?: string[]
+  author?: string
+  dateFrom?: Date
+  dateTo?: Date
 }
 
-// Template Types
-export interface TemplateMetadata {
-  title: string;
-  description?: string;
-  category?: string;
-  tags?: string[];
-  author?: string;
-  version?: string;
+export interface SortOptions {
+  field: string
+  direction: 'asc' | 'desc'
 }
 
-// Category Types
-export interface CategoryData {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  slug: string;
+// File Upload Types
+export interface FileUploadResult {
+  url: string
+  filename: string
+  size: number
+  type: string
 }
 
-// Member Types
-export interface MemberData {
-  id: string;
-  user_id: string;
-  workspace_id: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
-  invited_by?: string;
-  joined_at?: string;
-  permissions?: string[];
-}
-
-// Activity Types
-export interface ActivityData {
-  id: string;
-  user_id: string;
-  action: string;
-  resource_type: string;
-  resource_id: string;
-  metadata?: Record<string, unknown>;
-  timestamp: string;
-}
-
-// Statistics Types
-export interface StatsData {
-  total: number;
-  active: number;
-  recent: number;
-  growth?: number;
-}
-
-// Pagination Types
-export interface PaginationData {
-  page: number;
-  limit: number;
-  total: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
-
-// Filter Types
-export interface FilterOptions {
-  categories?: string[];
-  tags?: string[];
-  dateRange?: {
-    start: string;
-    end: string;
-  };
-  status?: string[];
+export interface UploadProgress {
+  percentage: number
+  isUploading: boolean
+  error?: string
 } 
