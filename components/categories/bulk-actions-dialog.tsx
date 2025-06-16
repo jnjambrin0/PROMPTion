@@ -2,16 +2,14 @@
 
 import React, { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Trash2, Edit2, Check, X, Loader2 } from 'lucide-react'
+import { Settings, Trash2, Edit2, Check, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { ColorBadge } from '@/components/ui/color-badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -475,7 +473,7 @@ export function BulkActionsDialog({
                   Delete {selectedCount} Categories
                 </CardTitle>
                 <CardDescription>
-                  This action cannot be undone. All prompts in these categories will be moved to "Uncategorized".
+                  This action cannot be undone. All prompts in these categories will be moved to &quot;Uncategorized&quot;.
                 </CardDescription>
               </CardHeader>
               <CardContent>

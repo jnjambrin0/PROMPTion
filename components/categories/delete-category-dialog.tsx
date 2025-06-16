@@ -97,7 +97,7 @@ export function DeleteCategoryDialog({
           </div>
           <AlertDialogDescription className="space-y-3">
             <div>
-              Are you sure you want to delete <strong>"{category.name}"</strong>? This action cannot be undone.
+                              Are you sure you want to delete <strong>&quot;{category.name}&quot;</strong>? This action cannot be undone.
             </div>
             
             {category.promptCount && category.promptCount > 0 && (
@@ -112,7 +112,7 @@ export function DeleteCategoryDialog({
                   This category contains <Badge variant="outline" className="mx-1">
                     {category.promptCount} {category.promptCount === 1 ? 'prompt' : 'prompts'}
                   </Badge>. 
-                  These prompts will be moved to "Uncategorized" and remain accessible.
+                                      These prompts will be moved to &quot;Uncategorized&quot; and remain accessible.
                 </div>
               </div>
             )}

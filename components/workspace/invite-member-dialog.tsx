@@ -169,7 +169,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
           <DialogTitle>Invite Member</DialogTitle>
           <DialogDescription>
             Send an invitation to add a new member to this workspace. 
-            They'll receive an email with instructions to join.
+            They&apos;ll receive an email with instructions to join.
           </DialogDescription>
         </DialogHeader>
 

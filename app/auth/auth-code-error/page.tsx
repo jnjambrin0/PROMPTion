@@ -14,7 +14,7 @@ export default function AuthCodeErrorPage() {
             Authentication Error
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Sorry, we couldn't sign you in. This can happen if the login link has expired or has already been used.
+            Sorry, we couldn&apos;t sign you in. This can happen if the login link has expired or has already been used.
           </p>
         </div>
 

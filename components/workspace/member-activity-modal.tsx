@@ -189,7 +189,7 @@ export function MemberActivityModal({
       setHasMore(true)
       setError(null)
     }
-  }, [open, member.user.id, workspaceSlug]) // Cambio: usar member.user.id para consistencia
+  }, [open, member.user.id, workspaceSlug, loadActivities]) // Cambio: usar member.user.id para consistencia
 
   const loadMore = () => {
     if (hasMore && !loading) {

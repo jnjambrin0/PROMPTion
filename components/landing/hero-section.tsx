@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 export function HeroSection() {
@@ -58,11 +59,13 @@ export function HeroSection() {
         <div className="mt-16 lg:mt-20">
           <div className="relative mx-auto max-w-5xl">
             <div className="relative rounded-xl shadow-2xl border border-gray-200 bg-white overflow-hidden">
-              <img
+              <Image
                 src="/hero-workspace.svg"
                 alt="Promption workspace interface showing organized prompts and collections"
+                width={800}
+                height={600}
                 className="w-full h-auto block"
-                loading="eager"
+                priority
               />
             </div>
             {/* Subtle gradient overlay */}

@@ -131,7 +131,7 @@ export function CreateTemplateForm({
     }
 
     loadData()
-  }, [])
+  }, [form])
 
   // Loading state
   if (isLoadingData) {
@@ -239,7 +239,7 @@ export function CreateTemplateForm({
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-sm text-blue-800">
-              💡 <strong>Tip:</strong> Start with a Prompt Template if you're new to creating templates. 
+              💡 <strong>Tip:</strong> Start with a Prompt Template if you&apos;re new to creating templates. 
               You can always create more complex workflows later.
             </p>
           </div>

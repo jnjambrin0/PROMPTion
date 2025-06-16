@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -14,13 +14,10 @@ import {
 } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { StatCard } from '@/components/ui/stat-card'
-import { TopicItem } from '@/components/ui/topic-item'
 import { QUICK_ACTIONS, WORKSPACE_NAVIGATION, MAIN_NAVIGATION } from '@/lib/constants/navigation'
 import { 
   UPCOMING_ITEMS, 
-  POPULAR_TOPICS, 
-  QUICK_STATS, 
-  TIPS 
+  QUICK_STATS
 } from '@/lib/constants/sidebar-data'
 
 interface MobileNavProps {

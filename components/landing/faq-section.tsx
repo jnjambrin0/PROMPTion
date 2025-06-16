@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import {
   Accordion,
   AccordionContent,
@@ -51,8 +52,8 @@ export function FAQSection() {
             Frequently asked questions
           </h2>
           <p className="mx-auto max-w-[600px] text-lg text-gray-600">
-            Everything you need to know about Promption. Can't find what you're looking for? 
-            <a href="/contact" className="text-gray-900 hover:underline ml-1">Contact our support team</a>.
+            Everything you need to know about Promption. Can&apos;t find what you&apos;re looking for? 
+            <Link href="/contact" className="text-gray-900 hover:underline ml-1">Contact our support team</Link>.
           </p>
         </div>
 

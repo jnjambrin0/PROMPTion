@@ -114,10 +114,11 @@ async function validateWorkspaceAndCategory(
     }
 
     return { workspace, category, error: undefined }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error validating workspace/category:', error)
     
-    if (error.message.includes('Access denied')) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('Access denied')) {
       return { error: NextResponse.json({ error: 'Access denied' }, { status: 403 }) }
     }
     
@@ -237,7 +238,14 @@ export async function PATCH(
     const validatedData = bodyValidation.data
 
     // Preparar datos de actualización
-    const updateData: any = {}
+    const updateData: Partial<{
+      name: string
+      slug: string
+      description: string | null
+      icon: string | null
+      color: string | null
+      parentId: string | null
+    }> = {}
     
     if (validatedData.name !== undefined) {
       updateData.name = validatedData.name

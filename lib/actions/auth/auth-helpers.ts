@@ -1,9 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
+import { AuthenticatedUser, ActionResult } from '@/lib/types/shared'
 
 interface AuthResult {
   success: boolean
-  user?: any
+  user?: AuthenticatedUser
   error?: string
 }
 
@@ -34,14 +35,14 @@ export async function authenticateUser(): Promise<AuthResult> {
 /**
  * HOC for Server Actions that require authentication
  */
-export function withAuth<T extends any[], R>(
-  action: (user: any, ...args: T) => Promise<R>
+export function withAuth<T extends unknown[], R>(
+  action: (user: AuthenticatedUser, ...args: T) => Promise<R>
 ) {
-  return async (...args: T): Promise<R | { success: false; error: string }> => {
+  return async (...args: T): Promise<R | ActionResult> => {
     const authResult = await authenticateUser()
     
     if (!authResult.success) {
-      return { success: false, error: authResult.error! } as any
+      return { success: false, error: authResult.error! }
     }
 
     return action(authResult.user!, ...args)

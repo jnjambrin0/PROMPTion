@@ -47,8 +47,8 @@ export default async function NotificationsPage() {
 
   // Calculate summary stats
   const totalNotifications = pagination.total
-  const unreadCount = notifications.filter((n: any) => n.status === 'UNREAD').length
-  const thisWeekCount = notifications.filter((n: any) => {
+  const unreadCount = notifications.filter((n) => n.status === 'UNREAD').length
+  const thisWeekCount = notifications.filter((n) => {
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
     return n.createdAt >= weekAgo

@@ -60,6 +60,13 @@ interface LoadingState {
   saving: boolean
 }
 
+interface BlockContentData {
+  type: string
+  content?: {
+    text?: string
+  }
+}
+
 export function PromptEditClient({ 
   workspaceSlug, 
   promptSlug, 
@@ -95,7 +102,7 @@ export function PromptEditClient({
   }, [formData, originalData])
 
   // Convert blocks to simple content and vice versa
-  const blocksToContent = useCallback((blocks: any[]): string => {
+  const blocksToContent = useCallback((blocks: BlockContentData[]): string => {
     if (!Array.isArray(blocks)) return ''
     
     return blocks
@@ -275,7 +282,7 @@ export function PromptEditClient({
               Prompt not found
             </h3>
             <p className="text-neutral-600 mb-6">
-              The prompt you're looking for doesn't exist or you don't have access to it.
+              The prompt you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
             </p>
             <Button asChild variant="outline">
               <Link href={`/${workspaceSlug}`}>
