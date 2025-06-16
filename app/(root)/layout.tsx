@@ -3,6 +3,9 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { RightSidebar } from '@/components/layout/right-sidebar'
 import { Toaster } from '@/components/ui/sonner'
 
+// Force dynamic rendering for authenticated layout
+export const dynamic = 'force-dynamic'
+
 interface RootLayoutProps {
   children: React.ReactNode
 }

@@ -1,324 +1,48 @@
-'use client'
-
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { LayoutDashboard, MessageSquare, FolderOpen, Users, Settings } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
+import { getUserByAuthId } from '@/lib/db/users'
 import { getWorkspaceDataAction } from '@/lib/actions/workspace'
-import { useWorkspaceNavigation } from '@/lib/hooks/use-workspace-navigation'
-import type { WorkspaceData, WorkspaceTab } from '@/lib/types/workspace'
-
-// Import tab components
-import OverviewTab from '@/components/workspace/tabs/overview-tab'
-import PromptsTab from '@/components/workspace/tabs/prompts-tab'
-import CategoriesTab from '@/components/workspace/tabs/categories-tab'
-import MembersTab from '@/components/workspace/tabs/members-tab'
-import WorkspaceSettingsTab from '@/components/workspace/tabs/workspace-settings-tab'
+import { WorkspacePageClient } from './workspace-page-client'
 
 interface WorkspacePageProps {
   params: Promise<{ workspace: string }>
+  searchParams: Promise<{ tab?: string }>
 }
 
-const TABS: { id: WorkspaceTab; label: string; icon: React.ElementType }[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'prompts', label: 'Prompts', icon: MessageSquare },
-  { id: 'categories', label: 'Categories', icon: FolderOpen },
-  { id: 'members', label: 'Members', icon: Users },
-  { id: 'settings', label: 'Settings', icon: Settings },
-]
+// Force dynamic rendering - requires user-specific server data
+export const dynamic = 'force-dynamic'
 
-import { 
-  WorkspaceOverviewSkeleton,
-} from '@/components/ui/skeletons'
-
-export default function WorkspacePage({ params }: WorkspacePageProps) {
-  // ============================================================================
-  // STATE MANAGEMENT - Simplificado
-  // ============================================================================
+export default async function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
+  // Server-side auth check
+  const supabase = await createClient()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
   
-  const [workspaceSlug, setWorkspaceSlug] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview')
-  const [data, setData] = useState<WorkspaceData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // ============================================================================
-  // NAVIGATION HOOK - Nueva funcionalidad para navegación sin refresh
-  // ============================================================================
-  
-  const navigation = useWorkspaceNavigation({
-    workspaceSlug,
-    onTabChange: setActiveTab
-  })
-
-  // ============================================================================
-  // DATA FETCHING - Single optimized function
-  // ============================================================================
-  
-  const fetchWorkspaceData = useCallback(async (slug: string) => {
-    if (!slug) return
-    
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const result = await getWorkspaceDataAction(slug)
-      
-      // Validación defensiva para Server Actions
-      if (!result) {
-        setError('Server connection failed. Please refresh the page.')
-        return
-      }
-      
-      if (result.success && result.data) {
-        setData(result.data as WorkspaceData)
-      } else {
-        setError(result.error || 'Failed to load workspace data')
-      }
-    } catch (err) {
-      console.error('Error fetching workspace data:', err)
-      setError('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  // ============================================================================
-  // EFFECTS - Simplificados
-  // ============================================================================
-
-  useEffect(() => {
-    params.then(({ workspace }) => {
-      setWorkspaceSlug(workspace)
-      fetchWorkspaceData(workspace)
-      
-      // Solo leer URL una vez al cargar la página
-      const searchParams = new URLSearchParams(window.location.search)
-      const tab = searchParams.get('tab') as WorkspaceTab
-      if (tab && TABS.find(t => t.id === tab)) {
-        setActiveTab(tab)
-      }
-    })
-  }, [params, fetchWorkspaceData])
-
-  // ============================================================================
-  // TAB SWITCHING - Optimizado para mejor UX
-  // ============================================================================
-  
-  const handleTabChange = useCallback((tab: WorkspaceTab) => {
-    // Cambio inmediato de estado para UX instantánea
-    setActiveTab(tab)
-    
-    // Actualización de URL con transición suave
-    const url = new URL(window.location.href)
-    if (tab === 'overview') {
-      url.searchParams.delete('tab')
-    } else {
-      url.searchParams.set('tab', tab)
-    }
-    
-    // Usar replaceState para evitar llenar el historial
-    // y transición más suave
-    window.history.replaceState(
-      { tab }, 
-      '', 
-      url.toString()
-    )
-  }, [])
-
-  // ============================================================================
-  // MEMOIZED VALUES - Performance optimization
-  // ============================================================================
-
-  const memoizedTabStats = useMemo(() => {
-    if (!data) return {}
-    
-    return {
-      totalPrompts: data.stats?.totalPrompts || 0,
-      totalCategories: data.stats?.totalCategories || 0,
-      totalMembers: data.stats?.totalMembers || 0,
-    }
-  }, [data])
-
-  // ============================================================================
-  // RENDER HELPERS - Con navegación mejorada
-  // ============================================================================
-  
-  const renderActiveTab = useCallback(() => {
-    if (!data) return null
-
-    const commonProps = {
-      workspaceSlug,
-      workspaceData: data,
-      navigation
-    }
-
-    switch (activeTab) {
-      case 'overview':
-        return <OverviewTab {...commonProps} />
-      case 'prompts':
-        return <PromptsTab {...commonProps} />
-      case 'categories':
-        return <CategoriesTab {...commonProps} />
-      case 'members':
-        return <MembersTab {...commonProps} />
-      case 'settings':
-        // Adaptar los datos para WorkspaceSettingsTab
-        const settingsProps = {
-          workspaceSlug,
-          workspaceData: {
-            workspace: data.workspace,
-            categories: data.categories?.map(cat => ({
-              id: cat.id,
-              name: cat.name,
-              color: cat.color,
-              icon: cat.icon
-            })) || [],
-            members: data.members?.map(member => ({
-              id: member.id,
-              role: member.role,
-              joinedAt: member.joinedAt || new Date(),
-              user: member.user
-            })) || [],
-            prompts: data.prompts?.map(prompt => ({
-              id: prompt.id,
-              title: prompt.title,
-              slug: prompt.slug,
-              description: prompt.description,
-              isPublic: prompt.isPublic,
-              isTemplate: prompt.isTemplate,
-              createdAt: prompt.createdAt,
-              updatedAt: prompt.updatedAt
-            })) || [],
-            stats: data.stats ? {
-              totalPrompts: data.stats.totalPrompts,
-              totalMembers: data.stats.totalMembers,
-              totalCategories: data.stats.totalCategories,
-              publicPrompts: data.stats.publicPromptsCount || 0
-            } : undefined
-          }
-        }
-        return <WorkspaceSettingsTab {...settingsProps} />
-      default:
-        return <OverviewTab {...commonProps} />
-    }
-  }, [activeTab, workspaceSlug, data, navigation])
-
-  // ============================================================================
-  // ERROR & LOADING STATES - Enhanced UX
-  // ============================================================================
-  
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => fetchWorkspaceData(workspaceSlug)}>
-            Try again
-          </Button>
-        </div>
-      </div>
-    )
+  if (!authUser) {
+    redirect('/sign-in')
   }
 
-  if (isLoading) {
-    return (
-      <div className="h-full bg-gray-25">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          {/* Header skeleton */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-8">
-              {TABS.map((tab) => (
-                <div
-                  key={tab.id}
-                  className="flex items-center gap-2 py-3 px-1"
-                >
-                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              ))}
-            </nav>
-          </div>
-          
-          {/* Content skeleton */}
-          <div className="min-h-[600px]">
-            <WorkspaceOverviewSkeleton />
-          </div>
-        </div>
-      </div>
-    )
+  const user = await getUserByAuthId(authUser.id)
+  if (!user) {
+    redirect('/sign-in')
   }
 
-  if (!data) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Workspace not found</h2>
-          <p className="text-gray-600">The workspace you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.</p>
-        </div>
-      </div>
-    )
-  }
+  // Get workspace slug and tab from params
+  const { workspace: workspaceSlug } = await params
+  const { tab } = await searchParams
 
-  // ============================================================================
-  // MAIN RENDER - Optimized with hover prefetching
-  // ============================================================================
+  // Server-side data fetching for better performance
+  const result = await getWorkspaceDataAction(workspaceSlug)
+  
+  if (!result.success || !result.data) {
+    redirect('/dashboard')
+  }
 
   return (
-    <div className="h-full bg-gray-25">
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Header with tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            {TABS.map((tab) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`
-                      flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-all duration-200
-                      ${isActive 
-                        ? 'border-gray-900 text-gray-900' 
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }
-                    `}
-                    // Preload tab content on hover for better performance
-                    onMouseEnter={() => {
-                      // Optional: Preload data for better UX
-                      console.log(`Preloading ${tab.id} tab`)
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
-                    {tab.id === 'prompts' && (
-                      <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
-                        {memoizedTabStats.totalPrompts}
-                      </span>
-                    )}
-                    {tab.id === 'categories' && (memoizedTabStats.totalCategories || 0) > 0 && (
-                      <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
-                        {memoizedTabStats.totalCategories || 0}
-                      </span>
-                    )}
-                    {tab.id === 'members' && (memoizedTabStats.totalMembers || 0) > 0 && (
-                      <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
-                        {memoizedTabStats.totalMembers || 0}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-          </nav>
-        </div>
-            
-        {/* Tab content with optimized rendering */}
-        <div className="min-h-[600px]">
-          {renderActiveTab()}
-        </div>
-      </div>
-    </div>
+    <WorkspacePageClient 
+      workspaceSlug={workspaceSlug}
+      initialData={result.data}
+      initialTab={tab}
+      userId={user.id}
+    />
   )
 } 

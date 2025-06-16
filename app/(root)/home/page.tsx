@@ -9,6 +9,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow } from '@/lib/utils'
 
+// Force dynamic rendering for this page since it requires authentication  
+export const dynamic = 'force-dynamic'
+
 async function getUserData() {
   try {
     const supabase = await createClient()

@@ -3,6 +3,8 @@ import { getUserByAuthId } from '@/lib/db/users'
 import { redirect } from 'next/navigation'
 import ProfileClient from './profile-client'
 
+// Force dynamic rendering for this page since it requires authentication
+export const dynamic = 'force-dynamic'
 
 // Server component - handles authentication and data fetching
 export default async function ProfilePage() {

@@ -6,6 +6,9 @@ import { Plus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { PromptsSectionClient } from '@/components/dashboard/prompts-section-client'
 
+// Force dynamic rendering - this page requires user-specific server data
+export const dynamic = 'force-dynamic'
+
 async function getOptimizedDashboardData() {
   try {
     const supabase = await createClient()

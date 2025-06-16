@@ -7,6 +7,8 @@ import { getUserNotifications } from '@/lib/db/notifications'
 import { redirect } from 'next/navigation'
 import { NotificationsClient } from './notifications-client'
 
+// Force dynamic rendering - this page requires user-specific server data
+export const dynamic = 'force-dynamic'
 
 async function getNotificationsData() {
   try {

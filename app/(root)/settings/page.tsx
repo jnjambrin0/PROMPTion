@@ -4,6 +4,9 @@ import { getUserByAuthId } from '@/lib/db/users'
 import { SettingsClient } from './settings-client'
 import { getUserSettingsAction } from '@/lib/actions/user-settings'
 
+// Force dynamic rendering - this page requires user-specific server data
+export const dynamic = 'force-dynamic'
+
 export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
