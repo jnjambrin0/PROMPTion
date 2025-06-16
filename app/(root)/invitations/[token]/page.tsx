@@ -9,11 +9,12 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, XCircle, Users, Calendar, Mail, User } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface InvitationPageProps {
-  params: {
+  params: Promise<{
     token: string
-  }
+  }>
 }
 
 async function getInvitation(token: string) {
@@ -150,7 +151,7 @@ async function InvitationContent({ token }: { token: string }) {
             <div className="flex items-center gap-3 p-4 bg-neutral-50 rounded-lg">
               <div className="h-12 w-12 rounded-lg bg-neutral-200 flex items-center justify-center flex-shrink-0">
                 {invitation.workspace.logoUrl ? (
-                  <img 
+                  <Image 
                     src={invitation.workspace.logoUrl} 
                     alt={invitation.workspace.name}
                     className="h-8 w-8 rounded"
@@ -239,14 +240,16 @@ async function InvitationContent({ token }: { token: string }) {
   )
 }
 
-export default function InvitationPage({ params }: InvitationPageProps) {
+export default async function InvitationPage({ params }: InvitationPageProps) {
+  const { token } = await params
+  
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-neutral-25 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+        <div className="animate-pulse">Loading...</div>
       </div>
     }>
-      <InvitationContent token={params.token} />
+      <InvitationContent token={token} />
     </Suspense>
   )
 } 

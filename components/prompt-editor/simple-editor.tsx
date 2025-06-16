@@ -1,12 +1,11 @@
 import React from 'react'
-import { useState, useCallback, useMemo } from 'react'
-import { Variable, Eye, Wand2, Settings } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { Variable, Eye, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PreviewPopup } from './preview-popup'
-import { Label } from '@/components/ui/label'
 
 interface Variable {
   name: string
@@ -90,7 +89,7 @@ export function SimpleEditor({
   onToggleAdvanced,
   title,
   placeholder = 'Write your prompt here...',
-  isLoading = false
+  isLoading = false // eslint-disable-line @typescript-eslint/no-unused-vars
 }: SimpleEditorProps) {
   const variables = useVariableExtraction(content)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useTransition } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { Clock, RotateCcw, Eye, GitBranch, User, AlertCircle } from 'lucide-react'
 import { Button } from './button'
@@ -245,10 +245,9 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-export function VersionHistoryPanel({ promptId, onRestoreVersion }: VersionHistoryPanelProps) {
+export function VersionHistoryPanel({ onRestoreVersion }: VersionHistoryPanelProps) {
   const [versions, setVersions] = useState<Version[]>([])
   const [isOpen, setIsOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const [loadingState, setLoadingState] = useState<LoadingState>({
     restoring: new Set(),
     previewing: new Set(),

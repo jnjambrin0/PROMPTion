@@ -52,16 +52,16 @@ export function useNotifications(): UseNotificationsResult {
       }
       
       // Transform Server Action data to component format
-      const transformedNotifications: Notification[] = result.data!.notifications.map((notif: Record<string, unknown>) => ({
+      const transformedNotifications: Notification[] = result.data!.notifications.map((notif) => ({
         id: notif.id,
         type: getNotificationTypeFromDB(notif.type),
         title: notif.title,
         message: notif.message,
-        time: new Date(notif.createdAt),
+        time: notif.createdAt,
         read: notif.status === 'READ',
-        actor: notif.actor ? { name: notif.actor.fullName || notif.actor.username } : undefined,
+        actor: notif.actor ? { name: notif.actor.fullName || notif.actor.username || 'Unknown User' } : undefined,
         workspace: notif.workspace ? { name: notif.workspace.name, slug: notif.workspace.slug } : undefined,
-        actionUrl: notif.actionUrl
+        actionUrl: notif.actionUrl || undefined
       }))
       
       setNotifications(transformedNotifications)

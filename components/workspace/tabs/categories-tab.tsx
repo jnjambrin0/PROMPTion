@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
-import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, ArrowRight, Settings, List, Grid, Users } from 'lucide-react'
+import { FolderOpen, Plus, Hash, MoreHorizontal, Edit2, Trash2, Search, ArrowRight, Settings, List, Grid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,23 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-
 // Import dialog components
 import { CreateCategoryDialog } from '@/components/categories/create-category-dialog'
 import { EditCategoryDialog } from '@/components/categories/edit-category-dialog'
 import { DeleteCategoryDialog } from '@/components/categories/delete-category-dialog'
 import { BulkActionsDialog } from '@/components/categories/bulk-actions-dialog'
+import type { WorkspaceTabProps, WorkspaceNavigation } from '@/lib/types/workspace'
 
 interface CategoriesTabProps {
   workspaceSlug: string
-  workspaceData: {
-    workspace: any
-    categories: any[]
-    members: any[]
-    prompts?: any[]
-    stats?: any
-  }
-  navigation: any
+  workspaceData: WorkspaceTabProps['workspaceData']
+  navigation: WorkspaceNavigation
 }
 
 interface CategoryWithCounts {
@@ -108,7 +101,7 @@ function CategoryViewSwitcher({
 function CategoryCard({ category, workspaceSlug, navigation }: { 
   category: CategoryWithCounts
   workspaceSlug: string 
-  navigation: any
+  navigation: WorkspaceNavigation
 }) {
   return (
     <Card className="group hover:shadow-sm transition-all hover:border-border">
@@ -220,7 +213,7 @@ function CategoryCard({ category, workspaceSlug, navigation }: {
 function CategoryListItem({ category, workspaceSlug, navigation }: { 
   category: CategoryWithCounts
   workspaceSlug: string 
-  navigation: any
+  navigation: WorkspaceNavigation
 }) {
   return (
     <div className="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
@@ -415,7 +408,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData, navigation
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  const { workspace, categories, prompts, stats } = workspaceData
+  const { categories, prompts, stats } = workspaceData
 
   // Transform categories with prompt counts
   const categoriesWithCounts = useMemo((): CategoryWithCounts[] => {
@@ -425,7 +418,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData, navigation
     const categoryPromptCounts = new Map()
     if (prompts && prompts.length > 0) {
       prompts.forEach(prompt => {
-        const categoryId = prompt.categoryId || 'uncategorized'
+        const categoryId = prompt.category?.id || 'uncategorized'
         categoryPromptCounts.set(categoryId, (categoryPromptCounts.get(categoryId) || 0) + 1)
       })
     }
@@ -531,7 +524,7 @@ export default function CategoriesTab({ workspaceSlug, workspaceData, navigation
               <span className="text-sm text-muted-foreground">Average per Category</span>
             </div>
             <p className="text-lg font-semibold text-foreground">
-              {stats?.totalCategories > 0 ? Math.round(totalPrompts / stats.totalCategories) : 0}
+              {(stats?.totalCategories || 0) > 0 ? Math.round(totalPrompts / (stats?.totalCategories || 1)) : 0}
             </p>
           </CardContent>
         </Card>

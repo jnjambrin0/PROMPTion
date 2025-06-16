@@ -20,7 +20,7 @@ export const SlugInput = forwardRef<HTMLInputElement, SlugInputProps>(
   function SlugInput({
     value,
     onChange,
-    title,
+    // title, // Currently unused
     baseUrl = '',
     onValidation,
     isRequired = false,
@@ -134,7 +134,7 @@ export const SlugInput = forwardRef<HTMLInputElement, SlugInputProps>(
       )
     }
 
-    const showValidationBorder = validationResult !== null
+
     const isValid = validationResult?.isValid === true
     const hasError = validationResult?.isValid === false
 

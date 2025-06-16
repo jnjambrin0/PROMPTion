@@ -8,6 +8,9 @@ import { getPromptBySlug, getPromptById } from '@/lib/db/prompts'
 import { generateUniqueSlug } from '@/lib/db/utils'
 import prisma from '@/lib/prisma'
 import type { CreatePromptData } from '@/lib/types/forms'
+import type { InputJsonValue } from '@prisma/client/runtime/library'
+import type { PromptBlockUpdate } from '@/lib/types/shared'
+import type { BlockType } from '@/lib/generated/prisma'
 
 interface CreatePromptResult {
   success: boolean
@@ -15,6 +18,57 @@ interface CreatePromptResult {
   promptSlug?: string
   workspaceSlug?: string
 }
+
+/*
+
+interface UpdatePromptData {
+  title: string
+  description: string
+  blocks: PromptBlockData[]
+  isPublic: boolean
+  isTemplate: boolean
+}
+
+interface UpdatePromptResult {
+  success: boolean
+  error?: string
+  data?: {
+    id: string
+    title: string
+    slug: string
+    description?: string | null
+    isPublic: boolean
+    isTemplate: boolean
+    updatedAt: Date
+  }
+}
+
+interface PromptData {
+  id: string
+  title: string
+  slug: string
+  description?: string | null
+  isPublic: boolean
+  isTemplate: boolean
+  updatedAt: Date
+  workspace: {
+    id: string
+    name: string
+    slug: string
+  }
+  user: {
+    id: string
+    fullName?: string | null
+    username?: string | null
+  }
+  _count: {
+    favorites: number
+    forks: number
+    comments: number
+    blocks: number
+  }
+}
+  */
 
 export async function createPromptAction(
   data: CreatePromptData
@@ -322,7 +376,7 @@ export async function duplicatePromptAction(
         data: originalPrompt.blocks.map((block, index) => ({
           promptId: duplicatePrompt.id,
           type: block.type,
-          content: block.content as any, // Json type compatibility
+          content: block.content as InputJsonValue,
           position: index,
           indentLevel: block.indentLevel || 0,
           userId: user.id
@@ -608,7 +662,7 @@ export async function forkPromptAction(
           data: originalPrompt.blocks.map((block, index) => ({
             promptId: forkedPrompt.id,
             type: block.type,
-            content: block.content as any,
+            content: block.content as InputJsonValue,
             position: index,
             indentLevel: block.indentLevel || 0,
             userId: user.id
@@ -743,16 +797,11 @@ export async function updatePromptAction(
   updates: {
     title: string
     description: string
-    blocks: Array<{
-      id: string
-      type: string
-      content: any
-      position: number
-    }>
+    blocks: PromptBlockUpdate[]
     isPublic: boolean
     isTemplate: boolean
   }
-): Promise<{ success: boolean; error?: string; data?: any }> {
+): Promise<{ success: boolean; error?: string; data?: { id: string; title: string; slug: string } }> {
   try {
     // 1. Authentication
     const supabase = await createClient()
@@ -824,8 +873,8 @@ export async function updatePromptAction(
       await prisma.block.createMany({
         data: updates.blocks.map(block => ({
           id: block.id,
-          type: block.type as any,
-          content: block.content,
+          type: block.type as BlockType,
+          content: block.content as InputJsonValue,
           position: block.position,
           promptId: promptId,
           userId: user.id

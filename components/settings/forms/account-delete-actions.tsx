@@ -18,10 +18,9 @@ import { toast } from 'sonner'
 
 interface AccountDeleteActionsProps {
   deleteAction: () => Promise<{ success: boolean; error?: string }>
-  onUpdate: () => void
 }
 
-export function AccountDeleteActions({ deleteAction, onUpdate }: AccountDeleteActionsProps) {
+export function AccountDeleteActions({ deleteAction }: AccountDeleteActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   
   const handleDelete = useCallback(async () => {

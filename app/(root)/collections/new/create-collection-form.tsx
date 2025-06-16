@@ -249,7 +249,7 @@ export function CreateCollectionForm({ defaultWorkspaceId }: CreateCollectionFor
                         purple: '#faf5ff',
                         pink: '#fdf2f8',
                         indigo: '#f0f9ff'
-                      }[formData.color] || '#f9fafb',
+                      }[formData.color || 'gray'] || '#f9fafb',
                       borderWidth: '1px',
                       borderColor: {
                         gray: '#d1d5db',
@@ -260,7 +260,7 @@ export function CreateCollectionForm({ defaultWorkspaceId }: CreateCollectionFor
                         purple: '#c084fc',
                         pink: '#e879f9',
                         indigo: '#93c5fd'
-                      }[formData.color] || '#d1d5db'
+                      }[formData.color || 'gray'] || '#d1d5db'
                     }}
                   />
                 </div>

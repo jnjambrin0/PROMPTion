@@ -7,12 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { NotificationItem } from './notification-item'
 import { useNotifications } from '@/lib/hooks/use-notifications'
+import Image from 'next/image'
 
-interface NotificationContentProps {
-  onClose?: () => void
-}
-
-export function NotificationContent({ onClose }: NotificationContentProps) {
+export function NotificationContent() {
   const [hasInitialized, setHasInitialized] = useState(false)
   const {
     notifications,
@@ -51,7 +48,7 @@ export function NotificationContent({ onClose }: NotificationContentProps) {
     return (
       <div className="p-8 text-center">
         <div className="mx-auto h-24 w-24 mb-4">
-          <img 
+          <Image 
             src="/waiting.svg" 
             alt="No notifications" 
             className="w-full h-full object-contain opacity-60"

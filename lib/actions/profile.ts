@@ -4,14 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId, updateUser } from '@/lib/db/users'
 import { z } from 'zod'
+import type { ActionResult, AuthenticatedUser } from '@/lib/types/shared'
 
 // ==================== INTERFACES ====================
-
-interface ActionResult<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
 
 interface ProfileData {
   id: string
@@ -47,7 +42,7 @@ const updateProfileSchema = z.object({
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: any; error?: never }
+  | { user: AuthenticatedUser; error?: never }
   | { user?: never; error: string }
 > {
   try {
@@ -75,11 +70,11 @@ async function getAuthenticatedUser(): Promise<
 export async function getProfileAction(): Promise<ActionResult<ProfileData>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     // Mapear a la interfaz de respuesta
     const profileData: ProfileData = {
@@ -116,11 +111,11 @@ export async function updateProfileAction(
 ): Promise<ActionResult<ProfileData>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     // Validar con Zod
     const validation = updateProfileSchema.safeParse(input)

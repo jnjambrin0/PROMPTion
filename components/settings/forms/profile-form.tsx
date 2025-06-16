@@ -9,10 +9,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { type UserProfileData } from '@/lib/actions/user-settings'
 
+interface ProfileUpdates {
+  username?: string | null
+  fullName?: string | null
+  bio?: string | null
+}
+
 interface ProfileFormProps {
   profile: UserProfileData
   onUpdate: () => void
-  updateAction: (updates: any) => Promise<{ success: boolean; error?: string }>
+  updateAction: (updates: ProfileUpdates) => Promise<{ success: boolean; error?: string }>
 }
 
 export function ProfileForm({ profile, onUpdate, updateAction }: ProfileFormProps) {
@@ -45,7 +51,7 @@ export function ProfileForm({ profile, onUpdate, updateAction }: ProfileFormProp
     setIsLoading(true)
     
     try {
-      const updates: any = {}
+      const updates: ProfileUpdates = {}
       
       if (formData.username !== (profile.username || '')) {
         updates.username = formData.username || null

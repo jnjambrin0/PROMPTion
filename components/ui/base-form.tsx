@@ -144,7 +144,7 @@ export function SlugField({
   onChange,
   title,
   baseUrl,
-  isCustomSlug,
+  // isCustomSlug,
   onValidation,
   validateSlug,
   error

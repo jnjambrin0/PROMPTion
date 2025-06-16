@@ -1,5 +1,6 @@
 import prisma from '../prisma'
 import type { NotificationType, NotificationStatus } from '../generated/prisma'
+import type { InputJsonValue } from '@prisma/client/runtime/library'
 
 /**
  * Obtiene notificaciones de un usuario con paginación
@@ -233,7 +234,7 @@ export async function createNotification(data: {
         workspaceId,
         promptId,
         actionUrl,
-        metadata,
+        metadata: metadata as InputJsonValue,
         status: 'UNREAD'
       },
       include: {

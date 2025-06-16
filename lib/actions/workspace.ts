@@ -6,6 +6,8 @@ import { createWorkspace, getUserByAuthId, getWorkspaceBySlug, getWorkspaceCateg
 import { getWorkspacePrompts } from '@/lib/db/prompts'
 import { generateUniqueSlug } from '@/lib/db/utils'
 import type { CreateWorkspaceData } from '@/lib/types/forms'
+import type { WorkspaceData, WorkspaceStats } from '@/lib/types/workspace'
+import type { WorkspacePrompt, WorkspaceMember, WorkspaceCategory } from '@/lib/types/workspace'
 
 // ============================================================================
 // TYPES - Single source of truth
@@ -17,28 +19,10 @@ interface CreateWorkspaceResult {
   workspaceSlug?: string
 }
 
-interface WorkspaceStats {
-  totalPrompts: number
-  totalMembers: number
-  totalCategories: number
-  recentActivity: number
-  templatesCount: number
-  publicPromptsCount: number
-  thisWeekPrompts: number
-  totalViews: number
-}
-
 interface WorkspaceDataResult {
   success: boolean
   error?: string
-  data?: {
-    workspace: Record<string, unknown>
-    categories: Record<string, unknown>[]
-    members: Record<string, unknown>[]
-    prompts: Record<string, unknown>[]
-    stats: WorkspaceStats
-    currentUser: Record<string, unknown>
-  }
+  data?: WorkspaceData
 }
 
 // ============================================================================
@@ -142,17 +126,21 @@ export async function getWorkspaceDataAction(workspaceSlug: string): Promise<Wor
     const prompts = promptsResult.prompts || []
 
     // Calculate stats efficiently
-    const stats = calculateWorkspaceStats(prompts, members, categories)
+    const stats = calculateWorkspaceStats(
+      prompts as unknown as WorkspacePrompt[], 
+      members as unknown as WorkspaceMember[], 
+      categories as unknown as WorkspaceCategory[]
+    )
 
     return {
       success: true,
       data: {
-        workspace,
-        categories,
-        members,
-        prompts,
+        workspace: workspace as unknown as WorkspaceData['workspace'],
+        categories: categories as unknown as WorkspaceCategory[],
+        members: members as unknown as WorkspaceMember[],
+        prompts: prompts as unknown as WorkspacePrompt[],
         stats,
-        currentUser: user
+        currentUser: user as unknown as WorkspaceData['currentUser']
       }
     }
   } catch (error) {
@@ -178,7 +166,7 @@ function generateSlugFromName(name: string): string {
  * Calculate workspace statistics efficiently
  * No mock data, pure calculation from real data
  */
-function calculateWorkspaceStats(prompts: Record<string, unknown>[], members: Record<string, unknown>[], categories: Record<string, unknown>[]): WorkspaceStats {
+function calculateWorkspaceStats(prompts: WorkspacePrompt[], members: WorkspaceMember[], categories: WorkspaceCategory[]): WorkspaceStats {
   const now = new Date()
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 

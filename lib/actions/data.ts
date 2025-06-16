@@ -74,8 +74,8 @@ async function getAuthenticatedUser(): Promise<
 export async function getWorkspacesAction(): Promise<ActionResult<Workspace[]>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     const workspaces = await prisma.workspace.findMany({
@@ -153,8 +153,8 @@ interface WorkspaceCategory {
 export async function getWorkspaceCategoriesAction(workspaceId: string): Promise<ActionResult<WorkspaceCategory[]>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     // Verify user has access to workspace
@@ -223,8 +223,8 @@ interface ProfileData {
 export async function getProfileAction(): Promise<ActionResult<ProfileData>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     const profileData: ProfileData = {
@@ -261,8 +261,8 @@ interface UpdateProfileInput {
 export async function updateProfileAction(input: UpdateProfileInput): Promise<ActionResult<ProfileData>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     // Basic validation
@@ -330,8 +330,8 @@ export async function updateProfileAction(input: UpdateProfileInput): Promise<Ac
 export async function useTemplateAction(templateId: string): Promise<ActionResult<{ promptId: string }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     // Get template
@@ -398,11 +398,15 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
         isTemplate: false,
         isPublic: false,
         blocks: {
-          create: template.blocks.map((block: { type: string; content: string; position: number }) => ({
+          create: template.blocks.map((block) => ({
             type: block.type,
-            content: block.content,
+            content: block.content ?? {},
             position: block.position,
-            userId: auth.user.id
+            indentLevel: block.indentLevel || 0,
+            properties: block.properties ?? {},
+            user: {
+              connect: { id: auth.user.id }
+            }
           }))
         }
       }
@@ -438,8 +442,8 @@ interface CreateTemplateInput {
 export async function createTemplateAction(input: CreateTemplateInput): Promise<ActionResult<{ templateId: string; workspaceSlug?: string }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'User not found' }
     }
 
     // Validation

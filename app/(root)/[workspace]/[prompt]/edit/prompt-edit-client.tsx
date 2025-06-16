@@ -14,28 +14,17 @@ import { toast } from 'sonner'
 import { getPromptPageDataAction, updatePromptAction } from '@/lib/actions/prompt'
 import { SimpleEditor, PreviewPanel } from '@/components/prompt-editor'
 import { AdvancedEditor } from '@/components/prompt-editor/advanced-editor'
+import type { Block } from '@/lib/types/shared'
+import type { JsonValue } from '@/lib/types/shared'
 
-// Simplified types for basic editing
-// Enhanced types for advanced mode
-interface Variable {
-  name: string
-  type: 'string' | 'number' | 'boolean' | 'select'
-  description: string
-  required: boolean
-  defaultValue?: string
-  options?: string[]
-}
-
-interface Block {
+// Tipos directos basados en la estructura real de datos de la base de datos
+interface PromptBlockData {
   id: string
-  type: 'TEXT' | 'VARIABLE' | 'PROMPT' | 'HEADING' | 'CODE'
+  type: string
+  content: JsonValue
   position: number
-  content: {
-    text?: string
-    level?: number
-    language?: string
-    variable?: Variable
-  }
+  indentLevel: number
+  createdAt: Date
 }
 
 interface PromptEditData {
@@ -60,16 +49,41 @@ interface LoadingState {
   saving: boolean
 }
 
-interface PromptWithWorkspace {
+// Estructura real de los datos que vienen de getPromptPageDataAction
+interface PromptPageData {
   id: string
   title: string
   description: string | null
-  blocks: Block[]
+  blocks: PromptBlockData[] // Usando la estructura real de DB
   isPublic: boolean
   isTemplate: boolean
   workspace: {
     name: string
   }
+}
+
+// Función auxiliar mínima para convertir blocks al formato esperado por AdvancedEditor
+function convertBlocksForEditor(blocks: PromptBlockData[]): Block[] {
+  return blocks.map(block => ({
+    id: block.id,
+    type: block.type as Block['type'],
+    position: block.position,
+    content: typeof block.content === 'object' && block.content !== null 
+      ? block.content as Record<string, unknown>
+      : { text: String(block.content) },
+    createdAt: block.createdAt,
+    indentLevel: block.indentLevel || 0
+  }))
+}
+
+// Función auxiliar mínima para preparar blocks para el update action
+function prepareBlocksForUpdate(blocks: Block[]) {
+  return blocks.map(block => ({
+    id: block.id,
+    type: block.type,
+    content: block.content,
+    position: block.position
+  }))
 }
 
 export function PromptEditClient({ 
@@ -98,7 +112,7 @@ export function PromptEditClient({
   const [showPreview, setShowPreview] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
-  const [promptData, setPromptData] = useState<PromptWithWorkspace | null>(null)
+  const [promptData, setPromptData] = useState<PromptPageData | null>(null)
 
   // Check for unsaved changes
   const hasChanges = useMemo(() => {
@@ -113,8 +127,7 @@ export function PromptEditClient({
     return blocks
       .filter(block => block.type === 'TEXT' || block.type === 'PROMPT')
       .map(block => {
-        const content = block.content as { text?: string }
-        return content?.text || ''
+        return block.content?.text || ''
       })
       .join('\n\n')
       .trim()
@@ -147,10 +160,14 @@ export function PromptEditClient({
       }
 
       if (result.data) {
-        const data = result.data
+        // Usar datos directamente sin conversiones innecesarias
+        const data = result.data as PromptPageData
+        
+        // Convert database blocks to editor format only when needed
+        const editorBlocks = convertBlocksForEditor(data.blocks || [])
         
         // Convert blocks to simple content for editing
-        const content = blocksToContent(data.blocks || [])
+        const content = blocksToContent(editorBlocks)
         
         const initialFormData: PromptEditData = {
           title: data.title,
@@ -181,12 +198,15 @@ export function PromptEditClient({
       setLoading(prev => ({ ...prev, saving: true }))
       
       // Convert content back to blocks for storage
-      const blocks = contentToBlocks(formData.content)
+      const blocks = isAdvancedMode ? formData.blocks : contentToBlocks(formData.content)
+      
+      // Prepare blocks for the action
+      const blockUpdates = prepareBlocksForUpdate(blocks)
       
       const result = await updatePromptAction(promptData.id, {
         title: formData.title,
         description: formData.description,
-        blocks,
+        blocks: blockUpdates,
         isPublic: formData.isPublic,
         isTemplate: formData.isTemplate
       })
@@ -203,7 +223,7 @@ export function PromptEditClient({
     } finally {
       setLoading(prev => ({ ...prev, saving: false }))
     }
-  }, [formData, promptData, loading.saving, contentToBlocks])
+  }, [formData, promptData, loading.saving, contentToBlocks, isAdvancedMode])
 
   // Handle navigation with unsaved changes
   const handleBack = useCallback(() => {
@@ -324,7 +344,7 @@ export function PromptEditClient({
             </p>
           </div>
           {hasChanges && (
-                              <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+            <Badge variant="outline" className="text-yellow-600 border-yellow-200">
               Unsaved changes
             </Badge>
           )}
@@ -401,10 +421,12 @@ export function PromptEditClient({
           </Card>
           
           <AdvancedEditor
-            blocks={formData.blocks}
-            onChange={(blocks) => setFormData(prev => ({ ...prev, blocks }))}
-            onBackToSimple={handleBackToSimple}
+            initialBlocks={formData.blocks}
+            onSave={(blocks: Block[]) => setFormData(prev => ({ ...prev, blocks }))}
+            onCancel={handleBackToSimple}
             title={formData.title}
+            showPreview={showPreview}
+            onTogglePreview={() => setShowPreview(!showPreview)}
           />
         </div>
       ) : (

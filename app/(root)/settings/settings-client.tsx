@@ -115,7 +115,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         return (
           <AccountSettings 
             userEmail={settingsData.profile.email}
-            onUpdate={refreshSettings}
           />
         )
       case 'billing':

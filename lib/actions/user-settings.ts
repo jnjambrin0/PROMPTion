@@ -146,10 +146,10 @@ export async function getUserSettingsAction(): Promise<UserSettingsResult> {
 }
 
 export async function updateUserProfileAction(updates: {
-  username?: string
-  fullName?: string
-  bio?: string
-  avatarUrl?: string
+  username?: string | null
+  fullName?: string | null
+  bio?: string | null
+  avatarUrl?: string | null
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()

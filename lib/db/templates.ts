@@ -203,7 +203,9 @@ export async function getPublicTemplates(filters: import('../types/templates').T
           title: true,
           description: true,
           slug: true,
+          viewCount: true,
           useCount: true,
+          forkCount: true,
           averageScore: true,
           createdAt: true,
           updatedAt: true,
@@ -275,7 +277,7 @@ export async function getPublicTemplates(filters: import('../types/templates').T
     const hasMore = skip + templates.length < totalCount
 
     return {
-      templates: templates as import('../types/templates').Template[],
+      templates: templates as import('../types/templates').TemplateListItem[],
       totalCount,
       hasMore
     }

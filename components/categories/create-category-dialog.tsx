@@ -15,6 +15,17 @@ import {
 import { Button } from '@/components/ui/button'
 import { CategoryForm } from './category-form'
 
+type CategoryFormData = {
+  name: string
+  description?: string
+  icon: string
+  color: string
+}
+
+type CreateCategoryData = CategoryFormData & {
+  slug: string
+}
+
 interface CreateCategoryDialogProps {
   workspaceSlug: string
   trigger?: React.ReactNode
@@ -36,7 +47,7 @@ export function CreateCategoryDialog({
   const dialogOpen = open !== undefined ? open : isOpen
   const setDialogOpen = onOpenChange || setIsOpen
 
-  const handleCreateCategory = async (data: any) => {
+  const handleCreateCategory = async (data: CreateCategoryData) => {
     setIsLoading(true)
     try {
       const { createCategoryAction } = await import('@/lib/actions/categories')
@@ -78,11 +89,12 @@ export function CreateCategoryDialog({
           </DialogDescription>
         </DialogHeader>
         <CategoryForm
-          onSubmit={(data) => {
-            handleCreateCategory({
+          onSubmit={async (data) => {
+            await handleCreateCategory({
               name: data.name,
               icon: data.icon,
               color: data.color,
+              description: data.description,
               slug: data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
             })
           }}

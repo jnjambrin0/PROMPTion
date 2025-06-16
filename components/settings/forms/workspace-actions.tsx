@@ -73,7 +73,7 @@ export function WorkspaceActions({ workspace, onUpdate, leaveAction }: Workspace
         <AlertDialogHeader>
           <AlertDialogTitle>Leave Workspace</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to leave "{workspace.name}"? You will lose access to all prompts and data in this workspace.
+            Are you sure you want to leave &quot;{workspace.name}&quot;? You will lose access to all prompts and data in this workspace.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

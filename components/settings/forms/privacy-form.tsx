@@ -44,7 +44,7 @@ export function PrivacyForm({ settings, onUpdate, updateAction, category }: Priv
   const [isLoading, setIsLoading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  const handleChange = useCallback((field: keyof PrivacySettings, value: any) => {
+  const handleChange = useCallback((field: keyof PrivacySettings, value: string | boolean) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value }
       

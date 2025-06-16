@@ -1,6 +1,17 @@
 import { getUserByAuthId } from './users'
 import { getUserWorkspaces } from './workspaces'
 import { getWorkspacePrompts } from './prompts'
+import type { AuthenticatedUser } from '@/lib/types/shared'
+import type { WorkspacePrompt } from '@/lib/types/workspace'
+
+// Dashboard-specific type that includes workspace info
+type DashboardPrompt = WorkspacePrompt & {
+  workspace: {
+    id: string
+    name: string
+    slug: string
+  }
+}
 
 interface DashboardStats {
   totalWorkspaces: number
@@ -9,10 +20,26 @@ interface DashboardStats {
   totalPublic: number
 }
 
+// Workspace type for dashboard context (reduced fields for performance)
+interface DashboardWorkspace {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  logoUrl: string | null
+  plan: string
+  createdAt: Date
+  ownerId: string
+  _count: {
+    prompts: number
+    members: number
+  }
+}
+
 interface DashboardData {
-  user: Record<string, unknown>
-  workspaces: Record<string, unknown>[]
-  prompts: Record<string, unknown>[]
+  user: AuthenticatedUser
+  workspaces: DashboardWorkspace[]
+  prompts: DashboardPrompt[]
   stats: DashboardStats
 }
 
@@ -36,24 +63,15 @@ export async function getDashboardData(userId: string): Promise<DashboardData | 
           limit: 25 // Reducido de 50 a 25 para mejor rendimiento
         })
         
-        // Retornar solo campos esenciales para dashboard
+        // Retornar prompts with workspace context
         return prompts.map(prompt => ({
-          id: prompt.id,
-          title: prompt.title,
-          slug: prompt.slug,
-          description: prompt.description,
-          isTemplate: prompt.isTemplate,
-          isPublic: prompt.isPublic,
-          updatedAt: prompt.updatedAt,
-          createdAt: prompt.createdAt,
-          _count: prompt._count || { blocks: 0 },
-          user: prompt.user,
+          ...prompt,
           workspace: {
             id: workspace.id,
             name: workspace.name,
             slug: workspace.slug
           }
-        }))
+        })) as DashboardPrompt[]
       } catch (error) {
         console.error(`Error fetching prompts for workspace ${workspace.id}:`, error)
         return []
@@ -64,7 +82,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData | 
     const promptsResults = await Promise.allSettled(promptsPromises)
     
     const allPrompts = promptsResults
-      .filter((result): result is PromiseFulfilledResult<Record<string, unknown>[]> => 
+      .filter((result): result is PromiseFulfilledResult<DashboardPrompt[]> => 
         result.status === 'fulfilled'
       )
       .flatMap(result => result.value)
@@ -83,8 +101,8 @@ export async function getDashboardData(userId: string): Promise<DashboardData | 
     }
 
     return { 
-      user, 
-      workspaces, 
+      user: user as AuthenticatedUser, 
+      workspaces: workspaces as DashboardWorkspace[], 
       prompts: allPrompts,
       stats
     }
@@ -114,7 +132,7 @@ export async function getDashboardDataOptimized(userId: string): Promise<Dashboa
         prompts.map(prompt => ({
           ...prompt,
           workspace: workspace
-        }))
+        })) as DashboardPrompt[]
       ).catch(error => {
         console.error(`Failed to fetch prompts for workspace ${workspace.id}:`, error)
         return [] // Return empty array on error to continue with other workspaces
@@ -138,8 +156,8 @@ export async function getDashboardDataOptimized(userId: string): Promise<Dashboa
     }
 
     return { 
-      user, 
-      workspaces, 
+      user: user as AuthenticatedUser, 
+      workspaces: workspaces as DashboardWorkspace[], 
       prompts: allPrompts,
       stats
     }

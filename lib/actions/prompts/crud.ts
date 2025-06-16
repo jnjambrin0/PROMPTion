@@ -6,6 +6,16 @@ import { createPrompt } from '@/lib/db'
 import { generateUniquePromptSlug, cleanCategoryId } from '@/lib/utils/prompt-utils'
 import prisma from '@/lib/prisma'
 import type { CreatePromptData } from '@/lib/types/forms'
+import type { AuthenticatedUser, JsonValue } from '@/lib/types/shared'
+import type { BlockType } from '@/lib/generated/prisma'
+import type { InputJsonValue } from '@prisma/client/runtime/library'
+
+interface UpdateBlock {
+  id: string
+  type: BlockType
+  content: JsonValue
+  position: number
+}
 
 interface CreatePromptResult {
   success: boolean
@@ -17,14 +27,14 @@ interface CreatePromptResult {
 interface UpdatePromptResult {
   success: boolean
   error?: string
-  data?: any
+  data?: unknown
 }
 
 /**
  * Create a new prompt
  */
 export const createPromptAction = withAuth(async (
-  user: any,
+  user: AuthenticatedUser,
   data: CreatePromptData
 ): Promise<CreatePromptResult> => {
   try {
@@ -97,17 +107,12 @@ export const createPromptAction = withAuth(async (
  * Update an existing prompt
  */
 export const updatePromptAction = withAuth(async (
-  user: any,
+  user: AuthenticatedUser,
   promptId: string,
   updates: {
     title: string
     description: string
-    blocks: Array<{
-      id: string
-      type: string
-      content: any
-      position: number
-    }>
+    blocks: UpdateBlock[]
     isPublic: boolean
     isTemplate: boolean
   }
@@ -170,8 +175,8 @@ export const updatePromptAction = withAuth(async (
       await prisma.block.createMany({
         data: updates.blocks.map(block => ({
           id: block.id,
-          type: block.type as any,
-          content: block.content,
+          type: block.type,
+          content: block.content as InputJsonValue,
           position: block.position,
           promptId: promptId,
           userId: user.id

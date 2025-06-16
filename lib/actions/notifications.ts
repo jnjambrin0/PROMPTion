@@ -5,14 +5,10 @@ import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
 import { getUserNotifications, getUnreadNotificationCount, deleteNotification, deleteAllNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/db/notifications'
 import { z } from 'zod'
+import type { ActionResult, AuthenticatedUser } from '@/lib/types/shared'
+import type { NotificationType } from '@/lib/generated/prisma'
 
 // ==================== INTERFACES ====================
-
-interface ActionResult<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
 
 interface NotificationActor {
   id: string
@@ -64,7 +60,7 @@ const notificationQuerySchema = z.object({
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: any; error?: never }
+  | { user: AuthenticatedUser; error?: never }
   | { user?: never; error: string }
 > {
   try {
@@ -93,16 +89,16 @@ export async function getNotificationsAction(input: {
   page?: number
   limit?: number
   type?: string
-  status?: 'UNREAD' | 'READ'
+  status?: 'UNREAD' | 'read'
   search?: string
 }): Promise<ActionResult<PaginatedNotificationsResponse>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     // Validar parámetros de entrada
     const validation = notificationQuerySchema.safeParse(input)
@@ -121,8 +117,8 @@ export async function getNotificationsAction(input: {
       getUserNotifications(user.id, {
         page: validatedParams.page,
         limit: validatedParams.limit,
-        type: validatedParams.type as any,
-        status: validatedParams.status as any,
+        type: validatedParams.type as NotificationType | undefined,
+        status: validatedParams.status as 'UNREAD' | 'READ' | undefined,
         search: validatedParams.search
       }),
       getUnreadNotificationCount(user.id)
@@ -174,11 +170,11 @@ export async function getNotificationsAction(input: {
 export async function deleteNotificationAction(notificationId: string): Promise<ActionResult<void>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     if (!notificationId || typeof notificationId !== 'string') {
       return {
@@ -224,11 +220,11 @@ export async function deleteNotificationAction(notificationId: string): Promise<
 export async function deleteAllNotificationsAction(): Promise<ActionResult<{ deletedCount: number }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     // Eliminar todas las notificaciones del usuario
     const result = await deleteAllNotifications(user.id)
@@ -254,11 +250,11 @@ export async function deleteAllNotificationsAction(): Promise<ActionResult<{ del
 export async function markNotificationAsReadAction(notificationId: string): Promise<ActionResult<void>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     // Validar ID de notificación
     if (!notificationId || typeof notificationId !== 'string') {
@@ -285,11 +281,11 @@ export async function markNotificationAsReadAction(notificationId: string): Prom
 export async function markAllNotificationsAsReadAction(): Promise<ActionResult<{ updatedCount: number }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const result = await markAllNotificationsAsRead(user.id)
 
@@ -314,11 +310,11 @@ export async function markAllNotificationsAsReadAction(): Promise<ActionResult<{
 export async function getUnreadNotificationCountAction(): Promise<ActionResult<{ count: number }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const count = await getUnreadNotificationCount(user.id)
 

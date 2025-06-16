@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// Import CategoryColor from the color picker component
+const categoryColors = ['gray', 'blue', 'green', 'yellow', 'red', 'purple', 'pink', 'indigo'] as const
+
 // ==================== TEMPLATE SCHEMAS ====================
 
 export const createTemplateSchema = z.object({
@@ -111,7 +114,7 @@ export const createCategorySchema = z.object({
     .max(200, 'Description must be less than 200 characters')
     .optional(),
   icon: z.string().optional(),
-  color: z.string().optional(),
+  color: z.enum(categoryColors).optional(),
   workspaceId: z.string()
     .min(1, 'Workspace is required'),
   parentId: z.string().optional()

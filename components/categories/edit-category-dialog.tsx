@@ -15,14 +15,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { CategoryForm } from './category-form'
 
-interface Category {
-  id: string
+interface CategoryUpdateData {
   name: string
-  description?: string | null
   icon: string
   color: string
-  promptCount?: number
-  isDefault?: boolean
+  description?: string
 }
 
 interface EditCategoryDialogProps {
@@ -33,15 +30,10 @@ interface EditCategoryDialogProps {
     color: string | null
     description?: string | null
   }
-  isOpen: boolean
-  onClose: () => void
-  onEditCategory: (data: {
-    name: string
-    icon: string
-    color: string
-    description?: string
-  }) => Promise<void>
-  isLoading?: boolean
+  workspaceSlug: string
+  trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function EditCategoryDialog({
@@ -59,7 +51,7 @@ export function EditCategoryDialog({
   const dialogOpen = open !== undefined ? open : isOpen
   const setDialogOpen = onOpenChange || setIsOpen
 
-  const handleUpdateCategory = async (data: any) => {
+  const handleUpdateCategory = async (data: CategoryUpdateData) => {
     setIsLoading(true)
     try {
       const { updateCategoryAction } = await import('@/lib/actions/categories')
@@ -103,8 +95,8 @@ export function EditCategoryDialog({
           initialData={{
             name: category.name,
             description: category.description || '',
-            icon: category.icon,
-            color: category.color,
+            icon: category.icon || '',
+            color: category.color || '',
           }}
           onSubmit={handleUpdateCategory}
           isLoading={isLoading}

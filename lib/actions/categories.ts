@@ -6,14 +6,9 @@ import { getUserByAuthId } from '@/lib/db/users'
 import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import { getWorkspaceCategories, createCategory, updateCategory, deleteCategory } from '@/lib/db/categories'
 import { z } from 'zod'
+import type { ActionResult, AuthenticatedUser } from '@/lib/types/shared'
 
 // ==================== INTERFACES ====================
-
-interface ActionResult<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
 
 interface CategoryResponse {
   id: string
@@ -83,7 +78,7 @@ const slugSchema = z.string()
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: any; error?: never }
+  | { user: AuthenticatedUser; error?: never }
   | { user?: never; error: string }
 > {
   try {
@@ -119,10 +114,10 @@ async function validateWorkspaceAccess(workspaceSlug: string, userId: string) {
     }
 
     return { workspace, error: undefined }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error validating workspace access:', error)
     
-    if (error.message.includes('Access denied')) {
+    if (error instanceof Error && error.message.includes('Access denied')) {
       return { error: 'Access denied' }
     }
     
@@ -146,11 +141,11 @@ export async function getWorkspaceCategoriesAction(
 ): Promise<ActionResult<CategoryResponse[]>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const validation = await validateWorkspaceAccess(workspaceSlug, user.id)
     if (validation.error) {
@@ -201,11 +196,11 @@ export async function createCategoryAction(
 ): Promise<ActionResult<{ categoryId: string }>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const validation = await validateWorkspaceAccess(workspaceSlug, user.id)
     if (validation.error) {
@@ -275,18 +270,16 @@ export async function updateCategoryAction(
 ): Promise<ActionResult<void>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const validation = await validateWorkspaceAccess(workspaceSlug, user.id)
     if (validation.error) {
       return { success: false, error: validation.error }
     }
-
-    const { workspace } = validation
 
     // Validar con Zod
     const bodyValidation = updateCategorySchema.safeParse(input)
@@ -345,11 +338,11 @@ export async function deleteCategoryAction(
 ): Promise<ActionResult<void>> {
   try {
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication required' }
     }
 
-    const { user } = auth
+    const user = auth.user
 
     const validation = await validateWorkspaceAccess(workspaceSlug, user.id)
     if (validation.error) {

@@ -5,6 +5,8 @@ import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import { getCategoryById } from '@/lib/db/categories'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { DetailedError } from '@/lib/types/shared'
 
 
 // ==================== TIPOS Y ESQUEMAS ====================

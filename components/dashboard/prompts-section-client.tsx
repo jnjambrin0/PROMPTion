@@ -6,34 +6,19 @@ import { Plus, MessageSquare, FileText, Globe, Users, Clock } from 'lucide-react
 import { PromptViewSwitcher } from './prompt-view-switcher'
 import { PromptFilters } from './prompt-filters'
 import { formatDistanceToNow } from '@/lib/utils'
+import type { WorkspacePrompt } from '@/lib/types/workspace'
 
-interface Prompt {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  isTemplate: boolean
-  isPublic: boolean
-  createdAt: Date
-  updatedAt: Date
-  _count: {
-    blocks: number
-  }
+// Dashboard-specific type that includes workspace info
+type DashboardPrompt = WorkspacePrompt & {
   workspace: {
     id: string
     name: string
     slug: string
   }
-  user: {
-    id: string
-    fullName: string | null
-    username: string | null
-    avatarUrl: string | null
-  }
 }
 
 interface PromptsSectionClientProps {
-  prompts: Prompt[]
+  prompts: DashboardPrompt[]
   initialSearchParams: {
     view?: string
     workspace?: string
@@ -43,7 +28,7 @@ interface PromptsSectionClientProps {
 }
 
 // Enhanced Prompt Card Component
-const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => (
+const EnhancedPromptCard = ({ prompt }: { prompt: DashboardPrompt }) => (
   <Link
     href={`/${prompt.workspace.slug}/${prompt.slug}`}
     className="group block bg-white rounded-lg border border-neutral-200 p-3 sm:p-4 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"
@@ -118,7 +103,7 @@ const EnhancedPromptCard = ({ prompt }: { prompt: Prompt }) => (
 )
 
 // Compact List Item Component  
-const CompactPromptItem = ({ prompt }: { prompt: Prompt }) => (
+const CompactPromptItem = ({ prompt }: { prompt: DashboardPrompt }) => (
   <Link
     href={`/${prompt.workspace.slug}/${prompt.slug}`}
     className="group block bg-white rounded-lg border border-neutral-200 p-2 sm:p-3 hover:border-neutral-300 hover:shadow-sm transition-all duration-200"

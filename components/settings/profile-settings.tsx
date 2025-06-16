@@ -8,6 +8,7 @@ import { SettingsSection } from './shared/settings-section'
 import { SettingsRow } from './shared/settings-row'
 import { CompactCard } from './shared/compact-card'
 import { ProfileForm } from './forms/profile-form'
+import Image from 'next/image'
 
 interface ProfileSettingsProps {
   profile: UserProfileData
@@ -23,7 +24,7 @@ export function ProfileSettings({ profile, onUpdate }: ProfileSettingsProps) {
           {/* Compact Avatar */}
           <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               {profile.avatarUrl ? (
-                <img 
+                <Image 
                   src={profile.avatarUrl} 
                   alt="Profile" 
                 className="h-full w-full object-cover rounded-full"

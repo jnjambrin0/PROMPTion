@@ -2,30 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db/users'
-import { getTemplateStats, getPublicTemplates, getFeaturedTemplates, createTemplate } from '@/lib/db/templates'
-import { z } from 'zod'
+import { getTemplateStats } from '@/lib/db/templates'
+import { getUserByAuthId } from '@/lib/db'
+import { ActionResult } from '@/lib/types/shared'
+import type { AuthenticatedUser } from '@/lib/types/shared'
+import type { Template, TemplateListItem, TemplateStats } from '@/lib/types/templates'
+import type { User } from '@supabase/supabase-js'
 import prisma from '@/lib/prisma'
-
-// ==================== INTERFACES ====================
-
-interface ActionResult<T = unknown> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-interface TemplateStats {
-  totalTemplates: number
-  totalAuthors: number
-  totalUsage: number
-  featuredCount: number
-}
 
 // ==================== AUTHENTICATION HELPER ====================
 
 async function getAuthenticatedUser(): Promise<
-  | { user: Record<string, unknown>; authUser: Record<string, unknown>; error?: never }
+  | { user: AuthenticatedUser; authUser: User; error?: never }
   | { user?: never; authUser?: never; error: string }
 > {
   try {
@@ -41,7 +29,7 @@ async function getAuthenticatedUser(): Promise<
       return { error: 'User not found' }
     }
 
-    return { user, authUser }
+    return { user: user as AuthenticatedUser, authUser }
   } catch (error) {
     console.error('Authentication error:', error)
     return { error: 'Authentication failed' }
@@ -88,17 +76,26 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
 
     // Autenticación
     const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication failed' }
     }
 
-    // Lógica de negocio
-    const result = await getTemplateById(templateId, auth.user.id)
+    // Buscar template
+    const template = await prisma.prompt.findFirst({
+      where: {
+        id: templateId,
+        isTemplate: true,
+        OR: [
+          { isPublic: true },
+          { userId: auth.user.id }
+        ]
+      }
+    })
 
-    if (!result.success) {
+    if (!template) {
       return {
         success: false,
-        error: result.error || 'Failed to use template'
+        error: 'Template not found or not accessible'
       }
     }
 
@@ -109,7 +106,7 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
     return {
       success: true,
       data: {
-        promptId: result.promptId!,
+        promptId: template.id,
         message: 'Template used successfully'
       }
     }
@@ -142,7 +139,7 @@ export async function useTemplateAction(templateId: string): Promise<ActionResul
 
 // ==================== GET TEMPLATE DETAILS ACTION ====================
 
-export async function getTemplateDetailsAction(templateId: string): Promise<ActionResult<Record<string, unknown>>> {
+export async function getTemplateDetailsAction(templateId: string): Promise<ActionResult<Template>> {
   try {
     if (!templateId || typeof templateId !== 'string') {
       return {
@@ -189,7 +186,7 @@ export async function getTemplateDetailsAction(templateId: string): Promise<Acti
           orderBy: {
             position: 'asc'
           }
-                 }
+        }
       }
     })
 
@@ -202,7 +199,7 @@ export async function getTemplateDetailsAction(templateId: string): Promise<Acti
 
     return {
       success: true,
-      data: template
+      data: template as unknown as Template
     }
 
   } catch (error) {
@@ -214,7 +211,7 @@ export async function getTemplateDetailsAction(templateId: string): Promise<Acti
   }
 }
 
-// ==================== NEW TEMPLATES LISTING ACTIONS ====================
+// ==================== TEMPLATES LISTING ACTIONS ====================
 
 export async function getPublicTemplatesAction(input: {
   categoryId?: string
@@ -223,28 +220,110 @@ export async function getPublicTemplatesAction(input: {
   page?: number
   limit?: number
 }): Promise<ActionResult<{
-  templates: Record<string, unknown>[]
+  templates: TemplateListItem[]
   totalCount: number
   hasMore: boolean
 }>> {
   try {
-    const filters = {
-      categoryId: input.categoryId,
-      search: input.search,
-      sort: input.sort || 'popular',
-      page: input.page || 1,
-      limit: input.limit || 12
+    const { categoryId, search, sort = 'popular', page = 1, limit = 20 } = input
+
+    // Construir filtros
+    const where: {
+      isTemplate: boolean
+      isPublic: boolean
+      deletedAt: null
+      categoryId?: string
+      OR?: Array<{
+        title?: { contains: string; mode: 'insensitive' }
+        description?: { contains: string; mode: 'insensitive' }
+      }>
+    } = {
+      isTemplate: true,
+      isPublic: true,
+      deletedAt: null
     }
 
-    const result = await getPublicTemplates(filters)
+    if (categoryId) {
+      where.categoryId = categoryId
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    // Construir ordenación
+    let orderBy: Record<string, unknown>
+
+    switch (sort) {
+      case 'recent':
+        orderBy = { createdAt: 'desc' }
+        break
+      case 'favorites':
+        orderBy = { _count: { favorites: 'desc' } }
+        break
+      case 'alphabetical':
+        orderBy = { title: 'asc' }
+        break
+      default: // popular
+        orderBy = { useCount: 'desc' }
+    }
+
+    const [templates, totalCount] = await Promise.all([
+      prisma.prompt.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              avatarUrl: true
+            }
+          },
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              color: true
+            }
+          },
+          _count: {
+            select: {
+              comments: true,
+              favorites: true,
+              forks: true
+            }
+          }
+        },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.prompt.count({ where })
+    ])
 
     return {
       success: true,
-      data: result
+      data: {
+        templates: templates as unknown as TemplateListItem[],
+        totalCount,
+        hasMore: totalCount > page * limit
+      }
     }
 
   } catch (error) {
-    console.error('Get public templates error:', error)
+    console.error('Error fetching public templates:', error)
     return {
       success: false,
       error: 'Failed to fetch templates'
@@ -252,44 +331,14 @@ export async function getPublicTemplatesAction(input: {
   }
 }
 
-export async function getFeaturedTemplatesAction(): Promise<ActionResult<Record<string, unknown>[]>> {
+export async function getFeaturedTemplatesAction(): Promise<ActionResult<TemplateListItem[]>> {
   try {
-    const templates = await getFeaturedTemplates()
-
-    return {
-      success: true,
-      data: templates
-    }
-
-  } catch (error) {
-    console.error('Get featured templates error:', error)
-    return {
-      success: false,
-      error: 'Failed to fetch featured templates'
-    }
-  }
-}
-
-// ==================== TEMPLATE DETAIL ACTION ====================
-
-export async function getTemplateByIdAction(templateId: string): Promise<ActionResult<Record<string, unknown>>> {
-  try {
-    if (!templateId || typeof templateId !== 'string') {
-      return {
-        success: false,
-        error: 'Invalid template ID'
-      }
-    }
-
-    // Buscar template público o verificar acceso privado
-    const template = await prisma.prompt.findFirst({
+    const templates = await prisma.prompt.findMany({
       where: {
-        id: templateId,
         isTemplate: true,
-        OR: [
-          { isPublic: true },
-          // Si está autenticado, puede ver sus propios templates
-        ]
+        isPublic: true,
+        isPinned: true,
+        deletedAt: null
       },
       include: {
         user: {
@@ -315,14 +364,71 @@ export async function getTemplateByIdAction(templateId: string): Promise<ActionR
             color: true
           }
         },
-        tags: {
-          include: {
-            tag: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
+        _count: {
+          select: {
+            comments: true,
+            favorites: true,
+            forks: true
+          }
+        }
+      },
+      orderBy: {
+        useCount: 'desc'
+      },
+      take: 12
+    })
+
+    return {
+      success: true,
+      data: templates as unknown as TemplateListItem[]
+    }
+
+  } catch (error) {
+    console.error('Error fetching featured templates:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch featured templates'
+    }
+  }
+}
+
+export async function getTemplateByIdAction(templateId: string): Promise<ActionResult<Template>> {
+  try {
+    if (!templateId) {
+      return {
+        success: false,
+        error: 'Template ID is required'
+      }
+    }
+
+    const template = await prisma.prompt.findFirst({
+      where: {
+        id: templateId,
+        isTemplate: true,
+        deletedAt: null
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatarUrl: true
+          }
+        },
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true
           }
         },
         blocks: {
@@ -343,25 +449,25 @@ export async function getTemplateByIdAction(templateId: string): Promise<ActionR
     if (!template) {
       return {
         success: false,
-        error: 'Template not found or not accessible'
+        error: 'Template not found'
       }
     }
 
     return {
       success: true,
-      data: template
+      data: template as unknown as Template
     }
 
   } catch (error) {
-    console.error('Get template by ID error:', error)
+    console.error('Error fetching template by ID:', error)
     return {
       success: false,
-      error: 'Failed to fetch template details'
+      error: 'Failed to fetch template'
     }
   }
 }
 
-// ==================== TEMPLATE CREATION ACTION ====================
+// ==================== CREATE TEMPLATE ACTION ====================
 
 interface CreateTemplateInput {
   title: string
@@ -374,55 +480,65 @@ interface CreateTemplateInput {
   templateType?: 'prompt' | 'workflow' | 'agent'
 }
 
-const createTemplateSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title too long'),
-  slug: z.string().min(3, 'Slug must be at least 3 characters').max(50, 'Slug too long').optional(),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description too long'),
-  workspaceId: z.string().uuid('Invalid workspace ID'),
-  categoryId: z.string().uuid('Invalid category ID').optional(),
-  isPublic: z.boolean().default(true),
-  icon: z.string().optional(),
-  templateType: z.enum(['prompt', 'workflow', 'agent']).default('prompt')
-})
-
 export async function createTemplateAction(input: CreateTemplateInput): Promise<ActionResult<{ templateId: string }>> {
   try {
-    const auth = await getAuthenticatedUser()
-    if (auth.error) {
-      return { success: false, error: auth.error }
-    }
-
-    const { user } = auth
-
-    // Validar datos de entrada
-    const validation = createTemplateSchema.safeParse(input)
-    if (!validation.success) {
-      const firstError = validation.error.errors[0]
+    // Validación de entrada
+    if (!input.title || !input.workspaceId) {
       return {
         success: false,
-        error: firstError.message
+        error: 'Title and workspace are required'
       }
     }
 
-    const validatedData = validation.data
+    // Autenticación
+    const auth = await getAuthenticatedUser()
+    if (auth.error || !auth.user) {
+      return { success: false, error: auth.error || 'Authentication failed' }
+    }
+
+    // Verificar acceso al workspace
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: input.workspaceId,
+        OR: [
+          { ownerId: auth.user.id },
+          {
+            members: {
+              some: {
+                userId: auth.user.id,
+                role: { in: ['OWNER', 'ADMIN', 'EDITOR'] }
+              }
+            }
+          }
+        ]
+      }
+    })
+
+    if (!workspace) {
+      return {
+        success: false,
+        error: 'Access denied to workspace'
+      }
+    }
 
     // Crear template
-    const template = await createTemplate({
-      title: validatedData.title,
-      slug: validatedData.slug || '',
-      description: validatedData.description,
-      workspaceId: validatedData.workspaceId,
-      categoryId: validatedData.categoryId,
-      isPublic: validatedData.isPublic,
-      icon: validatedData.icon,
-      templateType: validatedData.templateType,
-      isTemplate: true
-    }, user.id)
+    const template = await prisma.prompt.create({
+      data: {
+        title: input.title.trim(),
+        slug: input.slug || input.title.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 50),
+        description: input.description?.trim(),
+        workspaceId: input.workspaceId,
+        categoryId: input.categoryId,
+        userId: auth.user.id,
+        isTemplate: true,
+        isPublic: input.isPublic || false,
+        icon: input.icon
+      }
+    })
 
-    // Revalidar paths relevantes
+    // Revalidar paths
     revalidatePath('/templates')
     revalidatePath('/dashboard')
-    revalidatePath('/workspaces')
 
     return {
       success: true,
@@ -430,32 +546,7 @@ export async function createTemplateAction(input: CreateTemplateInput): Promise<
     }
 
   } catch (error) {
-    console.error('Create template error:', error)
-    
-    // Manejo de errores específicos
-    if (error instanceof Error) {
-      if (error.message.includes('already exists')) {
-        return {
-          success: false,
-          error: 'A template with this slug already exists'
-        }
-      }
-      
-      if (error.message.includes('Access denied')) {
-        return {
-          success: false,
-          error: 'Access denied to workspace'
-        }
-      }
-      
-      if (error.message.includes('not found')) {
-        return {
-          success: false,
-          error: 'Workspace or category not found'
-        }
-      }
-    }
-    
+    console.error('Error creating template:', error)
     return {
       success: false,
       error: 'Failed to create template'

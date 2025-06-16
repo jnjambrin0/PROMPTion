@@ -2,6 +2,8 @@
 // WORKSPACE TYPES - Single source of truth
 // ============================================================================
 
+import type { MemberRole } from './members'
+
 export interface WorkspaceStats {
   totalPrompts: number
   totalMembers: number
@@ -15,7 +17,7 @@ export interface WorkspaceStats {
 
 export interface WorkspaceMember {
   id: string
-  role: 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER'
+  role: MemberRole
   permissions: {
     canManageWorkspace: boolean
     canInviteMembers: boolean
@@ -93,7 +95,7 @@ export interface WorkspaceData {
   stats: WorkspaceStats
   currentUser: {
     id: string
-    username: string
+    username: string | null
     fullName: string | null
     email: string
     avatarUrl: string | null

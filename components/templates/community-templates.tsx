@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Eye, Copy, Heart, Grid3X3, List } from 'lucide-react'
 import { TemplatePreviewModal } from './template-preview-modal'
-import type { Template } from '@/lib/types/templates' 
+import type { TemplateListItem } from '@/lib/types/templates' 
 
 interface CommunityTemplatesProps {
-  templates: Template[]
+  templates: TemplateListItem[]
   searchParams: {
     view?: string
     search?: string
@@ -29,11 +29,6 @@ export function CommunityTemplates({ templates, searchParams, hasMore = false, t
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const viewMode = searchParams.view || 'grid'
   const currentSearch = searchParams.search || ''
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [sortBy, setSortBy] = useState('popular')
-  const [templates, setTemplates] = useState<Template[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
 
   const handleViewChange = (newView: 'grid' | 'list') => {
     const params = new URLSearchParams(urlSearchParams.toString())
@@ -48,7 +43,7 @@ export function CommunityTemplates({ templates, searchParams, hasMore = false, t
     router.push(`/templates?${params.toString()}`)
   }
 
-  const renderTemplateCard = (template: Template, isListView = false) => (
+  const renderTemplateCard = (template: TemplateListItem, isListView = false) => (
     <Card 
       key={template.id} 
       className={`border border-neutral-200 hover:border-neutral-300 transition-colors group ${

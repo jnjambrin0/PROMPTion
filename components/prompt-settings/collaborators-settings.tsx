@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { addCollaboratorAction, removeCollaboratorAction } from '@/lib/actions/prompt-settings'
 import type { CollaboratorData } from '@/lib/actions/prompt-settings'
+import Image from 'next/image'
 
 interface CollaboratorsSettingsProps {
   promptId: string
@@ -69,7 +70,7 @@ export const CollaboratorsSettings = React.memo(({
       } else {
         toast.error(result.error || 'Failed to add collaborator')
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to add collaborator')
     } finally {
       setIsInviting(false)
@@ -92,7 +93,7 @@ export const CollaboratorsSettings = React.memo(({
       } else {
         toast.error(result.error || 'Failed to remove collaborator')
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to remove collaborator')
     } finally {
       setRemovingIds(prev => {
@@ -253,7 +254,7 @@ const CollaboratorItem = React.memo(({
         {/* Avatar */}
         <div className="h-8 w-8 rounded-full bg-border flex items-center justify-center">
           {collaborator.avatarUrl ? (
-            <img 
+            <Image 
               src={collaborator.avatarUrl} 
               alt={collaborator.fullName || collaborator.email}
               className="h-8 w-8 rounded-full object-cover"

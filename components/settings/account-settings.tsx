@@ -12,10 +12,9 @@ import { AccountDeleteActions } from './forms/account-delete-actions'
 
 interface AccountSettingsProps {
   userEmail: string
-  onUpdate: () => void
 }
 
-export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
+export function AccountSettings({ userEmail }: AccountSettingsProps) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
   const handleDeleteAccount = useCallback(async () => {
@@ -212,7 +211,6 @@ export function AccountSettings({ userEmail, onUpdate }: AccountSettingsProps) {
 
             <AccountDeleteActions 
               deleteAction={deleteAccountAction}
-              onUpdate={onUpdate}
             />
           </div>
         </CompactCard>

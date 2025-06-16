@@ -48,7 +48,7 @@ export function NotificationPanel() {
         alignOffset={0}
         sideOffset={12}
       >
-        {isOpen && <NotificationContent onClose={() => setIsOpen(false)} />}
+        {isOpen && <NotificationContent />}
       </PopoverContent>
     </Popover>
   )

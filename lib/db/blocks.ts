@@ -1,5 +1,6 @@
 import prisma from '../prisma'
 import type { BlockType } from '../generated/prisma'
+import { InputJsonValue } from '@prisma/client/runtime/library'
 
 /**
  * Obtiene bloques de un prompt con verificación de acceso
@@ -154,7 +155,7 @@ export async function createBlock(
         promptId: data.promptId,
         userId,
         type: data.type,
-        content: data.content || {},
+        content: data.content as InputJsonValue,
         position,
         parentId: data.parentId,
         indentLevel: data.indentLevel || 0
@@ -249,7 +250,10 @@ export async function updateBlock(
     const updatedBlock = await prisma.block.update({
       where: { id },
       data: {
-        ...data,
+        type: data.type,
+        content: data.content ? (data.content as InputJsonValue) : undefined,
+        position: data.position,
+        indentLevel: data.indentLevel,
         updatedAt: new Date()
       },
       select: {

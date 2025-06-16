@@ -3,17 +3,11 @@ import { createClient } from '@/utils/supabase/server'
 import { getUserByAuthId } from '@/lib/db/users'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
+import type { JsonValue } from '@/lib/types/shared'
 
 const prisma = new PrismaClient()
 
 // ==================== TIPOS Y ESQUEMAS ====================
-
-interface PromptParams {
-  params: Promise<{
-    workspaceSlug: string
-    promptSlug: string
-  }>
-}
 
 interface PromptUser {
   id: string
@@ -35,15 +29,39 @@ interface PromptCategory {
   icon?: string | null
 }
 
+interface BlockContentData {
+  text?: string
+  level?: number
+  language?: string
+  variable?: {
+    name: string
+    type: 'string' | 'number' | 'boolean' | 'select'
+    description: string
+    required: boolean
+    defaultValue?: string
+    options?: string[]
+  }
+}
+
 interface PromptBlock {
   id: string
   type: string
-  content: any
+  content: BlockContentData
   position: number
   indentLevel: number
   createdAt: Date
 }
 
+interface PromptVariable {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select'
+  description: string
+  required: boolean
+  defaultValue?: string
+  options?: string[]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PromptResponse {
   id: string
   title: string
@@ -54,8 +72,8 @@ interface PromptResponse {
   isPublic: boolean
   isPinned: boolean
   aiModel?: string | null
-  modelConfig: any
-  variables: any
+  modelConfig: Record<string, JsonValue>
+  variables: PromptVariable[]
   viewCount: number
   useCount: number
   forkCount: number
@@ -84,11 +102,19 @@ const updatePromptSchema = z.object({
   isPublic: z.boolean().optional(),
   isPinned: z.boolean().optional(),
   aiModel: z.string().max(50).optional().nullable(),
-  modelConfig: z.record(z.any()).optional(),
-  variables: z.array(z.any()).optional()
+  modelConfig: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  variables: z.array(z.object({
+    name: z.string(),
+    type: z.enum(['string', 'number', 'boolean', 'select']),
+    description: z.string(),
+    required: z.boolean(),
+    defaultValue: z.string().optional(),
+    options: z.array(z.string()).optional()
+  })).optional()
 })
 
 // Esquemas de validación para parámetros
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const slugSchema = z.string().min(3, 'Slug too short').regex(/^[a-z0-9-]+$/, 'Invalid slug format')
 
 // ==================== UTILIDADES ====================
@@ -219,9 +245,9 @@ export async function PUT(
     }
 
     // Parse request body
-    let body: Record<string, unknown>
+    let requestBody: Record<string, JsonValue>
     try {
-      body = await request.json()
+      requestBody = await request.json()
     } catch {
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
@@ -229,20 +255,20 @@ export async function PUT(
       )
     }
 
-    // Validate with Zod (assuming updatePromptSchema exists)
-    // const validation = updatePromptSchema.safeParse(body)
-    // if (!validation.success) {
-    //   return NextResponse.json(
-    //     { error: validation.error.errors[0].message },
-    //     { status: 400 }
-    //   )
-    // }
+    // Validate with Zod
+    const validationResult = updatePromptSchema.safeParse(requestBody)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error.errors[0].message },
+        { status: 400 }
+      )
+    }
 
     // Update prompt
     const updatedPrompt = await prisma.prompt.update({
       where: { id: prompt.id },
       data: {
-        // ...validation.data
+        ...validationResult.data,
         updatedAt: new Date()
       }
     })

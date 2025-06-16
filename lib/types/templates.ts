@@ -1,6 +1,17 @@
 // ==================== TEMPLATE TYPES ====================
 // Tipos separados para evitar imports de DB en client components
 
+import type { AIModelConfig, BlockContentData } from './shared'
+
+export interface TemplateVariable {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select'
+  description: string
+  required: boolean
+  defaultValue?: string
+  options?: string[]
+}
+
 export interface Template {
   id: string
   title: string
@@ -11,8 +22,8 @@ export interface Template {
   isPublic: boolean
   isPinned: boolean
   aiModel?: string | null
-  modelConfig: Record<string, unknown>
-  variables: Record<string, unknown>
+  modelConfig: AIModelConfig
+  variables: TemplateVariable[]
   viewCount: number
   useCount: number
   forkCount: number
@@ -47,7 +58,7 @@ export interface Template {
   blocks: Array<{
     id: string
     type: string
-    content: Record<string, unknown>
+    content: BlockContentData
     position: number
     indentLevel: number
     createdAt: Date
@@ -82,5 +93,48 @@ export interface TemplateCategory {
   icon?: string | null
   _count: {
     prompts: number
+  }
+}
+
+// Template listing interface (reduced fields for performance)
+export interface TemplateListItem {
+  id: string
+  title: string
+  slug: string
+  description?: string | null
+  icon?: string | null
+  viewCount: number
+  useCount: number
+  forkCount: number
+  averageScore?: number | null
+  createdAt: Date
+  updatedAt: Date
+  user: {
+    id: string
+    username?: string | null
+    fullName?: string | null
+    avatarUrl?: string | null
+  }
+  workspace: {
+    id: string
+    name: string
+    slug: string
+  }
+  category?: {
+    id: string
+    name: string
+    color?: string | null
+    icon?: string | null
+  } | null
+  tags: Array<{
+    tag: {
+      id: string
+      name: string
+    }
+  }>
+  _count: {
+    comments: number
+    favorites: number
+    forks: number
   }
 } 

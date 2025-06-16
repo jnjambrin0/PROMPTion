@@ -1,26 +1,47 @@
-import { Code, Type, Image, List, Hash, Quote, FileText } from 'lucide-react'
+import { Code, Type, List, Hash, Quote, FileText, ImageIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+
+interface BlockContent {
+  text?: string
+  level?: number
+  language?: string
+  items?: string[]
+  ordered?: boolean
+}
+
+interface PromptBlock {
+  id: string
+  type: string
+  content: BlockContent | string
+  position: number
+  indentLevel: number
+}
+
+interface PromptVariable {
+  name: string
+  type: string
+  description?: string
+  defaultValue?: string
+}
+
+interface ModelConfig {
+  temperature?: number
+  maxTokens?: number
+  topP?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
+  [key: string]: unknown
+}
 
 interface PromptViewerProps {
   prompt: {
     id: string
     title: string
     description?: string | null
-    blocks?: Array<{
-      id: string
-      type: string
-      content: any
-      position: number
-      indentLevel: number
-    }>
-    variables?: Array<{
-      name: string
-      type: string
-      description?: string
-      defaultValue?: string
-    }>
-    modelConfig?: any
+    blocks?: PromptBlock[]
+    variables?: PromptVariable[]
+    modelConfig?: ModelConfig
   }
 }
 
@@ -31,7 +52,7 @@ function getBlockIcon(type: string) {
     case 'code':
       return <Code className="h-4 w-4 text-blue-600" />
     case 'image':
-      return <Image className="h-4 w-4 text-green-600" />
+      return <ImageIcon className="h-4 w-4 text-green-600"/>
     case 'list':
       return <List className="h-4 w-4 text-purple-600" />
     case 'heading':
@@ -43,12 +64,12 @@ function getBlockIcon(type: string) {
   }
 }
 
-function renderBlockContent(block: any) {
+function renderBlockContent(block: PromptBlock) {
   const content = typeof block.content === 'string' ? block.content : block.content?.text || ''
   
   switch (block.type) {
     case 'heading':
-      const level = block.content?.level || 1
+      const level = (typeof block.content === 'object' && block.content?.level) || 1
       const className = `font-semibold ${
         level === 1 ? 'text-xl' : 
         level === 2 ? 'text-lg' : 
@@ -68,7 +89,7 @@ function renderBlockContent(block: any) {
           <pre className="text-sm text-gray-800 overflow-x-auto">
             <code>{content}</code>
           </pre>
-          {block.content?.language && (
+          {typeof block.content === 'object' && block.content?.language && (
             <Badge variant="outline" className="mt-2 text-xs">
               {block.content.language}
             </Badge>
@@ -84,8 +105,9 @@ function renderBlockContent(block: any) {
       )
       
     case 'list':
-      const items = Array.isArray(block.content?.items) ? block.content.items : [content]
-      const isOrdered = block.content?.ordered === true
+      const blockContent = typeof block.content === 'object' ? block.content : {}
+      const items = Array.isArray(blockContent?.items) ? blockContent.items : [content]
+      const isOrdered = blockContent?.ordered === true
       const ListTag = isOrdered ? 'ol' : 'ul'
       
       return (

@@ -1,7 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
+
+// Helper function for safe metadata access
+function getMetadataString(metadata: Record<string, unknown>, key: string): string | null {
+  const value = metadata[key]
+  return typeof value === 'string' ? value : null
+}
 import {
   Dialog,
   DialogContent,
@@ -103,22 +109,22 @@ function ActivityItem({ activity }: { activity: MemberActivity }) {
         
         {activity.metadata && Object.keys(activity.metadata).length > 0 && (
           <div className="text-xs text-neutral-600">
-            {activity.metadata.promptTitle && (
-              <span>Prompt: {activity.metadata.promptTitle}</span>
+            {getMetadataString(activity.metadata, 'promptTitle') && (
+              <span>Prompt: {getMetadataString(activity.metadata, 'promptTitle')}</span>
             )}
-            {activity.metadata.workspaceName && (
-              <span>Workspace: {activity.metadata.workspaceName}</span>
+            {getMetadataString(activity.metadata, 'workspaceName') && (
+              <span>Workspace: {getMetadataString(activity.metadata, 'workspaceName')}</span>
             )}
           </div>
         )}
       </div>
       
-      {activity.metadata?.actionUrl && (
+      {getMetadataString(activity.metadata, 'actionUrl') && (
         <Button
           size="sm"
           variant="ghost"
           className="h-8 w-8 p-0"
-          onClick={() => window.open(activity.metadata.actionUrl, '_blank')}
+          onClick={() => window.open(getMetadataString(activity.metadata, 'actionUrl')!, '_blank')}
         >
           <ExternalLink className="h-3 w-3" />
         </Button>
@@ -141,7 +147,7 @@ export function MemberActivityModal({
 
   const memberName = member.user.fullName || member.user.username || 'Unknown User'
 
-  const loadActivities = async (pageNum: number = 1, reset: boolean = false) => {
+  const loadActivities = useCallback(async (pageNum: number = 1, reset: boolean = false) => {
     if (loading) return
     
     setLoading(true)
@@ -176,7 +182,7 @@ export function MemberActivityModal({
     } finally {
       setLoading(false)
     }
-  }
+  }, [workspaceSlug, member.user.id, loading])
 
   // Load activities when modal opens
   useEffect(() => {
@@ -189,7 +195,7 @@ export function MemberActivityModal({
       setHasMore(true)
       setError(null)
     }
-  }, [open, member.user.id, workspaceSlug, loadActivities]) // Cambio: usar member.user.id para consistencia
+  }, [open, loadActivities]) // Simplificado: solo open y loadActivities como dependencias
 
   const loadMore = () => {
     if (hasMore && !loading) {

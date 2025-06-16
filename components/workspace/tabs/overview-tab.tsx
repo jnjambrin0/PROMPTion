@@ -18,6 +18,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import type { WorkspaceTabProps } from '@/lib/types/workspace'
 
+interface ActivityData {
+  id?: string
+  type: string
+  description: string
+  createdAt: Date | string
+  href?: string
+  user?: {
+    name: string
+    id: string
+  } | null
+}
+
 // Insight Card - Server Component for better performance
 function InsightCard({ 
   icon: Icon, 
@@ -62,7 +74,7 @@ function InsightCard({
 }
 
 // Activity Item - More detailed than simple prompt item
-function ActivityItem({ activity, workspaceSlug }: { activity: any; workspaceSlug: string }) {
+function ActivityItem({ activity }: { activity: ActivityData }) {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'prompt_created': return Plus
@@ -205,7 +217,7 @@ export function OverviewTabSkeleton() {
 }
 
 export default function OverviewTab({ workspaceSlug, workspaceData, navigation }: WorkspaceTabProps) {
-  const { workspace, categories, members, prompts, stats } = workspaceData
+  const { categories, members, prompts, stats } = workspaceData
 
   // Strategic insights with actionable data
   const insights = useMemo(() => {
@@ -221,7 +233,7 @@ export default function OverviewTab({ workspaceSlug, workspaceData, navigation }
 
     // Count active members (those with recent activity)
     const activeMembers = members 
-      ? members.filter(m => {
+      ? members.filter(() => {
           // For now, count all members as active
           // TODO: Implement actual activity tracking
           return true
@@ -284,7 +296,7 @@ export default function OverviewTab({ workspaceSlug, workspaceData, navigation }
         )
       }
     ]
-  }, [prompts, members, categories, workspaceSlug, navigation])
+  }, [prompts, members, categories, navigation])
 
   // Recent workspace activity (mix of prompts, members, etc.)
   const recentActivity = useMemo(() => {
@@ -321,7 +333,7 @@ export default function OverviewTab({ workspaceSlug, workspaceData, navigation }
     return activities
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 8)
-  }, [prompts, members, workspaceSlug, navigation])
+  }, [prompts, members, navigation, workspaceSlug])
 
   // Workspace summary for sidebar
   const workspaceSummary = useMemo(() => {
@@ -352,7 +364,7 @@ export default function OverviewTab({ workspaceSlug, workspaceData, navigation }
         onClick: () => navigation.navigateToMembers() 
       }
     ]
-  }, [stats, workspaceSlug, navigation])
+  }, [stats, navigation])
 
   return (
     <div className="space-y-6">
@@ -399,7 +411,6 @@ export default function OverviewTab({ workspaceSlug, workspaceData, navigation }
                     <ActivityItem
                       key={index}
                       activity={activity}
-                      workspaceSlug={workspaceSlug}
                     />
                   ))}
                 </div>

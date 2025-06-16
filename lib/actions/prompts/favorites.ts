@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { withAuth } from '@/lib/actions/auth/auth-helpers'
 import prisma from '@/lib/prisma'
+import type { AuthenticatedUser } from '@/lib/types/shared'
 
 interface FavoriteResult {
   success: boolean
@@ -14,7 +15,7 @@ interface FavoriteResult {
  * Toggle favorite status for a prompt
  */
 export const toggleFavoritePromptAction = withAuth(async (
-  user: Record<string, unknown>,
+  user: AuthenticatedUser,
   promptId: string
 ): Promise<FavoriteResult> => {
   try {
@@ -75,7 +76,7 @@ export const toggleFavoritePromptAction = withAuth(async (
  * Check if a prompt is favorited by the user
  */
 export const checkPromptFavoriteAction = withAuth(async (
-  user: Record<string, unknown>,
+  user: AuthenticatedUser,
   promptId: string
 ): Promise<FavoriteResult> => {
   try {
