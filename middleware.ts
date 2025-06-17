@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { createMiddlewareClient } from './utils/supabase/middleware'
 
 // ==================== SECURITY CONFIGURATION ====================
 // WHITELIST APPROACH - Security by default according to SECURITY.md
@@ -58,8 +59,9 @@ function setSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // ==================== OPTIMISTIC SESSION VALIDATION ====================
-// According to SECURITY.md, middleware should only do optimistic checks
-// SIMPLIFIED to prevent infinite loops and improve performance
+// DEPRECATED: The optimistic check was causing infinite loops.
+// Replaced with a proper Supabase session validation in the main middleware logic.
+/*
 async function validateSessionOptimistic(request: NextRequest): Promise<boolean> {
   try {
     // Super simple check - just look for ANY Supabase auth cookies
@@ -77,6 +79,7 @@ async function validateSessionOptimistic(request: NextRequest): Promise<boolean>
     return false
   }
 }
+*/
 
 // ==================== SECURE COOKIE UTILITIES ====================
 // TODO: Implement secure Supabase client when needed for auth callbacks
@@ -92,10 +95,26 @@ function logSecurityEvent(type: string, pathname: string, details?: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
+  // Create a response object that we can modify
+  // This is essential for the Supabase client to be able to set cookies
+  const response = NextResponse.next({
+    request: {
+      headers: new Headers(request.headers),
+    },
+  })
+
+  // Create a Supabase client that can be used in the middleware
+  const supabase = createMiddlewareClient(request, response)
+
+  // Now, get the actual session
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   // Static file check - if any static file reaches here, let it pass immediately
   if (pathname.endsWith('.css') || pathname.endsWith('.js')) {
     console.warn(`[MIDDLEWARE] Static file reached middleware unexpectedly: ${pathname}`)
-    return NextResponse.next()
+    return response // Use the modified response
   }
   
   // ABSOLUTE FIRST PRIORITY: If any static file somehow reaches here, let it pass immediately
@@ -103,12 +122,12 @@ export async function middleware(request: NextRequest) {
       STATIC_EXTENSIONS.some(ext => pathname.endsWith(ext)) ||
       STATIC_PATHS.some(path => pathname.startsWith(path))) {
     console.log(`[DEBUG] Allowing static file: ${pathname}`)
-    return NextResponse.next()
+    return response // Use the modified response
   }
 
   // Allow auth system routes (callbacks, etc.) - no security headers needed
   if (AUTH_SYSTEM_ROUTES.some(route => pathname.startsWith(route))) {
-    return NextResponse.next()
+    return response // Use the modified response
   }
   
   // Check route types BEFORE session validation
@@ -118,12 +137,11 @@ export async function middleware(request: NextRequest) {
 
   // Public routes and APIs - allow with security headers but no auth check
   if (isPublicRoute || isPublicAPI) {
-    const response = NextResponse.next({ request })
     return setSecurityHeaders(response)
   }
 
-  // NOW do session validation (only for routes that actually need it)
-  const hasValidSession = await validateSessionOptimistic(request)
+  // The session validation is now based on the actual session object
+  const hasValidSession = !!session
   
   // DEBUG: Log session validation result
   if (pathname.startsWith('/home') || pathname.startsWith('/sign-in')) {
@@ -134,9 +152,10 @@ export async function middleware(request: NextRequest) {
   if (isAuthRoute) {
     if (hasValidSession) {
       logSecurityEvent('AUTH_REDIRECT', pathname, 'Authenticated user redirected from auth route')
+      // Important: We create a new response for redirection
       return NextResponse.redirect(new URL('/home', request.url))
     }
-    const response = NextResponse.next({ request })
+    // For auth routes, allow access but with security headers
     return setSecurityHeaders(response)
   }
 
@@ -146,8 +165,7 @@ export async function middleware(request: NextRequest) {
     const url = new URL(request.url)
     if (url.searchParams.get('redirected') === 'true') {
       console.warn(`[SECURITY] Infinite redirect loop detected for ${pathname}`)
-      // Allow the request to proceed to prevent infinite loop
-      const response = NextResponse.next({ request })
+      // Allow the request to proceed to prevent infinite loop but still apply headers
       return setSecurityHeaders(response)
     }
     
@@ -155,12 +173,12 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL('/sign-in', request.url)
     redirectUrl.searchParams.set('redirected', 'true')
     redirectUrl.searchParams.set('from', pathname)
+    // Important: We create a new response for redirection
     return NextResponse.redirect(redirectUrl)
   }
 
   // Authenticated access to protected routes
   logSecurityEvent('ACCESS_GRANTED', pathname, 'Authenticated access granted')
-  const response = NextResponse.next({ request })
   return setSecurityHeaders(response)
 }
 
