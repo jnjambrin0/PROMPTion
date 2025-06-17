@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db/users'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { z } from 'zod'
 
 import type { JsonValue } from '@/lib/types/shared'
@@ -120,22 +119,6 @@ const slugSchema = z.string().min(3, 'Slug too short').regex(/^[a-z0-9-]+$/, 'In
 
 // ==================== UTILIDADES ====================
 
-async function authenticateUser() {
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-  
-  if (!authUser) {
-    return { error: NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
-  }
-
-  const user = await getUserByAuthId(authUser.id)
-  if (!user) {
-    return { error: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
-  }
-
-  return { user, authUser, error: undefined }
-}
-
 async function validateWorkspaceAndPrompt(
   workspaceSlug: string,
   promptSlug: string,
@@ -195,10 +178,11 @@ export async function GET(
   { params }: { params: Promise<{ workspaceSlug: string; promptSlug: string }> }
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, promptSlug } = await params
 
     const validation = await validateWorkspaceAndPrompt(workspaceSlug, promptSlug, user)
@@ -222,10 +206,11 @@ export async function PUT(
   { params }: { params: Promise<{ workspaceSlug: string; promptSlug: string }> }
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, promptSlug } = await params
 
     const validation = await validateWorkspaceAndPrompt(workspaceSlug, promptSlug, user)
@@ -290,10 +275,11 @@ export async function DELETE(
   { params }: { params: Promise<{ workspaceSlug: string; promptSlug: string }> }
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, promptSlug } = await params
 
     const validation = await validateWorkspaceAndPrompt(workspaceSlug, promptSlug, user)
@@ -303,8 +289,8 @@ export async function DELETE(
 
     // Check if user can delete this prompt
     const canDelete = prompt.userId === user.id || 
-                     // TODO: Check if user is admin/owner of workspace
-                     false
+                   // TODO: Check if user is admin of workspace
+                   false
 
     if (!canDelete) {
       return NextResponse.json(
@@ -313,15 +299,12 @@ export async function DELETE(
       )
     }
 
-    // Delete prompt (this will cascade delete blocks)
+    // Delete the prompt
     await prisma.prompt.delete({
       where: { id: prompt.id }
     })
 
-    return NextResponse.json({ 
-      success: true,
-      message: 'Prompt deleted successfully' 
-    })
+    return NextResponse.json({ success: true, message: 'Prompt deleted successfully' })
 
   } catch (error: unknown) {
     console.error('Error deleting prompt:', error)

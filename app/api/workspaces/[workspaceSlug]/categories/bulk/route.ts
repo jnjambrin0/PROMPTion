@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db/users'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import { updateCategory, deleteCategory, getCategoriesByWorkspace } from '@/lib/db/categories'
 import { z } from 'zod'
@@ -30,22 +29,6 @@ const bulkDeleteSchema = z.object({
 const slugSchema = z.string().min(3, 'Slug too short').regex(/^[a-z0-9-]+$/, 'Invalid slug format')
 
 // ==================== UTILIDADES ====================
-
-async function authenticateUser() {
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-  
-  if (!authUser) {
-    return { error: NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
-  }
-
-  const user = await getUserByAuthId(authUser.id)
-  if (!user) {
-    return { error: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
-  }
-
-  return { user, authUser, error: undefined }
-}
 
 async function validateWorkspaceAccess(workspaceSlug: string, userId: string) {
   // Validar slug
@@ -88,10 +71,11 @@ export async function PATCH(
 ) {
   try {
     // Autenticación
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug } = await params
 
     // Validar acceso al workspace
@@ -194,10 +178,11 @@ export async function DELETE(
 ) {
   try {
     // Autenticación
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug } = await params
 
     // Validar acceso al workspace
@@ -263,7 +248,7 @@ export async function DELETE(
         if (result) {
           deletedCount++
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error(`Failed to delete category ${categoryId}:`, error)
         errors.push(`Failed to delete category ${categoryId}`)
       }
@@ -284,7 +269,7 @@ export async function DELETE(
     
     return response
 
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Bulk delete categories error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

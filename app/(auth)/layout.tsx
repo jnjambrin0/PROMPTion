@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { redirect } from 'next/navigation'
 
 export default async function AuthLayout({
@@ -6,11 +6,7 @@ export default async function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthenticatedUser()
 
   // Redirect to home if user is already authenticated
   if (user) {
@@ -18,7 +14,7 @@ export default async function AuthLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-25">
+    <div className="flex items-center justify-center min-h-screen bg-neutral-50 p-4">
       {children}
     </div>
   )

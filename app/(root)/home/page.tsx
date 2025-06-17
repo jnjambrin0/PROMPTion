@@ -1,34 +1,26 @@
 import { Separator } from '@/components/ui/separator'
 import { QuickActionButton } from '@/components/ui/quick-action-button'
 import { MAIN_QUICK_ACTIONS } from '@/lib/constants/navigation'
-import { getUserByAuthId } from '@/lib/db/users'
 import { getUserWorkspaces } from '@/lib/db/workspaces'
 import { getWorkspacePrompts } from '@/lib/db/prompts'
-import { createClient } from '@/utils/supabase/server'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
-// Force dynamic rendering for this page since it requires authentication  
+// Force dynamic rendering for this page
 export const dynamic = 'force-dynamic'
 
-async function getUserData() {
+async function getHomePageData(userId: string) {
   try {
-    const supabase = await createClient()
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    
-    if (!authUser) return null
-
-    const user = await getUserByAuthId(authUser.id)
-    if (!user) return null
-
-    const workspaces = await getUserWorkspaces(user.id)
+    const workspaces = await getUserWorkspaces(userId)
     
     // Get recent prompts from all workspaces
     const recentPrompts = []
     for (const workspace of workspaces.slice(0, 3)) { // Limit to first 3 workspaces
       try {
-        const { prompts } = await getWorkspacePrompts(workspace.id, user.id, {
+        const { prompts } = await getWorkspacePrompts(workspace.id, userId, {
           page: 1,
           limit: 5
         })
@@ -45,25 +37,33 @@ async function getUserData() {
     recentPrompts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 
     return { 
-      user, 
       workspaces, 
       recentPrompts: recentPrompts.slice(0, 5)
     }
   } catch (error) {
-    console.error('Error fetching user data:', error)
-    return null
+    console.error('Error fetching home page data:', error)
+    return { workspaces: [], recentPrompts: [] }
   }
 }
 
 export default async function HomePage() {
-  const userData = await getUserData()
+  const authenticatedUser = await getAuthenticatedUser()
   
-  if (!userData) {
+  // Case 1: User is not authenticated at all. Redirect to sign-in.
+  if (!authenticatedUser) {
     redirect('/sign-in')
   }
 
-  const { user, recentPrompts } = userData
-  const displayName = user.fullName || user.username || user.email.split('@')[0]
+  // Case 2: User is authenticated, but the profile might not be fully available.
+  // We can still render a welcome message. `authId` will be the same as `id` in this case.
+  const isProfilePending = authenticatedUser.id === authenticatedUser.authId;
+  
+  // Only fetch detailed data if the profile is fully available.
+  const pageData = !isProfilePending 
+    ? await getHomePageData(authenticatedUser.id)
+    : null;
+
+  const displayName = authenticatedUser.fullName || authenticatedUser.username || authenticatedUser.email.split('@')[0]
 
   return (
     <div className="flex justify-center w-full min-h-full">
@@ -74,7 +74,9 @@ export default async function HomePage() {
             Good morning, {displayName}
           </h1>
           <p className="text-sm md:text-base text-neutral-600">
-            Ready to create some amazing prompts?
+            {isProfilePending
+              ? "Welcome to Promption! Your workspace is being set up."
+              : "Ready to create some amazing prompts?"}
           </p>
         </div>
 
@@ -98,9 +100,14 @@ export default async function HomePage() {
         <div>
           <h2 className="text-base md:text-lg font-medium text-neutral-900 mb-4">Recent prompts</h2>
           
-          {recentPrompts.length > 0 ? (
+          {isProfilePending ? (
             <div className="space-y-3">
-              {recentPrompts.map((prompt) => (
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          ) : pageData && pageData.recentPrompts.length > 0 ? (
+            <div className="space-y-3">
+              {pageData.recentPrompts.map((prompt) => (
                 <Link
                   key={prompt.id}
                   href={`/${prompt.workspace.slug}/${prompt.slug}`}

@@ -1,67 +1,63 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { Resend } from 'resend'
+import { WorkspaceInvitationEmail } from '@/components/emails/workspace-invitation-email'
+
+// Configuración de Resend
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET() {
   try {
-    console.log('🧪 Testing email configuration...')
-    
-    const supabase = await createClient()
-    
-    // Test basic connection
-    const { data: { user } } = await supabase.auth.getUser()
-    console.log('👤 Current user:', user?.id || 'None')
-    
-    // Try to get session info
-    const { data: { session } } = await supabase.auth.getSession()
-    console.log('🔐 Current session:', !!session)
-    
-    // Test a simple signup to see what happens with a VALID email
-    const testEmail = `testuser${Date.now()}@gmail.com`
-    console.log('📧 Testing signup with valid email:', testEmail)
-    
-    const { data, error } = await supabase.auth.signUp({
-      email: testEmail,
-      password: 'TestPassword123!',
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/confirm?next=/home`,
-      },
-    })
-    
-    console.log('📊 Signup result:', {
-      user: !!data.user,
-      session: !!data.session,
-      userEmail: data.user?.email,
-      emailConfirmed: data.user?.email_confirmed_at,
-      error: error?.message || 'No error'
-    })
-    
-    // If signup worked, check what Supabase returned
-    if (data.user) {
-      console.log('✅ User created successfully')
-      console.log('📧 Email confirmation required:', !data.user.email_confirmed_at)
-      console.log('🎯 User ID:', data.user.id)
+    console.log('🧪 Testing email sending via Resend...')
+
+    // Configurar remitente y destinatario de prueba
+    const fromEmail = process.env.RESEND_USER || 'noreply@promption.dev'
+    const fromName = process.env.RESEND_FROM_NAME || 'Promption Test'
+    const toEmail = process.env.RESEND_USER || 'test@example.com' // Send to self or a test address
+
+    if (toEmail === 'test@example.com') {
+      console.warn('⚠️ RESEND_USER is not set. Sending to a placeholder address.')
     }
-    
+
+    // Enviar email de prueba
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [toEmail],
+      subject: `🧪 Test Email from Promption [${new Date().toLocaleTimeString()}]`,
+      react: await WorkspaceInvitationEmail({
+        workspaceName: 'Test Workspace',
+        inviterName: 'Test Inviter',
+        inviterEmail: fromEmail,
+        recipientEmail: toEmail,
+        role: 'MEMBER',
+        message: 'This is a test email to verify Resend configuration.',
+        invitationUrl: '#',
+        expiresInDays: 1,
+      }),
+    })
+
+    if (error) {
+      console.error('❌ Resend API Error:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to send test email', details: error },
+        { status: 500 }
+      )
+    }
+
+    console.log('✅ Test email sent successfully! Message ID:', data?.id)
+
     return NextResponse.json({
       success: true,
-      config: {
-        environment: process.env.NODE_ENV,
-        appUrl: process.env.NEXT_PUBLIC_APP_URL,
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...',
-      },
-      testResult: {
-        userCreated: !!data.user,
-        hasSession: !!data.session,
-        needsConfirmation: !!data.user && !data.user.email_confirmed_at,
-        error: error?.message
-      }
+      messageId: data?.id,
+      from: fromEmail,
+      to: toEmail,
     })
-    
+
   } catch (error) {
-    console.error('❌ Test failed:', error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 })
+    console.error('❌ Test endpoint failed:', error)
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
   }
 } 
 

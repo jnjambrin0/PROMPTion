@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { getUserByAuthId } from '@/lib/db/users'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import { getCategoryById } from '@/lib/db/categories'
 import prisma from '@/lib/prisma'
@@ -64,22 +63,6 @@ const slugSchema = z.string()
 const uuidSchema = z.string().uuid('Invalid category ID')
 
 // ==================== UTILIDADES ====================
-
-async function authenticateUser() {
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-  
-  if (!authUser) {
-    return { error: NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
-  }
-
-  const user = await getUserByAuthId(authUser.id)
-  if (!user) {
-    return { error: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
-  }
-
-  return { user, authUser, error: undefined }
-}
 
 async function validateWorkspaceAndCategory(
   workspaceSlug: string, 
@@ -145,10 +128,11 @@ export async function GET(
   { params }: CategoryParams
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, categoryId } = await params
 
     const validation = await validateWorkspaceAndCategory(
@@ -201,10 +185,11 @@ export async function PATCH(
   { params }: CategoryParams
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, categoryId } = await params
 
     const validation = await validateWorkspaceAndCategory(
@@ -347,56 +332,50 @@ export async function DELETE(
   { params }: CategoryParams
 ) {
   try {
-    const auth = await authenticateUser()
-    if (auth.error) return auth.error
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const { user } = auth
     const { workspaceSlug, categoryId } = await params
 
     const validation = await validateWorkspaceAndCategory(
-      workspaceSlug, 
-      categoryId, 
+      workspaceSlug,
+      categoryId,
       user.id
     )
 
     if (validation.error) return validation.error
 
-    // Verificar que no sea una categoría por defecto (si existe esa lógica)
-    // TODO: Implementar verificación de categorías por defecto si es necesario
+    const { category } = validation
 
-    // Eliminar categoría
+    // Verificar si la categoría tiene subcategorías o prompts
+    const hasChildren = await prisma.category.count({ where: { parentId: category.id } })
+    const hasPrompts = await prisma.prompt.count({ where: { categoryId: category.id } })
+
+    if (hasChildren > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete a category that has sub-categories.' },
+        { status: 400 }
+      )
+    }
+
+    if (hasPrompts > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete a category that contains prompts.' },
+        { status: 400 }
+      )
+    }
+
+    // Eliminar la categoría
     await prisma.category.delete({
-      where: { id: categoryId }
+      where: { id: category.id },
     })
 
-    // Headers de seguridad
-    const response = NextResponse.json({
-      success: true,
-      message: 'Category deleted successfully'
-    })
-    
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    
-    return response
+    return NextResponse.json({ success: true, message: 'Category deleted successfully' })
 
-  } catch (error: DetailedError | unknown) {
+  } catch (error) {
     console.error('Delete category error:', error)
-    
-    // Manejar errores específicos
-    if (error instanceof Error && error.message.includes('access denied')) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions to delete this category' },
-        { status: 403 }
-      )
-    }
-    
-    if (error instanceof Error && error.message.includes('has prompts')) {
-      return NextResponse.json(
-        { error: 'Cannot delete category that contains prompts. Move prompts to another category first.' },
-        { status: 409 }
-      )
-    }
-    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const invitationUrl = `${baseUrl}/invitations/${validatedData.invitationToken}`
 
     // Configurar remitente
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@promption.com'
+    const fromEmail = process.env.RESEND_USER || 'noreply@promption.dev'
     const fromName = process.env.RESEND_FROM_NAME || 'Promption'
 
     // Enviar email
