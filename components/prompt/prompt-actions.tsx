@@ -96,30 +96,30 @@ export function PromptActions({
   const handleShare = async () => {
     setIsLoading(true)
     
+    // 1. Construct URL optimistically on the client
+    const shareUrl = `${window.location.origin}/${workspaceSlug}/${promptSlug}`
+
     try {
+      // 2. Try to copy immediately
+      await navigator.clipboard.writeText(shareUrl)
+      toast.success("Link copied to clipboard!")
+
+      // 3. Validate with the server in the background
       const result = await generateShareLinkAction(promptId)
-      
-      if (result.success && result.shareUrl) {
-        toast.success("Share link generated", {
-          description: "Anyone with the link can view the prompt.",
-          action: {
-            label: "Copy Link",
-            onClick: () => {
-              navigator.clipboard.writeText(result.shareUrl!)
-              toast.success("Link copied to clipboard!")
-            },
-          },
+
+      // 4. If the prompt is not public, inform the user with a second toast.
+      if (result.success && !result.isPublic) {
+        toast.info("This prompt is not public", {
+          description: "Only workspace members will be able to view it.",
         })
-      } else {
-        toast.error("Failed to generate share link", {
-          description: result.error || "Unknown error occurred",
+      } else if (!result.success) {
+        toast.error("Could not verify share link", {
+          description: result.error || "The copied link may not work for others.",
         })
       }
     } catch (error) {
-      console.error('Error generating share link:', error)
-      toast.error("Failed to generate share link", {
-        description: "An unexpected error occurred",
-      })
+      console.error('Error copying share link:', error)
+      toast.error("Failed to copy link to clipboard.")
     } finally {
       setIsLoading(false)
     }
