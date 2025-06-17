@@ -45,7 +45,7 @@ export function SearchFilters({ results, activeFilter, setActiveFilter }: Search
             className="cursor-pointer transition-colors"
           >
             {option.label}
-            <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
               {count}
             </span>
           </Badge>
