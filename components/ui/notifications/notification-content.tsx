@@ -52,6 +52,8 @@ export function NotificationContent() {
             src="/waiting.svg" 
             alt="No notifications" 
             className="w-full h-full object-contain opacity-60"
+            width={96}
+            height={96}
           />
         </div>
         <h3 className="text-sm font-medium text-neutral-900 mb-1">

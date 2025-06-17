@@ -56,7 +56,7 @@ export async function Sidebar() {
       <Separator className="mb-4" />
 
       {/* Workspaces */}
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-3 px-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-neutral-500">
             Workspaces

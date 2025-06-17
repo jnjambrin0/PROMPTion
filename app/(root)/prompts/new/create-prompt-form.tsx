@@ -89,9 +89,11 @@ export function CreatePromptForm({ defaultWorkspaceId }: CreatePromptFormProps) 
   useEffect(() => {
     if (!isCustomSlug && formData.title) {
       const generatedSlug = generateSlug(formData.title)
-      setFormData(prev => ({ ...prev, slug: generatedSlug }))
+      if (generatedSlug !== formData.slug) {
+        setFormData(prev => ({ ...prev, slug: generatedSlug }))
+      }
     }
-  }, [formData.title, isCustomSlug])
+  }, [formData.title, isCustomSlug, formData.slug])
 
   const isFormValid = formData.title.length >= 3 && formData.workspaceId && !isPending
 

@@ -131,7 +131,8 @@ export function CreateTemplateForm({
     }
 
     loadData()
-  }, [form])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Loading state
   if (isLoadingData) {

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import { duplicatePromptAction, toggleFavoritePromptAction, generateShareLinkAction } from '@/lib/actions/prompt'
+import { DeletePromptDialog } from './delete-prompt-dialog'
 
 interface PromptActionsProps {
   promptId: string
@@ -149,17 +150,6 @@ export function PromptActions({
     router.push(`/${workspaceSlug}/${promptSlug}/settings`)
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this prompt? This action cannot be undone.')) {
-      return
-    }
-
-    // Delete functionality - will be implemented in Phase 2 with proper Server Action
-    toast.info("Delete functionality coming soon", {
-      description: "This feature will be available in the next update",
-    })
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -228,14 +218,15 @@ export function PromptActions({
         {isOwner && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleDelete}
-              disabled
-              className="text-red-600 focus:text-red-600"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete prompt
-            </DropdownMenuItem>
+            <DeletePromptDialog promptId={promptId}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()} // Prevent Dropdown from closing
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete prompt
+              </DropdownMenuItem>
+            </DeletePromptDialog>
           </>
         )}
       </DropdownMenuContent>

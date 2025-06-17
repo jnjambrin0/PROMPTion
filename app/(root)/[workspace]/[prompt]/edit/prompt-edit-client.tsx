@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, Settings, ChevronDown, ChevronUp, Wand2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { getPromptPageDataAction, updatePromptAction } from '@/lib/actions/prompt'
 import { SimpleEditor, PreviewPanel } from '@/components/prompt-editor'
@@ -109,7 +110,6 @@ export function PromptEditClient({
   })
   
   const [showPreview, setShowPreview] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [promptData, setPromptData] = useState<PromptPageData | null>(null)
   const [isDirty, setIsDirty] = useState(false)
@@ -370,6 +370,108 @@ export function PromptEditClient({
         </div>
       </div>
 
+      <Tabs defaultValue="editor" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="editor">Editor</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="editor">
+          {/* Editor - Simple or Advanced based on mode */}
+          {isAdvancedMode ? (
+            <div className="space-y-4">
+              {/* Mode Toggle Bar for Advanced */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Advanced Mode</h3>
+                      <p className="text-sm text-neutral-500">
+                        Create complex prompts with specialized blocks and variables
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBackToSimple}
+                      className="gap-2"
+                    >
+                      <Wand2 className="h-4 w-4" />
+                      Simple Mode
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <AdvancedEditor
+                initialBlocks={formData.blocks}
+                onBlocksChange={handleBlocksChange}
+                onSave={handleSave}
+                onCancel={handleBackToSimple}
+                isLoading={loading.saving}
+                title={formData.title}
+                showPreview={showPreview}
+                onTogglePreview={() => setShowPreview(!showPreview)}
+              />
+            </div>
+          ) : (
+            <SimpleEditor
+              content={formData.content}
+              onChange={(content) => handleFormDataChange({ content })}
+              onToggleAdvanced={toggleAdvancedMode}
+              showPreview={showPreview}
+              onTogglePreview={() => setShowPreview(!showPreview)}
+              title={formData.title}
+              isAdvancedMode={isAdvancedMode}
+            />
+          )}
+          {/* Preview - Panel for simple mode, integrated in advanced mode */}
+          {!isAdvancedMode && (
+            <PreviewPanel 
+              content={formData.content}
+              title={formData.title}
+              isVisible={showPreview}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="settings">
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="isPublic" className="font-medium">Public Access</Label>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    Allow anyone with the link to view this prompt.
+                  </p>
+                </div>
+                <Switch
+                  id="isPublic"
+                  checked={formData.isPublic}
+                  onCheckedChange={(checked) => 
+                    handleFormDataChange({ isPublic: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="isTemplate" className="font-medium">Make it a Template</Label>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    Make this prompt available as a template for others in the workspace.
+                  </p>
+                </div>
+                <Switch
+                  id="isTemplate"
+                  checked={formData.isTemplate}
+                  onCheckedChange={(checked) => 
+                    handleFormDataChange({ isTemplate: checked })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
       {/* Basic Info - Streamlined */}
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -396,123 +498,6 @@ export function PromptEditClient({
             </div>
           </div>
         </CardContent>
-      </Card>
-
-      {/* Editor - Simple or Advanced based on mode */}
-      {isAdvancedMode ? (
-        <div className="space-y-4">
-          {/* Mode Toggle Bar for Advanced */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">Advanced Mode</h3>
-                  <p className="text-sm text-neutral-500">
-                    Create complex prompts with specialized blocks and variables
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBackToSimple}
-                  className="gap-2"
-                >
-                  <Wand2 className="h-4 w-4" />
-                  Simple Mode
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <AdvancedEditor
-            initialBlocks={formData.blocks}
-            onBlocksChange={handleBlocksChange}
-            onSave={handleSave}
-            onCancel={handleBackToSimple}
-            isLoading={loading.saving}
-            title={formData.title}
-            showPreview={showPreview}
-            onTogglePreview={() => setShowPreview(!showPreview)}
-          />
-        </div>
-      ) : (
-        <SimpleEditor
-          content={formData.content}
-          onChange={(content) => handleFormDataChange({ content })}
-          onToggleAdvanced={toggleAdvancedMode}
-          showPreview={showPreview}
-          onTogglePreview={() => setShowPreview(!showPreview)}
-          title={formData.title}
-          isAdvancedMode={isAdvancedMode}
-        />
-      )}
-
-      {/* Preview - Panel for simple mode, integrated in advanced mode */}
-      {!isAdvancedMode && (
-        <PreviewPanel 
-          content={formData.content}
-          title={formData.title}
-          isVisible={showPreview}
-        />
-      )}
-
-      {/* Advanced Settings - Collapsed by default */}
-      <Card>
-        <CardHeader className="pb-4">
-          <Button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            variant="ghost"
-            className="w-full justify-between p-0 h-auto font-medium"
-          >
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </div>
-            {showAdvanced ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </CardHeader>
-        
-        {showAdvanced && (
-          <CardContent className="pt-0">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="isPublic">Public Access</Label>
-                  <p className="text-sm text-neutral-500">
-                    Allow anyone with the link to view this prompt
-                  </p>
-                </div>
-                <Switch
-                  id="isPublic"
-                  checked={formData.isPublic}
-                  onCheckedChange={(checked) => 
-                    handleFormDataChange({ isPublic: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="isTemplate">Template</Label>
-                  <p className="text-sm text-neutral-500">
-                    Make this prompt available as a template for others
-                  </p>
-                </div>
-                <Switch
-                  id="isTemplate"
-                  checked={formData.isTemplate}
-                  onCheckedChange={(checked) => 
-                    handleFormDataChange({ isTemplate: checked })
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        )}
       </Card>
     </div>
   )

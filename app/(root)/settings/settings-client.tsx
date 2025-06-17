@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { User, Shield, Bell, CreditCard, Building, Settings as SettingsIcon } from 'lucide-react'
+import { User, Shield, Bell, CreditCard, Building, Settings as SettingsIcon, Zap } from 'lucide-react'
 import { 
   ProfileSettings, 
   NotificationSettings, 
   WorkspaceSettings, 
   PrivacySettings,
   AccountSettings,
-  BillingSettings 
+  BillingSettings,
+  IntegrationsSettings
 } from '@/components/settings'
 import { getUserSettingsAction, type UserSettingsData } from '@/lib/actions/user-settings'
 import { toast } from 'sonner'
@@ -49,6 +50,12 @@ const settingsTabs = [
     label: 'Privacy',
     icon: SettingsIcon,
     description: 'Data and visibility settings'
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    icon: Zap,
+    description: 'Connect with other services'
   }
 ]
 
@@ -123,6 +130,8 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
             onUpdate={refreshSettings}
           />
         )
+      case 'integrations':
+        return <IntegrationsSettings />
       default:
         return null
     }

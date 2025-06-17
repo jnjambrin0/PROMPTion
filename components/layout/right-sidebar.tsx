@@ -64,7 +64,7 @@ export async function RightSidebar() {
   ])
 
   return (
-    <aside className="w-72 border-l h-full border-gray-200 bg-gray-25/50 p-6">
+    <aside className="w-72 border-l h-full border-gray-200 bg-gray-25/50 p-6 overflow-y-auto">
       {/* Quick Stats */}
       <div className="mb-8">
         <h3 className="mb-4 text-sm font-medium text-gray-900">Overview</h3>

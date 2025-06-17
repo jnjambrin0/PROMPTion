@@ -2,12 +2,19 @@
 
 import { useState, useTransition, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Save, Users, Settings, Bot, Webhook } from 'lucide-react'
+import { Save, Users, Settings, Bot, Webhook } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { toast } from 'sonner'
 import React from 'react'
 
@@ -23,10 +30,10 @@ import {
 import { 
   getPromptSettingsAction, 
   updatePromptSettingsAction,
-  type PromptSettingsData,
   type PromptSettingsResult
 } from '@/lib/actions/prompt-settings'
 
+type SettingsData = NonNullable<PromptSettingsResult['data']>['prompt']
 interface PromptSettingsClientProps {
   workspaceSlug: string
   promptSlug: string
@@ -60,8 +67,8 @@ export function PromptSettingsClient({ workspaceSlug, promptSlug, initialData }:
   })
   
   const [settingsData, setSettingsData] = useState<PromptSettingsResult['data'] | null>(initialData)
-  const [formData, setFormData] = useState<PromptSettingsData | null>(initialData?.prompt || null)
-  const [initialFormData, setInitialFormData] = useState<PromptSettingsData | null>(initialData?.prompt || null)
+  const [formData, setFormData] = useState<SettingsData | null>(initialData?.prompt || null)
+  const [initialFormData, setInitialFormData] = useState<SettingsData | null>(initialData?.prompt || null)
 
   const hasUnsavedChanges = useMemo(() => {
     if (!initialFormData || !formData) return false
@@ -96,7 +103,7 @@ export function PromptSettingsClient({ workspaceSlug, promptSlug, initialData }:
     }
   }, [workspaceSlug, promptSlug])
 
-  const updateFormData = useCallback((updates: Partial<PromptSettingsData>) => {
+  const updateFormData = useCallback((updates: Partial<SettingsData>) => {
     setFormData(prev => prev ? { ...prev, ...updates } : null)
     setSaveState(prev => ({ ...prev, status: 'unsaved' }))
   }, [])
@@ -162,19 +169,28 @@ export function PromptSettingsClient({ workspaceSlug, promptSlug, initialData }:
       return (
       <div className="max-w-4xl mx-auto space-y-6 p-2 md:p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-            <Link
-              href={`/${workspaceSlug}/${promptSlug}`}
-              className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to prompt
-            </Link>
+          <div className="flex flex-col gap-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href={`/${workspaceSlug}`}>{settingsData.workspace.name}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href={`/${workspaceSlug}/${promptSlug}`}>{settingsData.prompt.title}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Settings</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             <div className="flex items-center gap-2">
               <h1 className="text-lg md:text-xl font-semibold text-neutral-900">Prompt Settings</h1>
-              <Badge variant="secondary" className="text-xs">
-                {settingsData.workspace.name}
-              </Badge>
             </div>
           </div>
           
@@ -262,6 +278,7 @@ export function PromptSettingsClient({ workspaceSlug, promptSlug, initialData }:
             isOwner={settingsData.isOwner}
             canEdit={settingsData.canEdit}
             workspaceSlug={workspaceSlug}
+            onUpdate={updateFormData}
           />
         </TabsContent>
       </Tabs>

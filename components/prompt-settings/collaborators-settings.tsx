@@ -9,7 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { addCollaboratorAction, removeCollaboratorAction } from '@/lib/actions/prompt-settings'
+import {
+  addCollaboratorAction,
+  removeCollaboratorAction,
+  updateCollaboratorPermissionAction,
+} from '@/lib/actions/prompt-settings'
 import type { CollaboratorData } from '@/lib/actions/prompt-settings'
 import Image from 'next/image'
 
@@ -39,11 +43,13 @@ export const CollaboratorsSettings = React.memo(({
   const [isInviting, setIsInviting] = useState(false)
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
 
+  const canManageCollaborators = useMemo(() => isOwner, [isOwner])
+
   const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setNewEmail(e.target.value)
   }, [])
 
-  const handlePermissionChange = useCallback((value: 'VIEW' | 'COMMENT' | 'EDIT') => {
+  const handleNewPermissionChange = useCallback((value: 'VIEW' | 'COMMENT' | 'EDIT') => {
     setNewPermission(value)
   }, [])
 
@@ -53,7 +59,7 @@ export const CollaboratorsSettings = React.memo(({
       return
     }
 
-    if (!isOwner) {
+    if (!canManageCollaborators) {
       toast.error('Only the owner can add collaborators')
       return
     }
@@ -65,7 +71,7 @@ export const CollaboratorsSettings = React.memo(({
       if (result.success) {
         setNewEmail('')
         setNewPermission('VIEW')
-        onUpdate() // Refresh the data
+        onUpdate()
         toast.success('Collaborator added successfully')
       } else {
         toast.error(result.error || 'Failed to add collaborator')
@@ -75,10 +81,10 @@ export const CollaboratorsSettings = React.memo(({
     } finally {
       setIsInviting(false)
     }
-  }, [promptId, newEmail, newPermission, isOwner, onUpdate])
+  }, [promptId, newEmail, newPermission, canManageCollaborators, onUpdate])
 
   const handleRemoveCollaborator = useCallback(async (collaboratorId: string) => {
-    if (!isOwner) {
+    if (!canManageCollaborators) {
       toast.error('Only the owner can remove collaborators')
       return
     }
@@ -88,7 +94,7 @@ export const CollaboratorsSettings = React.memo(({
       const result = await removeCollaboratorAction(promptId, collaboratorId)
       
       if (result.success) {
-        onUpdate() // Refresh the data
+        onUpdate()
         toast.success('Collaborator removed')
       } else {
         toast.error(result.error || 'Failed to remove collaborator')
@@ -102,7 +108,24 @@ export const CollaboratorsSettings = React.memo(({
         return newSet
       })
     }
-  }, [promptId, isOwner, onUpdate])
+  }, [promptId, canManageCollaborators, onUpdate])
+
+  const handlePermissionChange = useCallback(async (collaboratorId: string, permission: 'VIEW' | 'COMMENT' | 'EDIT') => {
+    if (!canManageCollaborators) {
+      toast.error('Only the owner can change permissions')
+      return
+    }
+    
+    const result = await updateCollaboratorPermissionAction(promptId, collaboratorId, permission)
+
+    if (result.success) {
+      toast.success('Permission updated')
+      onUpdate()
+    } else {
+      toast.error(result.error || 'Failed to update permission')
+      onUpdate() // Re-fetch to revert optimistic update
+    }
+  }, [promptId, canManageCollaborators, onUpdate])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -110,9 +133,7 @@ export const CollaboratorsSettings = React.memo(({
     }
   }, [handleInvite])
 
-  const canManageCollaborators = useMemo(() => isOwner && canEdit, [isOwner, canEdit])
-
-  if (!isOwner && !canEdit) {
+  if (!canEdit) {
     return (
       <Card>
         <CardHeader>
@@ -124,7 +145,7 @@ export const CollaboratorsSettings = React.memo(({
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">You don&apos;t have permission to view collaborators</p>
+            <p className="text-sm">You don&apos;t have permission to manage collaborators</p>
           </div>
         </CardContent>
       </Card>
@@ -140,7 +161,6 @@ export const CollaboratorsSettings = React.memo(({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Add new collaborator - only for owners */}
         {canManageCollaborators && (
           <div className="space-y-3 p-4 border border-border rounded-lg bg-muted">
             <div className="flex items-center gap-2">
@@ -157,7 +177,7 @@ export const CollaboratorsSettings = React.memo(({
                   disabled={isInviting}
                 />
               </div>
-              <Select value={newPermission} onValueChange={handlePermissionChange}>
+              <Select value={newPermission} onValueChange={handleNewPermissionChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -179,7 +199,6 @@ export const CollaboratorsSettings = React.memo(({
           </div>
         )}
 
-        {/* Current collaborators */}
         <div className="space-y-2">
           {collaborators.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -190,40 +209,28 @@ export const CollaboratorsSettings = React.memo(({
               )}
             </div>
           ) : (
-            collaborators.map((collaborator) => {
-              const permission = permissionLabels[collaborator.permission]
-              const isRemoving = removingIds.has(collaborator.id)
-              
-              return (
-                <CollaboratorItem
-                  key={collaborator.id}
-                  collaborator={collaborator}
-                  permission={permission}
-                  isRemoving={isRemoving}
-                  canRemove={canManageCollaborators}
-                  onRemove={handleRemoveCollaborator}
-                />
-              )
-            })
+            collaborators.map((collaborator) => (
+              <CollaboratorItem
+                key={collaborator.id}
+                collaborator={collaborator}
+                isRemoving={removingIds.has(collaborator.id)}
+                canRemove={canManageCollaborators}
+                onRemove={handleRemoveCollaborator}
+                onPermissionChange={handlePermissionChange}
+              />
+            ))
           )}
         </div>
 
-        {/* Permission explanations */}
         <div className="mt-6 p-4 bg-muted border border-border rounded-lg">
           <h4 className="text-sm font-medium mb-3">Permission Levels</h4>
           <div className="space-y-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Badge className={permissionLabels.VIEW.color} variant="secondary">{permissionLabels.VIEW.label}</Badge>
-              <span>{permissionLabels.VIEW.description}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={permissionLabels.COMMENT.color} variant="secondary">{permissionLabels.COMMENT.label}</Badge>
-              <span>{permissionLabels.COMMENT.description}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={permissionLabels.EDIT.color} variant="secondary">{permissionLabels.EDIT.label}</Badge>
-              <span>{permissionLabels.EDIT.description}</span>
-            </div>
+            {Object.entries(permissionLabels).map(([key, { label, color, description }]) => (
+              <div className="flex items-center gap-2" key={key}>
+                <Badge className={`${color} hover:${color}`} variant="secondary">{label}</Badge>
+                <span>{description}</span>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>
@@ -231,81 +238,85 @@ export const CollaboratorsSettings = React.memo(({
   )
 })
 
+CollaboratorsSettings.displayName = 'CollaboratorsSettings'
+
 const CollaboratorItem = React.memo(({ 
   collaborator, 
-  permission, 
   isRemoving, 
   canRemove, 
-  onRemove 
+  onRemove,
+  onPermissionChange
 }: {
   collaborator: CollaboratorData
-  permission: typeof permissionLabels[keyof typeof permissionLabels]
   isRemoving: boolean
   canRemove: boolean
   onRemove: (id: string) => void
+  onPermissionChange: (id: string, permission: 'VIEW' | 'COMMENT' | 'EDIT') => void
 }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const handleRemove = useCallback(() => {
     onRemove(collaborator.id)
   }, [collaborator.id, onRemove])
 
+  const handleSelectPermission = useCallback(async (permission: 'VIEW' | 'COMMENT' | 'EDIT') => {
+    setIsUpdating(true);
+    await onPermissionChange(collaborator.id, permission);
+    setIsUpdating(false);
+  }, [collaborator.id, onPermissionChange]);
+
+  const isDisabled = isRemoving || isUpdating;
+
   return (
-    <div className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-muted transition-colors">
+    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors">
       <div className="flex items-center gap-3">
-        {/* Avatar */}
-        <div className="h-8 w-8 rounded-full bg-border flex items-center justify-center">
-          {collaborator.avatarUrl ? (
-            <Image 
-              src={collaborator.avatarUrl} 
-              alt={collaborator.fullName || collaborator.email}
-              className="h-8 w-8 rounded-full object-cover"
-            />
-          ) : (
-            <span className="text-xs font-medium text-muted-foreground">
-              {(collaborator.fullName || collaborator.email).charAt(0).toUpperCase()}
-            </span>
-          )}
-        </div>
-        
-        {/* User info */}
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">
-              {collaborator.fullName || collaborator.email}
-            </p>
-            <Badge className={permission.color} variant="secondary">
-              {permission.label}
-            </Badge>
-          </div>
-                     <p className="text-xs text-muted-foreground">
-             {collaborator.email}
-             {collaborator.createdAt && (
-               <span className="ml-2">
-                 Added {formatDistanceToNow(new Date(collaborator.createdAt), { addSuffix: true })}
-               </span>
-             )}
-           </p>
+        <Image
+          src={collaborator.avatarUrl || `https://avatar.vercel.sh/${collaborator.email}.png`}
+          alt={collaborator.fullName || collaborator.email}
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+        <div className="text-sm">
+          <p className="font-medium text-foreground">
+            {collaborator.fullName || collaborator.email}
+          </p>
+          <p className="text-muted-foreground">
+            Added {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
+          </p>
         </div>
       </div>
-      
-      {/* Actions */}
-      {canRemove && (
+      <div className="flex items-center gap-3">
+        <Select
+          value={collaborator.permission}
+          onValueChange={handleSelectPermission}
+          disabled={!canRemove || isDisabled}
+        >
+          <SelectTrigger className="w-32 text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="VIEW">Viewer</SelectItem>
+            <SelectItem value="COMMENT">Commenter</SelectItem>
+            <SelectItem value="EDIT">Editor</SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={handleRemove}
-          disabled={isRemoving}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          disabled={!canRemove || isDisabled}
+          className="text-muted-foreground hover:text-danger hover:bg-danger-muted h-8 w-8"
         >
           {isRemoving ? (
-            <div className="h-4 w-4 animate-spin rounded-full border border-red-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
           ) : (
             <Trash2 className="h-4 w-4" />
           )}
         </Button>
-      )}
+      </div>
     </div>
   )
 })
 
-CollaboratorsSettings.displayName = 'CollaboratorsSettings'
 CollaboratorItem.displayName = 'CollaboratorItem' 

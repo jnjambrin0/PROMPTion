@@ -1,15 +1,13 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useCallback } from 'react'
 import { AlertTriangle, Trash2, Zap, Webhook } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { toast } from 'sonner'
-import { deletePromptAction } from '@/lib/actions/prompt-settings'
+import { DeletePromptDialog } from '@/components/prompt/delete-prompt-dialog'
 import type { PromptSettingsData } from '@/lib/actions/prompt-settings'
 
 interface AdvancedSettingsProps {
@@ -18,6 +16,7 @@ interface AdvancedSettingsProps {
   isOwner: boolean
   canEdit: boolean
   workspaceSlug: string
+  onUpdate: (updates: Partial<PromptSettingsData>) => void
 }
 
 export const AdvancedSettings = React.memo(({ 
@@ -25,48 +24,17 @@ export const AdvancedSettings = React.memo(({
   settings, 
   isOwner, 
   canEdit,
-  workspaceSlug 
+  onUpdate
 }: AdvancedSettingsProps) => {
-  const router = useRouter()
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const handleShowDeleteConfirm = useCallback(() => {
-    setShowDeleteConfirm(true)
-  }, [])
-
-  const handleCancelDelete = useCallback(() => {
-    setShowDeleteConfirm(false)
-  }, [])
-
-  const handleConfirmDelete = useCallback(async () => {
-    setIsDeleting(true)
-    try {
-      const result = await deletePromptAction(promptId)
-      
-      if (result.success) {
-        toast.success('Prompt deleted successfully')
-        if (result.redirectUrl) {
-          router.push(result.redirectUrl)
-        } else {
-          router.push(`/${workspaceSlug}`)
-        }
-      } else {
-        toast.error(result.error || 'Failed to delete prompt')
-      }
-    } catch {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsDeleting(false)
-      setShowDeleteConfirm(false)
-    }
-  }, [promptId, router, workspaceSlug])
-
   // Dummy handler for webhook since this is a future feature
   const handleWebhookChange = useCallback(() => {
     // This is disabled for now - future feature
     // In the future, this would call onUpdate({ webhookUrl: e.target.value })
   }, [])
+
+  const handleApiAccessChange = useCallback((checked: boolean) => {
+    onUpdate({ apiAccess: checked })
+  }, [onUpdate])
 
   return (
     <div className="space-y-6">
@@ -94,6 +62,7 @@ export const AdvancedSettings = React.memo(({
             <Switch
               id="api-access"
               checked={settings.apiAccess}
+              onCheckedChange={handleApiAccessChange}
               disabled={!canEdit}
             />
           </div>
@@ -148,7 +117,7 @@ export const AdvancedSettings = React.memo(({
             <div 
               className="rounded-lg border p-4 bg-danger-muted border-danger-border"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <h4 className="font-medium text-danger-muted-foreground">
                     Delete this prompt
@@ -157,57 +126,18 @@ export const AdvancedSettings = React.memo(({
                     This action cannot be undone. All collaborators will lose access.
                   </p>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleShowDeleteConfirm}
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete Prompt
-                </Button>
+                <DeletePromptDialog promptId={promptId}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Prompt
+                  </Button>
+                </DeletePromptDialog>
               </div>
             </div>
-
-            {/* Delete Confirmation Dialog */}
-            {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div 
-                  className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 border border-border"
-                >
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-6 w-6 mt-0.5 text-danger" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-2">
-                        Delete Prompt
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Are you sure you want to delete this prompt? This action cannot be undone.
-                        All collaborators will lose access and any integrations will stop working.
-                      </p>
-                      <div className="flex gap-3 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCancelDelete}
-                          disabled={isDeleting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={handleConfirmDelete}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? 'Deleting...' : 'Delete Prompt'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}

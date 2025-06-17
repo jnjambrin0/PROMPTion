@@ -249,96 +249,78 @@ export const AIConfigSettings = React.memo(({ settings, canEdit, onUpdate }: AIC
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sliders className="h-5 w-5 text-#6b7280" />
-            <CardTitle>Advanced Parameters</CardTitle>
+            <Sliders className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Model Parameters</CardTitle>
           </div>
           <CardDescription>
-            Fine-tune the AI behavior for your specific use case. Click on values to edit them directly.
+            Fine-tune the model&apos;s behavior for more precise control
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           <ParameterControl
             label="Temperature"
-            value={modelConfig.temperature || 0.7}
+            value={modelConfig.temperature ?? 0.7}
             min={0}
             max={2}
             step={0.1}
-            description="Controls randomness. Lower values = more focused, higher values = more creative"
+            description="Controls randomness. Lower values are more deterministic."
             canEdit={canEdit}
             onChange={handleTemperatureChange}
           />
-
           <ParameterControl
             label="Top P"
-            value={modelConfig.topP || 1.0}
+            value={modelConfig.topP ?? 1}
             min={0}
             max={1}
             step={0.1}
-            description="Controls diversity via nucleus sampling. Lower values = more focused output"
+            description="Controls nucleus sampling. 1.0 considers all tokens."
             canEdit={canEdit}
             onChange={handleTopPChange}
           />
-
           <ParameterControl
             label="Frequency Penalty"
-            value={modelConfig.frequencyPenalty || 0}
+            value={modelConfig.frequencyPenalty ?? 0}
             min={-2}
             max={2}
             step={0.1}
-            description="Reduces repetition based on frequency. Positive values discourage repetition"
+            description="Penalizes new tokens based on their frequency."
             canEdit={canEdit}
             onChange={handleFrequencyPenaltyChange}
           />
-
           <ParameterControl
             label="Presence Penalty"
-            value={modelConfig.presencePenalty || 0}
+            value={modelConfig.presencePenalty ?? 0}
             min={-2}
             max={2}
             step={0.1}
-            description="Encourages new topics. Positive values promote diverse content"
+            description="Penalizes new tokens if they appear in the text so far."
             canEdit={canEdit}
             onChange={handlePresencePenaltyChange}
           />
         </CardContent>
       </Card>
 
-      {/* Configuration Summary */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-#6b7280" />
-            <CardTitle>Configuration Summary</CardTitle>
+            <Zap className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Prompt Variables</CardTitle>
           </div>
+          <CardDescription>
+            Define dynamic variables to insert into your prompt
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Model:</span>
-                <span className="font-mono text-#1f2937">{selectedModel?.label || 'Not selected'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Max Tokens:</span>
-                <span className="font-mono text-#1f2937">{modelConfig.maxTokens || 4096}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Temperature:</span>
-                <span className="font-mono text-#1f2937">{modelConfig.temperature || 0.7}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Top P:</span>
-                <span className="font-mono text-#1f2937">{modelConfig.topP || 1.0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Frequency Penalty:</span>
-                <span className="font-mono text-#1f2937">{modelConfig.frequencyPenalty || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-#6b7280">Presence Penalty:</span>
-                <span className="font-mono text-#1f2937">{modelConfig.presencePenalty || 0}</span>
+           <div 
+            className="p-4 rounded-lg border border-border bg-muted"
+          >
+            <div className="flex items-start gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground mb-1">Coming Soon</p>
+                <p className="text-muted-foreground">
+                  A new interface to manage prompt variables will be available in a future update.
+                </p>
               </div>
             </div>
           </div>

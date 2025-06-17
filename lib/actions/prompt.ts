@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
-import { createPrompt, getUserByAuthId, getWorkspaceCategories, getUserWorkspaces } from '@/lib/db'
+import { createPrompt, getUserByAuthId, getUserWorkspaces } from '@/lib/db'
 import { getWorkspaceBySlug } from '@/lib/db/workspaces'
 import { getPromptBySlug, getPromptById } from '@/lib/db/prompts'
 import { generateUniqueSlug } from '@/lib/db/utils'
@@ -171,7 +171,7 @@ function generateSlugFromTitle(title: string): string {
     .slice(0, 50)
 }
 
-export async function validatePromptSlug(slug: string, workspaceId: string): Promise<boolean> {
+export async function validatePromptSlug(slug: string, workspaceId: string, promptId?: string): Promise<boolean> {
   try {
     // Basic validation
     if (!slug || !/^[a-z0-9-]+$/.test(slug) || slug.length < 3) {
@@ -187,6 +187,7 @@ export async function validatePromptSlug(slug: string, workspaceId: string): Pro
       where: {
         slug: slug,
         workspaceId: workspaceId,
+        id: promptId ? { not: promptId } : undefined,
         deletedAt: null
       },
       select: { id: true }
@@ -221,35 +222,22 @@ export async function getUserWorkspacesData() {
   }
 }
 
-export async function getWorkspaceData(workspaceId: string) {
-  try {
-    const supabase = await createClient()
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+export async function getWorkspaceData(workspaceId: string): Promise<{
+  categories: Array<{ id: string; name: string; icon: string | null }>
+}> {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: {
+      categories: true,
+    },
+  })
 
-    if (!authUser) {
-      return { categories: [] }
-    }
-
-    const user = await getUserByAuthId(authUser.id)
-    if (!user) {
-      return { categories: [] }
-    }
-
-    // Verify user has access to workspace
-    const workspaces = await getUserWorkspaces(user.id)
-    const hasAccess = workspaces.some(w => w.id === workspaceId)
-    
-    if (!hasAccess) {
-      return { categories: [] }
-    }
-
-    const categories = await getWorkspaceCategories(workspaceId, user.id)
-    return { categories }
-  } catch (error) {
-    console.error('Error fetching workspace data:', error)
+  if (!workspace) {
     return { categories: [] }
   }
-} 
+
+  return { categories: workspace.categories }
+}
 
 /**
  * Server Action para obtener datos completos del prompt page
@@ -912,6 +900,62 @@ export async function updatePromptAction(
       success: false, 
       error: 'Failed to update prompt' 
     }
+  }
+}
+
+interface DeletePromptResult {
+  success: boolean
+  error?: string
+  redirectTo?: string
+}
+
+export async function deletePromptAction(promptId: string): Promise<DeletePromptResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Authentication required' }
+  }
+
+  if (!promptId) {
+    return { success: false, error: 'Prompt ID is required' }
+  }
+
+  try {
+    const prompt = await prisma.prompt.findUnique({
+      where: { id: promptId },
+      select: { 
+        userId: true, 
+        workspace: {
+          select: { slug: true }
+        }
+      }
+    })
+
+    if (!prompt) {
+      return { success: false, error: 'Prompt not found' }
+    }
+
+    // Critical: Verify ownership
+    if (prompt.userId !== user.id) {
+      return { success: false, error: 'You are not authorized to delete this prompt' }
+    }
+
+    // Delete the prompt. Relational data will be handled by `onDelete: Cascade` in schema.
+    await prisma.prompt.delete({
+      where: { id: promptId }
+    })
+
+    const workspaceSlug = prompt.workspace.slug
+    
+    // Revalidate relevant paths
+    revalidatePath('/dashboard')
+    revalidatePath(`/${workspaceSlug}`)
+
+    return { success: true, redirectTo: `/${workspaceSlug}` }
+  } catch (error) {
+    console.error('Error deleting prompt:', error)
+    return { success: false, error: 'An unexpected error occurred while deleting the prompt.' }
   }
 }
 

@@ -12,7 +12,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <div className="h-screen bg-white flex">
+    <div className="h-screen bg-white flex overflow-hidden">
       {/* Left Sidebar - Full height, hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar />
@@ -22,9 +22,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <div className="flex-1 min-w-0 flex flex-col">
         <Topbar />
         
-        <div className="flex flex-1">
+        <div className="flex flex-1 min-h-0">
           {/* Main Content */}
-          <main className="flex-1 min-w-0 w-full overflow-auto">
+          <main className="flex-1 min-w-0 w-full overflow-y-auto">
             {children}
           </main>
           

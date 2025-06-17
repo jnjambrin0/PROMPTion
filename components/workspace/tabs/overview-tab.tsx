@@ -123,12 +123,12 @@ function ActivityItem({ activity }: { activity: ActivityData }) {
 }
 
 // Compact list items for sidebar
-function CompactListItem({ 
-  icon, 
-  label, 
-  value, 
+function CompactListItem({
+  icon,
+  label,
+  value,
   trend,
-  onClick 
+  onClick,
 }: {
   icon: string
   label: string
@@ -136,31 +136,36 @@ function CompactListItem({
   trend?: string
   onClick?: () => void
 }) {
+  const commonClasses =
+    'w-full flex items-center gap-3 py-1.5 px-2 rounded-md transition-colors text-left'
+  const interactiveClasses = 'hover:bg-muted/80 cursor-pointer'
+  const nonInteractiveClasses = 'cursor-default'
+
   const content = (
-    <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/50 transition-colors">
+    <>
+      <span className="text-sm">{icon}</span>
+      <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm">{icon}</span>
-        <span className="text-sm font-medium text-foreground">{label}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-bold text-foreground">{value}</span>
+        <span className="text-sm font-semibold text-foreground">{value}</span>
         {trend && (
-          <span className="text-xs text-muted-foreground">+{trend}</span>
+          <span className="text-xs font-medium text-green-600">+{trend}</span>
         )}
       </div>
-    </div>
+    </>
   )
 
-  return onClick ? (
-    <Button 
-      size="sm" 
-      variant="ghost" 
-      className="h-6 px-2"
+  return (
+    <button
+      type="button"
       onClick={onClick}
+      disabled={!onClick}
+      className={`${commonClasses} ${
+        onClick ? interactiveClasses : nonInteractiveClasses
+      }`}
     >
       {content}
-    </Button>
-  ) : content
+    </button>
+  )
 }
 
 export function OverviewTabSkeleton() {

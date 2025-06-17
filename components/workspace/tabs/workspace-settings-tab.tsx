@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Globe, Lock, Bell, Save, AlertTriangle, Users, BarChart3, Shield } from 'lucide-react'
+import { Settings, Globe, Lock, Bell, Save, AlertTriangle, Users, BarChart3, Shield, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { DevelopmentNotice, INTEGRATIONS_NOTICE } from '@/components/ui/development-notice'
 
 // ============================================================================
 // TYPES
@@ -140,37 +139,6 @@ function SettingRow({
         </p>
       </div>
       {action}
-    </div>
-  )
-}
-
-function IntegrationCard({ 
-  name, 
-  description, 
-  icon, 
-  color, 
-  connected 
-}: {
-  name: string
-  description: string
-  icon: string
-  color: string
-  connected: boolean
-}) {
-  return (
-    <div className="border border-border rounded-lg p-3">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`h-8 w-8 rounded-md flex items-center justify-center ${color}`}>
-          <span className="text-sm font-bold text-white">{icon}</span>
-        </div>
-        <div>
-          <h4 className="text-sm font-medium text-foreground">{name}</h4>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      <Button variant="outline" size="sm" className="w-full h-7">
-        {connected ? 'Configure' : 'Connect'}
-      </Button>
     </div>
   )
 }
@@ -372,41 +340,17 @@ export default function WorkspaceSettingsTab({ workspaceSlug, workspaceData }: W
         title="Integrations"
         description="Connect external tools and services"
       >
-        <DevelopmentNotice 
-          {...INTEGRATIONS_NOTICE}
-          className="mb-4 w-full"
-        />
-        
-        {/* Preview of future integrations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none">
-          <IntegrationCard
-            name="Slack"
-            description="Team communication"
-            icon="S"
-            color="bg-purple-600"
-            connected={false}
-          />
-          <IntegrationCard
-            name="Notion"
-            description="Documentation sync"
-            icon="N"
-            color="bg-slate-900"
-            connected={false}
-          />
-          <IntegrationCard
-            name="GitHub"
-            description="Code integration"
-            icon="G"
-            color="bg-slate-800"
-            connected={false}
-          />
-          <IntegrationCard
-            name="Figma"
-            description="Design workflow"
-            icon="F"
-            color="bg-purple-500"
-            connected={false}
-          />
+        <div className="flex flex-col items-center justify-center text-center py-10 px-4 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+          <div className="p-2.5 bg-primary/10 rounded-full mb-3 pt-6">
+            <Zap className="h-5 w-5 text-primary" />
+          </div>
+          <h4 className="text-sm font-semibold text-foreground">
+            Integrations Coming Soon
+          </h4>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground pb-6">
+            Connect Promption to Slack, GitHub, and more to streamline your
+            workflows. API access is also on the way.
+          </p>
         </div>
       </SettingsSection>
 

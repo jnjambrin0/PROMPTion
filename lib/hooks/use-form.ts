@@ -69,13 +69,16 @@ export function useForm<T extends Record<string, unknown>>({
   // Auto-generate slug when title changes (if enabled)
   useEffect(() => {
     if (shouldGenerateSlug && !state.isCustomSlug && state.data[titleField]) {
-      const generatedSlug = generateSlug(String(state.data[titleField]))
-      setState(prev => ({
-        ...prev,
-        data: { ...prev.data, [slugField]: generatedSlug }
-      }))
+      const newSlug = generateSlug(String(state.data[titleField]))
+      if (newSlug !== state.data[slugField]) {
+        setState(prev => ({
+          ...prev,
+          data: { ...prev.data, [slugField]: newSlug },
+        }))
+      }
     }
-  }, [state.data, state.isCustomSlug, shouldGenerateSlug, slugField, titleField])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.data[titleField], state.isCustomSlug, shouldGenerateSlug, slugField, titleField])
 
   // Validate form whenever data changes (after interaction)
   useEffect(() => {

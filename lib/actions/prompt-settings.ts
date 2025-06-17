@@ -20,6 +20,7 @@ interface ModelConfig {
 export interface PromptSettingsData {
   // Basic Information
   title: string
+  slug: string
   description: string | null
   categoryId: string | null
   
@@ -146,6 +147,8 @@ export async function getPromptSettingsAction(
         isPinned: true,
         aiModel: true,
         modelConfig: true,
+        apiAccess: true,
+        webhookUrl: true,
         userId: true,
         workspaceId: true,
         createdAt: true,
@@ -187,6 +190,7 @@ export async function getPromptSettingsAction(
     // 7. Build response
     const settingsData: PromptSettingsData = {
       title: prompt.title,
+      slug: prompt.slug,
       description: prompt.description,
       categoryId: prompt.categoryId,
       isPublic: prompt.isPublic,
@@ -194,8 +198,8 @@ export async function getPromptSettingsAction(
       isPinned: prompt.isPinned,
       aiModel: prompt.aiModel,
       modelConfig: (prompt.modelConfig as ModelConfig) || {},
-      apiAccess: false, // TODO: Add to schema if needed
-      webhookUrl: null // TODO: Add to schema if needed
+      apiAccess: prompt.apiAccess,
+      webhookUrl: prompt.webhookUrl
     }
 
     const collaboratorData: CollaboratorData[] = collaborators.map(collab => ({
@@ -445,6 +449,64 @@ export async function addCollaboratorAction(
   } catch (error) {
     console.error('Error adding collaborator:', error)
     return { success: false, error: 'Failed to add collaborator' }
+  }
+}
+
+/**
+ * Update collaborator permission
+ */
+export async function updateCollaboratorPermissionAction(
+  promptId: string,
+  collaboratorId: string,
+  permission: 'VIEW' | 'COMMENT' | 'EDIT'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
+      return { success: false, error: 'Authentication required' }
+    }
+
+    const user = await getUserByAuthId(authUser.id)
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    const prompt = await prisma.prompt.findUnique({
+      where: { id: promptId },
+      select: { userId: true, workspace: { select: { ownerId: true } } }
+    })
+
+    if (!prompt) {
+      return { success: false, error: 'Prompt not found' }
+    }
+
+    const isOwner = prompt.userId === user.id || prompt.workspace.ownerId === user.id
+    if (!isOwner) {
+      return { success: false, error: 'Only the owner can change permissions' }
+    }
+    
+    if (collaboratorId === prompt.userId || collaboratorId === prompt.workspace.ownerId) {
+      return { success: false, error: "Cannot change the owner's permission" }
+    }
+
+    await prisma.collaboration.update({
+      where: {
+        promptId_userId: {
+          promptId: promptId,
+          userId: collaboratorId
+        }
+      },
+      data: { permission }
+    })
+
+    revalidatePath(`/prompts/${promptId}/settings`)
+    return { success: true }
+
+  } catch (error) {
+    console.error('Error updating collaborator permission:', error)
+    return { success: false, error: 'Failed to update permission' }
   }
 }
 
