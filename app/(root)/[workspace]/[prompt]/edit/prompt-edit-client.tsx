@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2, Settings, ChevronDown, ChevronUp, Wand2 } from 'lucide-react'
@@ -108,17 +108,22 @@ export function PromptEditClient({
     isTemplate: false
   })
   
-  const [originalData, setOriginalData] = useState<PromptEditData | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [promptData, setPromptData] = useState<PromptPageData | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
 
-  // Check for unsaved changes
-  const hasChanges = useMemo(() => {
-    if (!originalData) return false
-    return JSON.stringify(formData) !== JSON.stringify(originalData)
-  }, [formData, originalData])
+  // Handlers for form data changes to track dirty state
+  const handleFormDataChange = (newData: Partial<PromptEditData>) => {
+    setFormData(prev => ({ ...prev, ...newData }))
+    setIsDirty(true)
+  }
+  
+  const handleBlocksChange = (newBlocks: Block[]) => {
+    setFormData(prev => ({ ...prev, blocks: newBlocks }))
+    setIsDirty(true)
+  }
 
   // Convert blocks to simple content and vice versa
   const blocksToContent = useCallback((blocks: Block[]): string => {
@@ -179,7 +184,6 @@ export function PromptEditClient({
         }
         
         setFormData(initialFormData)
-        setOriginalData(initialFormData)
         setPromptData(data)
       }
     } catch (error) {
@@ -212,7 +216,7 @@ export function PromptEditClient({
       })
       
       if (result.success) {
-        setOriginalData({ ...formData })
+        setIsDirty(false)
         toast.success('Prompt saved successfully')
       } else {
         toast.error(result.error || 'Failed to save prompt')
@@ -227,18 +231,18 @@ export function PromptEditClient({
 
   // Handle navigation with unsaved changes
   const handleBack = useCallback(() => {
-    if (hasChanges) {
+    if (isDirty) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
         router.push(`/${workspaceSlug}/${promptSlug}`)
       }
     } else {
       router.push(`/${workspaceSlug}/${promptSlug}`)
     }
-  }, [hasChanges, router, workspaceSlug, promptSlug])
+  }, [isDirty, router, workspaceSlug, promptSlug])
 
   // Toggle advanced mode
   const toggleAdvancedMode = useCallback(() => {
-    if (hasChanges) {
+    if (isDirty) {
       toast.error('Please save your changes before switching modes')
       return
     }
@@ -256,11 +260,11 @@ export function PromptEditClient({
       setIsAdvancedMode(true)
       toast.success('Switched to advanced mode')
     }
-  }, [hasChanges, isAdvancedMode, formData.blocks, formData.content, blocksToContent, contentToBlocks])
+  }, [isDirty, isAdvancedMode, formData.blocks, formData.content, blocksToContent, contentToBlocks])
 
   // Handle back to simple from advanced editor
   const handleBackToSimple = useCallback(() => {
-    if (hasChanges) {
+    if (isDirty) {
       toast.error('Please save your changes before switching modes')
       return
     }
@@ -269,7 +273,7 @@ export function PromptEditClient({
     setFormData(prev => ({ ...prev, content, blocks: [] }))
     setIsAdvancedMode(false)
     toast.success('Switched to simple mode')
-  }, [hasChanges, formData.blocks, blocksToContent])
+  }, [isDirty, formData.blocks, blocksToContent])
 
   // Load data on mount
   useEffect(() => {
@@ -279,7 +283,7 @@ export function PromptEditClient({
   // Browser navigation warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasChanges) {
+      if (isDirty) {
         e.preventDefault()
         e.returnValue = ''
       }
@@ -287,7 +291,7 @@ export function PromptEditClient({
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [hasChanges])
+  }, [isDirty])
 
   // Loading state
   if (loading.initial) {
@@ -343,7 +347,7 @@ export function PromptEditClient({
               {promptData.workspace.name}
             </p>
           </div>
-          {hasChanges && (
+          {isDirty && (
             <Badge variant="outline" className="text-yellow-600 border-yellow-200">
               Unsaved changes
             </Badge>
@@ -353,7 +357,7 @@ export function PromptEditClient({
         <div className="flex items-center gap-2">
           <Button
             onClick={handleSave}
-            disabled={loading.saving || !hasChanges}
+            disabled={loading.saving || !isDirty}
             className="gap-2"
           >
             {loading.saving ? (
@@ -375,7 +379,7 @@ export function PromptEditClient({
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => handleFormDataChange({ title: e.target.value })}
                 placeholder="Enter prompt title"
                 className="mt-1"
               />
@@ -385,7 +389,7 @@ export function PromptEditClient({
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => handleFormDataChange({ description: e.target.value })}
                 placeholder="Brief description"
                 className="mt-1"
               />
@@ -422,8 +426,10 @@ export function PromptEditClient({
           
           <AdvancedEditor
             initialBlocks={formData.blocks}
-            onSave={(blocks: Block[]) => setFormData(prev => ({ ...prev, blocks }))}
+            onBlocksChange={handleBlocksChange}
+            onSave={handleSave}
             onCancel={handleBackToSimple}
+            isLoading={loading.saving}
             title={formData.title}
             showPreview={showPreview}
             onTogglePreview={() => setShowPreview(!showPreview)}
@@ -432,7 +438,7 @@ export function PromptEditClient({
       ) : (
         <SimpleEditor
           content={formData.content}
-          onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+          onChange={(content) => handleFormDataChange({ content })}
           onToggleAdvanced={toggleAdvancedMode}
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
@@ -484,7 +490,7 @@ export function PromptEditClient({
                   id="isPublic"
                   checked={formData.isPublic}
                   onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, isPublic: checked }))
+                    handleFormDataChange({ isPublic: checked })
                   }
                 />
               </div>
@@ -500,7 +506,7 @@ export function PromptEditClient({
                   id="isTemplate"
                   checked={formData.isTemplate}
                   onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, isTemplate: checked }))
+                    handleFormDataChange({ isTemplate: checked })
                   }
                 />
               </div>

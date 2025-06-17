@@ -7,8 +7,9 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { IconPicker } from '@/components/ui/icon-picker'
 
-import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/constants/categories'
+import { CATEGORY_COLORS, ENTITY_ICONS } from '@/lib/types/forms'
 import {
   Form,
   FormControl,
@@ -59,7 +60,7 @@ export function CategoryForm({
     defaultValues: {
       name: initialData?.name || '',
       description: initialData?.description || '',
-      icon: initialData?.icon || CATEGORY_ICONS[0],
+      icon: initialData?.icon || ENTITY_ICONS[0],
       color: initialData?.color || CATEGORY_COLORS[0].value, // Gray
     },
   })
@@ -123,28 +124,13 @@ export function CategoryForm({
             name="icon"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Icon</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isLoading}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an icon" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="max-h-60">
-                    {CATEGORY_ICONS.map((icon) => (
-                      <SelectItem key={icon} value={icon}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{icon}</span>
-                          <span className="text-sm text-muted-foreground">Icon</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <IconPicker
+                    label="Icon"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -187,18 +173,18 @@ export function CategoryForm({
         </div>
 
         <div className="flex items-center gap-3 pt-4">
-          <Button 
-            type="submit" 
-            variant="outline"
+          <Button
+            type="submit"
+            variant="default"
             disabled={isLoading}
             className="flex-1"
           >
             {isLoading ? 'Creating...' : submitLabel}
           </Button>
           {showCancel && (
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
               disabled={isLoading}
               className="flex-1"

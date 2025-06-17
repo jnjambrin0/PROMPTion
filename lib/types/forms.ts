@@ -62,19 +62,28 @@ export interface FormState {
   isValid: boolean
 }
 
-// Available icons for entities
+// Unified icons for all entities (prompts, categories, etc.)
 export const ENTITY_ICONS = [
   '📝', '🎯', '🚀', '💡', '⚡', '🔥', '✨', '🎨', '🧠', '🔧',
-  '📊', '📈', '🎪', '🎭', '🎵', '🎲', '🎯', '🎨', '🎪', '🎭',
-  '📁', '📂', '📚', '📋', '📌', '📍', '📎', '📏', '📐', '📑',
-  '⭐', '🌟', '💫', '✨', '🔥', '💥', '🎆', '🎇', '🌈', '☀️'
+  '📊', '📈', '🎪', '🎭', '🎵', '🎲', '📁', '📂', '📚', '📋',
+  '📌', '📍', '📎', '📏', '📐', '📑', '⭐', '🌟', '💫', '💥',
+  '🎆', '🎇', '🌈', '☀️', '📉', '🗂️', '🗃️', '🔖', '🏷️', '✅',
+  '❌', '⚙️', '🛠️', '🔍', '🔎', '📤', '📥', '📦', '🗄️', '💼',
+  '🖼️', '📷'
 ] as const
 
 export type EntityIcon = typeof ENTITY_ICONS[number]
 
-// Color options for categories
+// Unified color options for categories
 export const CATEGORY_COLORS = [
-  'gray', 'blue', 'green', 'yellow', 'red', 'purple', 'pink', 'indigo'
+  { name: 'gray', value: 'gray', hex: '#6b7280' },
+  { name: 'blue', value: 'blue', hex: '#3b82f6' },
+  { name: 'green', value: 'green', hex: '#22c55e' },
+  { name: 'yellow', value: 'yellow', hex: '#eab308' },
+  { name: 'red', value: 'red', hex: '#ef4444' },
+  { name: 'purple', value: 'purple', hex: '#a855f7' },
+  { name: 'pink', value: 'pink', hex: '#ec4899' },
+  { name: 'indigo', value: 'indigo', hex: '#6366f1' },
 ] as const
 
-export type CategoryColor = typeof CATEGORY_COLORS[number] 
+export type CategoryColor = typeof CATEGORY_COLORS[number]['value'] 

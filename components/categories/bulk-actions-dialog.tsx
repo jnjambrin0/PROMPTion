@@ -13,7 +13,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ColorBadge } from '@/components/ui/color-badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/constants/categories'
+import { IconPicker } from '@/components/ui/icon-picker'
+import { CATEGORY_COLORS } from '@/lib/types/forms'
 import { toast } from 'sonner'
 
 interface Category {
@@ -405,25 +406,13 @@ export function BulkActionsDialog({
                       Update Icon
                     </Label>
                   </div>
-                  <Select
+                  <IconPicker
+                    label=""
                     value={bulkUpdateData.icon || ''}
-                    onValueChange={(value) => setBulkUpdateData(prev => ({ ...prev, icon: value }))}
+                    onChange={(value) => setBulkUpdateData(prev => ({ ...prev, icon: value }))}
+                    placeholder="Select Icon"
                     disabled={!updateFields.has('icon')}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an icon" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {CATEGORY_ICONS.map((icon) => (
-                        <SelectItem key={icon} value={icon}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{icon}</span>
-                            <span className="text-sm text-muted-foreground">Icon</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
 
 

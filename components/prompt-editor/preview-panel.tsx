@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Eye, Copy, Check, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,8 +42,8 @@ export function PreviewPanel({ content, title, isVisible }: PreviewPanelProps) {
   
   const variables = useMemo(() => extractVariables(content), [content])
 
-  // Generate preview with variable substitution
-  const preview = useMemo(() => {
+  // Generate preview text for copying
+  const previewText = useMemo(() => {
     let result = content
     
     variables.forEach(variable => {
@@ -55,9 +55,38 @@ export function PreviewPanel({ content, title, isVisible }: PreviewPanelProps) {
     return result
   }, [content, variables, testValues])
 
+  // Generate preview for rendering with styled variables
+  const previewRender = useMemo(() => {
+    const parts: (string | React.ReactNode)[] = []
+    if (!content) return parts
+
+    const variableRegex = /\{\{([^}]+)\}\}/g
+    let lastIndex = 0
+    let match
+
+    while ((match = variableRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index))
+      }
+
+      const varName = match[1].trim()
+      const value = testValues[varName] || `[${varName}]`
+      
+      parts.push(<strong key={`${varName}-${match.index}`} className="font-semibold text-foreground text-base">{value}</strong>)
+      
+      lastIndex = match.index + match[0].length
+    }
+
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex))
+    }
+
+    return parts
+  }, [content, testValues])
+
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(preview)
+      await navigator.clipboard.writeText(previewText)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
@@ -177,9 +206,9 @@ export function PreviewPanel({ content, title, isVisible }: PreviewPanelProps) {
           <h4 className="font-medium">Generated Prompt</h4>
           <div className="relative">
             <div className="p-4 bg-white border rounded-lg min-h-[120px]">
-              {preview.trim() ? (
+              {previewText.trim() ? (
                 <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-neutral-800">
-                  {preview}
+                  {previewRender}
                 </pre>
               ) : (
                 <div className="text-neutral-400 text-sm italic">

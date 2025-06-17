@@ -100,13 +100,15 @@ export function PromptActions({
       const result = await generateShareLinkAction(promptId)
       
       if (result.success && result.shareUrl) {
-        // Copy to clipboard
-        await navigator.clipboard.writeText(result.shareUrl)
-        
-        toast.success("Share link copied", {
-          description: result.isPublic 
-            ? "Anyone with this link can view the prompt" 
-            : "Only workspace members can view this prompt",
+        toast.success("Share link generated", {
+          description: "Anyone with the link can view the prompt.",
+          action: {
+            label: "Copy Link",
+            onClick: () => {
+              navigator.clipboard.writeText(result.shareUrl!)
+              toast.success("Link copied to clipboard!")
+            },
+          },
         })
       } else {
         toast.error("Failed to generate share link", {
@@ -165,7 +167,7 @@ export function PromptActions({
           variant="outline" 
           size="sm" 
           disabled={isLoading}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 cursor-pointer"
         >
           <MoreHorizontal className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
@@ -184,7 +186,7 @@ export function PromptActions({
               <Pin className="h-4 w-4 mr-2" />
               Pin to top
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSettings} disabled>
+            <DropdownMenuItem onClick={handleSettings}>
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </DropdownMenuItem>

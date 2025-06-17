@@ -11,13 +11,15 @@ interface IconPickerProps {
   onChange: (icon: string) => void
   label?: string
   placeholder?: string
+  disabled?: boolean
 }
 
 export function IconPicker({ 
   value, 
   onChange, 
   label = 'Icon',
-  placeholder = '📝' 
+  placeholder = '📝',
+  disabled = false
 }: IconPickerProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -38,6 +40,7 @@ export function IconPicker({
             variant="outline"
             className="h-10 w-20 text-lg p-0 justify-center hover:bg-gray-50 transition-colors"
             type="button"
+            disabled={disabled}
           >
             {displayIcon}
           </Button>
@@ -47,7 +50,7 @@ export function IconPicker({
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-900">Choose an icon</h4>
             
-            <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-7 gap-1 max-h-48 overflow-y-auto">
               {ENTITY_ICONS.map((icon, index) => (
                 <button
                   key={`${icon}-${index}`}

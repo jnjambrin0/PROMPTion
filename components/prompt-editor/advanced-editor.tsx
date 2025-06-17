@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { 
   Plus, GripVertical, Type, Hash, Code, Heading, Variable, Trash2,
   Eye, RotateCcw, Check, Loader2
@@ -16,7 +16,8 @@ import type { Block, BlockVariable } from '@/lib/types/shared'
 // Props interface for the AdvancedEditor component
 interface AdvancedEditorProps {
   initialBlocks?: Block[]
-  onSave: (blocks: Block[]) => void
+  onBlocksChange: (blocks: Block[]) => void
+  onSave: () => void
   onCancel: () => void
   isLoading?: boolean
   showPreview?: boolean
@@ -402,6 +403,7 @@ function PromptBlock({
 
 export function AdvancedEditor({
   initialBlocks = [],
+  onBlocksChange,
   onSave,
   onCancel,
   isLoading = false,
@@ -410,6 +412,10 @@ export function AdvancedEditor({
 }: AdvancedEditorProps) {
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks)
   const [showingBlockSelector, setShowingBlockSelector] = useState(false)
+  
+  useEffect(() => {
+    onBlocksChange(blocks)
+  }, [blocks, onBlocksChange])
   
   // Auto-detect variables from blocks
   const detectedVariables = useVariableDetection(blocks)
@@ -456,12 +462,11 @@ export function AdvancedEditor({
   
   // Save blocks
   const handleSave = useCallback(() => {
-    onSave(blocks)
-  }, [blocks, onSave])
+    onSave()
+  }, [onSave])
 
   const renderBlock = (block: Block) => {
     const props = {
-      key: block.id,
       block,
       onChange: (content: Block['content']) => updateBlock(block.id, content),
       onRemove: () => removeBlock(block.id),
@@ -470,13 +475,14 @@ export function AdvancedEditor({
 
     switch (block.type) {
       case 'TEXT':
-        return <TextBlock {...props} />
+        return <TextBlock key={block.id} {...props} />
       case 'VARIABLE':
-        return <VariableBlock {...props} />
+        return <VariableBlock key={block.id} {...props} />
       case 'PROMPT':
-        return <PromptBlock {...props} />
+        return <PromptBlock key={block.id} {...props} />
       default:
-        return <TextBlock {...props} />
+        // Render other block types here if any
+        return <TextBlock key={block.id} {...props} />
     }
   }
 

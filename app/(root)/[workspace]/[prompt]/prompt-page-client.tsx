@@ -11,10 +11,11 @@ import { Separator } from '@/components/ui/separator'
 import { PromptViewer } from '@/components/prompt/prompt-viewer'
 import { PromptActions } from '@/components/prompt/prompt-actions'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertCircle, ArrowLeft, Star, StarOff } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Star, Play } from 'lucide-react'
 import Link from 'next/link'
-import type { JsonValue } from '@/lib/types/shared'
+import type { JsonValue, Block } from '@/lib/types/shared'
 import Image from 'next/image'
+import { UsePromptModal } from '@/components/prompt/use-prompt-modal'
 
 // Tipos específicos basados en la estructura real de datos
 interface PromptBlockData {
@@ -151,7 +152,7 @@ function LoadingSkeleton() {
 function convertBlocksForViewer(blocks: PromptBlockData[]) {
   return blocks.map(block => ({
     id: block.id,
-    type: block.type,
+    type: block.type as Block['type'],
     content: typeof block.content === 'object' && block.content !== null 
       ? block.content as Record<string, unknown>
       : { text: String(block.content) },
@@ -170,6 +171,7 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
+  const [isUseModalOpen, setIsUseModalOpen] = useState(false)
 
   // Fetch prompt data
   const fetchPromptData = useCallback(async () => {
@@ -356,183 +358,196 @@ export function PromptPageClient({ workspaceSlug, promptSlug, userId }: PromptPa
     return <ErrorState message="No prompt data available" onRetry={fetchPromptData} />
   }
 
-  // Preparar datos para PromptViewer
+  // Preparar datos para PromptViewer y Modal
+  const editorBlocks = convertBlocksForViewer(promptData.blocks || [])
+
   const promptViewerData = {
     id: promptData.id,
     title: promptData.title,
     description: promptData.description,
-    blocks: convertBlocksForViewer(promptData.blocks || [])
+    blocks: editorBlocks,
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        {/* Breadcrumbs */}
-        {breadcrumbData && (
-          <nav className="mb-6">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Link href={`/${breadcrumbData.workspaceSlug}`} className="hover:text-gray-900">
-                {breadcrumbData.workspaceName}
-              </Link>
-              <span>/</span>
-              <span className="font-medium text-gray-900">{promptData.title}</span>
-            </div>
-          </nav>
-        )}
+    <>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto py-8 px-4">
+          {/* Breadcrumbs */}
+          {breadcrumbData && (
+            <nav className="mb-6">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Link href={`/${breadcrumbData.workspaceSlug}`} className="hover:text-gray-900">
+                  {breadcrumbData.workspaceName}
+                </Link>
+                <span>/</span>
+                <span className="font-medium text-gray-900">{promptData.title}</span>
+              </div>
+            </nav>
+          )}
 
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Prompt content */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Prompt header with actions */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{promptData.title}</h1>
-                    {promptData.description && (
-                      <p className="text-gray-600">{promptData.description}</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2 ml-4">
-                    {/* Favorite button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={loading.action}
-                      onClick={() => handleAction(actions.favorite)}
-                      className="flex items-center gap-2"
-                    >
-                      {isFavorited ? (
-                        <>
-                          <StarOff className="h-4 w-4" />
-                          Unfavorite
-                        </>
-                      ) : (
-                        <>
-                          <Star className="h-4 w-4" />
-                          Favorite
-                        </>
+          {/* Main content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Prompt content */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Prompt header with actions */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900 mb-2">{promptData.title}</h1>
+                      {promptData.description && (
+                        <p className="text-gray-600">{promptData.description}</p>
                       )}
-                    </Button>
+                    </div>
                     
-                    {/* Actions dropdown */}
-                    <PromptActions
-                      promptId={promptData.id}
-                      promptSlug={promptData.slug}
-                      workspaceSlug={workspaceSlug}
-                      isOwner={isOwner}
-                      isFavorited={isFavorited}
-                      onFavoriteChange={setIsFavorited}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="flex items-center gap-2 ml-4">
+                      {/* Use Prompt button */}
+                      <Button
+                        size="sm"
+                        onClick={() => setIsUseModalOpen(true)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Play className="h-4 w-4" />
+                        Use Prompt
+                      </Button>
 
-            {/* Prompt viewer */}
-            <Card>
-              <CardContent className="pt-6">
-                <PromptViewer prompt={promptViewerData} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Prompt info */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">About this prompt</h3>
-                    {promptData.description ? (
-                      <p className="text-sm text-gray-600">{promptData.description}</p>
-                    ) : (
-                      <p className="text-sm text-gray-400 italic">No description available</p>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Created</span>
-                      <p className="font-medium">{new Date(promptData.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Updated</span>
-                      <p className="font-medium">{new Date(promptData.updatedAt).toLocaleDateString()}</p>
+                      {/* Favorite button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={loading.action}
+                        onClick={() => handleAction(actions.favorite)}
+                        className={`flex items-center gap-2 cursor-pointer ${
+                          isFavorited ? 'bg-warning-muted/50 border-warning/30 text-warning-muted-foreground hover:bg-warning-muted/70' : ''
+                        }`}
+                      >
+                        <Star className={`h-4 w-4 ${isFavorited ? 'text-warning' : ''}`} />
+                        {isFavorited ? 'Favorited' : 'Favorite'}
+                      </Button>
+                      
+                      {/* Actions dropdown */}
+                      <PromptActions
+                        promptId={promptData.id}
+                        promptSlug={promptData.slug}
+                        workspaceSlug={workspaceSlug}
+                        isOwner={isOwner}
+                        isFavorited={isFavorited}
+                        onFavoriteChange={setIsFavorited}
+                      />
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {promptData._count && (
-                    <>
-                      <Separator />
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div className="text-center">
-                          <p className="font-semibold text-lg">{promptData._count.blocks || 0}</p>
-                          <p className="text-gray-500">Blocks</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-semibold text-lg">{promptData._count.favorites || 0}</p>
-                          <p className="text-gray-500">Favorites</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-semibold text-lg">{promptData._count.forks || 0}</p>
-                          <p className="text-gray-500">Forks</p>
-                        </div>
+              {/* Prompt viewer */}
+              <Card>
+                <CardContent className="pt-6">
+                  <PromptViewer prompt={promptViewerData} />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Prompt info */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">About this prompt</h3>
+                      {promptData.description ? (
+                        <p className="text-sm text-gray-600">{promptData.description}</p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No description available</p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Created</span>
+                        <p className="font-medium">{new Date(promptData.createdAt).toLocaleDateString()}</p>
                       </div>
-                    </>
-                  )}
-
-                  <Separator />
-
-                  <div className="flex flex-wrap gap-2">
-                    {promptData.isTemplate && (
-                      <Badge variant="secondary">Template</Badge>
-                    )}
-                    {promptData.isPublic && (
-                      <Badge variant="outline">Public</Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Author info */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Created by</h3>
-                <div className="flex items-center space-x-3">
-                  {promptData.user.avatarUrl ? (
-                    <Image
-                      src={promptData.user.avatarUrl}
-                      alt={promptData.user.fullName || promptData.user.username || 'User'}
-                      className="w-10 h-10 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-600 font-medium text-sm">
-                        {(promptData.user.fullName || promptData.user.username || '?').charAt(0).toUpperCase()}
-                      </span>
+                      <div>
+                        <span className="text-gray-500">Updated</span>
+                        <p className="font-medium">{new Date(promptData.updatedAt).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {promptData.user.fullName || promptData.user.username || 'Anonymous'}
-                    </p>
-                    {promptData.user.username && promptData.user.fullName && (
-                      <p className="text-sm text-gray-500">@{promptData.user.username}</p>
+
+                    {promptData._count && (
+                      <>
+                        <Separator />
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="text-center">
+                            <p className="font-semibold text-lg">{promptData._count.blocks || 0}</p>
+                            <p className="text-gray-500">Blocks</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-semibold text-lg">{promptData._count.favorites || 0}</p>
+                            <p className="text-gray-500">Favorites</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-semibold text-lg">{promptData._count.forks || 0}</p>
+                            <p className="text-gray-500">Forks</p>
+                          </div>
+                        </div>
+                      </>
                     )}
+
+                    <Separator />
+
+                    <div className="flex flex-wrap gap-2">
+                      {promptData.isTemplate && (
+                        <Badge variant="secondary">Template</Badge>
+                      )}
+                      {promptData.isPublic && (
+                        <Badge variant="outline">Public</Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* Author info */}
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Created by</h3>
+                  <div className="flex items-center space-x-3">
+                    {promptData.user.avatarUrl ? (
+                      <Image
+                        src={promptData.user.avatarUrl}
+                        alt={promptData.user.fullName || promptData.user.username || 'User'}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-600 font-medium text-sm">
+                          {(promptData.user.fullName || promptData.user.username || '?').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {promptData.user.fullName || promptData.user.username || 'Anonymous'}
+                      </p>
+                      {promptData.user.username && promptData.user.fullName && (
+                        <p className="text-sm text-gray-500">@{promptData.user.username}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <UsePromptModal
+        isOpen={isUseModalOpen}
+        onOpenChange={setIsUseModalOpen}
+        blocks={editorBlocks}
+        title={promptData.title}
+      />
+    </>
   )
 } 

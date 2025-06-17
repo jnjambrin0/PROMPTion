@@ -65,11 +65,11 @@ export function DevelopmentNotice({
               </Badge>
             </div>
             <AlertDescription className="text-sm text-muted-foreground leading-relaxed w-full">
-              {description}
+              <p className="max-w-prose">{description}</p>
               {estimatedDate && (
-                <div className="mt-2 text-xs font-medium text-foreground">
+                <p className="mt-2 text-xs font-medium text-foreground">
                   <span className="text-muted-foreground">Estimated availability:</span> {estimatedDate}
-                </div>
+                </p>
               )}
             </AlertDescription>
           </div>
