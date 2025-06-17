@@ -3,15 +3,13 @@ import { getUserByAuthId } from '@/lib/db/users'
 import { AuthenticatedUser } from '@/lib/types/shared'
 
 /**
- * Retrieves the full authenticated user state. This is the centralized,
- * canonical way to check for a user's session across the app.
+ * Retrieves the authenticated user if they have both a valid session
+ * AND a complete profile in our database.
+ * 
+ * Users with only a Supabase session but no profile are considered
+ * unauthenticated and will be redirected to complete their setup.
  *
- * It gracefully handles the replication lag that can occur after signup
- * by constructing a partial `AuthenticatedUser` object from the Supabase
- * session data if the full profile from the public `users` table is not yet available.
- * This prevents redirection loops.
- *
- * @returns An `AuthenticatedUser` object if a session exists, otherwise `null`.
+ * @returns The authenticated user profile if fully valid, otherwise `null`.
  */
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   try {
@@ -26,34 +24,15 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
 
     const profile = await getUserByAuthId(authUser.id)
 
-    // If the profile exists in our DB, return the full, merged user object.
-    if (profile) {
-      return profile
+    // CRITICAL: Only return a user if they have BOTH auth AND profile
+    if (!profile) {
+      console.error(
+        `[AUTH] User has auth session but no profile. AuthId: ${authUser.id}. This user needs to complete registration.`
+      )
+      return null
     }
 
-    // HANDLE RACE CONDITION:
-    // If the profile is not yet in our DB (due to replication lag),
-    // we construct a partial but valid AuthenticatedUser from the auth data.
-    // This acknowledges the user is logged in and prevents sign-in loops.
-    // The application should handle this partial state gracefully.
-    console.warn(
-      `[AUTH] User profile not found for authId: ${authUser.id}. Serving partial user state.`
-    )
-
-    return {
-      id: authUser.id, // Use authUser.id as the primary ID temporarily
-      authId: authUser.id,
-      email: authUser.email || '',
-      emailVerified: !!authUser.email_confirmed_at,
-      username: authUser.user_metadata.username || null,
-      fullName: authUser.user_metadata.full_name || null,
-      avatarUrl: authUser.user_metadata.avatar_url || null,
-      bio: null,
-      isActive: true, // Assume active if they have a session
-      lastActiveAt: new Date(),
-      createdAt: new Date(authUser.created_at),
-      updatedAt: new Date(authUser.updated_at || authUser.created_at),
-    }
+    return profile
   } catch (error) {
     console.error('Error in getAuthenticatedUser:', error)
     return null

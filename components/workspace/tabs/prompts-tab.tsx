@@ -17,7 +17,6 @@ import {
   MoreHorizontal,
   Clock,
   User,
-  RefreshCcw,
   Hash,
   Trash2,
   Copy,
@@ -349,200 +348,141 @@ function EmptyState({
   searchQuery, 
   selectedCategory, 
   onClearFilters, 
-  workspaceSlug 
+  workspaceId
 }: {
   searchQuery: string
   selectedCategory: string
   onClearFilters: () => void
-  workspaceSlug: string
+  workspaceId: string
 }) {
   const hasFilters = searchQuery || selectedCategory !== 'all'
-
   return (
-    <div className="text-center py-8">
-      <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-      {hasFilters ? (
-        <>
-          <h3 className="text-base font-medium text-foreground mb-2">No prompts found</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Try adjusting your search criteria or filters
-          </p>
-          <Button variant="outline" onClick={onClearFilters}>
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            Clear filters
+    <div className="text-center py-16 px-6 bg-white rounded-lg border border-dashed">
+      <MessageSquare className="mx-auto h-12 w-12 text-neutral-400" />
+      <h3 className="mt-4 text-lg font-medium text-neutral-900">
+        {hasFilters ? 'No prompts match your filters' : 'No prompts yet'}
+      </h3>
+      <p className="mt-2 text-sm text-neutral-500 max-w-sm mx-auto">
+        {hasFilters
+          ? 'Try adjusting your search or clearing the filters to see all prompts.'
+          : 'Get started by creating a new prompt for your workspace.'}
+      </p>
+      <div className="mt-6">
+        {hasFilters ? (
+          <Button onClick={onClearFilters}>
+            <Filter className="h-4 w-4 mr-2" />
+            Clear Filters
           </Button>
-        </>
-      ) : (
-        <>
-          <h3 className="text-base font-medium text-foreground mb-2">No prompts yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Get started by creating your first prompt
-          </p>
+        ) : (
           <Button asChild>
-            <Link href={`/${workspaceSlug}/prompts/new`}>
+            <Link href={`/prompts/new?workspace=${workspaceId}`}>
               <Plus className="h-4 w-4 mr-2" />
-              Create first prompt
+              Create Prompt
             </Link>
           </Button>
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 }
 
 export default function PromptsTab({ workspaceSlug, workspaceData }: PromptsTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
-  const { categories, prompts, stats } = workspaceData
-
-  // Memoized data transformations
   const transformedPrompts = useMemo(() => {
-    if (!prompts || prompts.length === 0) return []
-    
-    return prompts.map(prompt => ({
+    if (!workspaceData.prompts) return []
+    return workspaceData.prompts.map(prompt => ({
       id: prompt.id,
       slug: prompt.slug,
       name: prompt.title,
-      description: prompt.description || 'No description available',
+      description: prompt.description || 'No description provided.',
       category: prompt.category?.name || 'Uncategorized',
-      categoryId: prompt.category?.id || 'uncategorized',
+      categoryId: prompt.category?.id || '',
       categoryColor: prompt.category?.color || null,
       isPublic: prompt.isPublic,
       isTemplate: prompt.isTemplate,
-      blocks: prompt._count?.blocks || 0,
-      views: Math.floor(Math.random() * 100) + 10, // Simular views hasta implementar analytics
-      author: { 
-        name: prompt.user?.fullName || prompt.user?.username || 'Unknown',
-        avatar: prompt.user?.avatarUrl || null 
+      blocks: prompt._count.blocks,
+      views: 0, // Placeholder
+      author: {
+        name: prompt.user.fullName || prompt.user.username || 'Unknown User',
+        avatar: prompt.user.avatarUrl,
       },
       updatedAt: new Date(prompt.updatedAt),
-      createdAt: new Date(prompt.createdAt)
+      createdAt: new Date(prompt.createdAt),
     }))
-  }, [prompts])
+  }, [workspaceData.prompts])
 
-  // Filter categories with memoization
-  const filterCategories = useMemo(() => {
-    const realCategories = categories.map(cat => ({
-      id: cat.id,
-      name: cat.name
-    }))
-    
-    const hasUncategorized = transformedPrompts.some(p => p.categoryId === 'uncategorized')
-    if (hasUncategorized) {
-      realCategories.push({ id: 'uncategorized', name: 'Uncategorized' })
-    }
-    
-    return [
-      { id: 'all', name: 'All Categories' },
-      ...realCategories
-    ]
-  }, [categories, transformedPrompts])
+  const filteredBySearch = usePromptSearch(transformedPrompts, searchQuery)
+  const filteredPrompts = usePromptFilters(filteredBySearch, selectedCategory)
 
-  // Apply search and filters with custom hooks
-  const searchResults = usePromptSearch(transformedPrompts, searchQuery)
-  const filteredPrompts = usePromptFilters(searchResults, selectedCategory)
-
-  // Optimized handlers
-  const handleClearFilters = useCallback(() => {
+  const clearFilters = useCallback(() => {
     setSearchQuery('')
     setSelectedCategory('all')
   }, [])
 
-  const handleCategoryChange = useCallback((categoryId: string) => {
-    setSelectedCategory(categoryId)
-  }, [])
+  const stats = useMemo(() => ({
+    totalPrompts: workspaceData.stats?.totalPrompts || 0,
+    totalViews: workspaceData.stats?.totalViews || 0,
+    templatesCount: workspaceData.stats?.templatesCount || 0,
+    publicPromptsCount: workspaceData.stats?.publicPromptsCount || 0
+  }), [workspaceData.stats])
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-        <div>
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Prompts</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage and organize all your prompts
-          </p>
-        </div>
-        <Button asChild className="self-start sm:self-auto">
-          <Link href={`/${workspaceSlug}/prompts/new`}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Prompt
-          </Link>
-        </Button>
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={MessageSquare} label="Total Prompts" value={stats.totalPrompts} />
+        <StatCard icon={Eye} label="Total Views" value={stats.totalViews} />
+        <StatCard icon={Hash} label="Templates" value={stats.templatesCount} />
+        <StatCard icon={User} label="Public" value={stats.publicPromptsCount} />
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search prompts..."
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+          <Input 
+            placeholder="Search prompts..." 
+            className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9"
           />
         </div>
-        <div className="flex gap-2">
-          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-full sm:w-[200px] h-9">
-              <SelectValue placeholder="Select category" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-            {filterCategories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                {category.name}
+              <SelectItem value="all">All Categories</SelectItem>
+              {workspaceData.categories.map(cat => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
                 </SelectItem>
-            ))}
+              ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" className="shrink-0">
-            <Filter className="h-4 w-4" />
+          <Button asChild>
+            <Link href={`/prompts/new?workspace=${workspaceData.workspace.id}`}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Prompt
+            </Link>
           </Button>
         </div>
       </div>
-
-      {/* Compact Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        <StatCard
-          icon={MessageSquare}
-          label="Prompts"
-          value={stats?.totalPrompts || 0}
-        />
-        <StatCard
-          icon={Eye}
-          label="Total Views"
-          value={stats?.totalViews || 0}
-        />
-        <StatCard
-          icon={Filter}
-          label="Templates"
-          value={stats?.templatesCount || 0}
-        />
-        <StatCard
-          icon={User}
-          label="Public"
-          value={stats?.publicPromptsCount || 0}
-        />
-      </div>
-
-      {/* Prompts Grid */}
-      {filteredPrompts.length === 0 ? (
-        <EmptyState
-          searchQuery={searchQuery}
-          selectedCategory={selectedCategory}
-          onClearFilters={handleClearFilters}
-          workspaceSlug={workspaceSlug}
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      
+      {filteredPrompts.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPrompts.map((prompt) => (
-            <PromptCard
-              key={prompt.id}
-              prompt={prompt}
-              workspaceSlug={workspaceSlug}
-            />
+            <PromptCard key={prompt.id} prompt={prompt} workspaceSlug={workspaceSlug} />
           ))}
         </div>
+      ) : (
+        <EmptyState 
+          searchQuery={searchQuery}
+          selectedCategory={selectedCategory}
+          onClearFilters={clearFilters}
+          workspaceId={workspaceData.workspace.id}
+        />
       )}
     </div>
   )

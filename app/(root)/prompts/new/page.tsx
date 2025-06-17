@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { getAuthenticatedUser } from '@/lib/actions/auth/auth-helpers'
 import { redirect } from 'next/navigation'
 import { CreatePromptForm } from './create-prompt-form'
 
@@ -7,12 +7,11 @@ interface PageProps {
 }
 
 export default async function NewPromptPage({ searchParams }: PageProps) {
-  // Ensure user is authenticated
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Ensure user is authenticated using the centralized helper
+  const user = await getAuthenticatedUser()
   
   if (!user) {
-    redirect('/auth/signin')
+    redirect('/sign-in')
   }
 
   const params = await searchParams

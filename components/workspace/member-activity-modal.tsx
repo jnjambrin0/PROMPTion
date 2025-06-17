@@ -182,7 +182,7 @@ export function MemberActivityModal({
     } finally {
       setLoading(false)
     }
-  }, [workspaceSlug, member.user.id, loading])
+  }, [workspaceSlug, member.user.id])
 
   // Load activities when modal opens
   useEffect(() => {

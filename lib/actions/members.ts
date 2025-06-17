@@ -121,19 +121,20 @@ export async function inviteMemberAction(
     )
 
     // Enviar email de invitación
-    try {
-      await sendWorkspaceInvitationEmail({
-        workspaceName: invitation.workspace.name,
-        inviterName: invitation.invitedBy.fullName || invitation.invitedBy.username || 'Team Member',
-        inviterEmail: invitation.invitedBy.email,
-        recipientEmail: invitation.email,
-        role: invitation.role,
-        message: invitation.message || undefined,
-        invitationToken: invitation.token
-      })
-    } catch (emailError) {
-      // Log error but don't fail the invitation process
-      console.error('Failed to send invitation email:', emailError)
+    const emailResult = await sendWorkspaceInvitationEmail({
+      workspaceName: invitation.workspace.name,
+      inviterName: invitation.invitedBy.fullName || invitation.invitedBy.username || 'Team Member',
+      inviterEmail: invitation.invitedBy.email,
+      recipientEmail: invitation.email,
+      role: invitation.role,
+      message: invitation.message || undefined,
+      invitationToken: invitation.token
+    })
+
+    if (!emailResult.success) {
+      // Log the error but do not block the success of the invitation itself.
+      // The user can be notified via in-app notifications.
+      console.error('Failed to send invitation email:', emailResult.error)
     }
 
     // Crear notificación si el usuario ya existe en la plataforma
