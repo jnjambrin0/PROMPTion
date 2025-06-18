@@ -1,4 +1,4 @@
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { z } from 'zod'
 import { MemberRole } from '@/lib/generated/prisma'
 import { WorkspaceInvitationEmail } from '@/components/emails/workspace-invitation-email'
@@ -26,12 +26,6 @@ const sendInvitationSchema = z.object({
 })
 
 export type SendInvitationEmailData = z.infer<typeof sendInvitationSchema>
-
-// ============================================================================
-// RESEND CONFIGURATION
-// ============================================================================
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 // ============================================================================
 // EMAIL SENDING FUNCTION
