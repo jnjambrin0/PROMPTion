@@ -613,3 +613,37 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Help Search Highlighting */
+mark {
+  background-color: #fef08a;
+  color: #713f12;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+/* Help Search Result Hover Effects */
+.notion-hover {
+  transition: all 0.15s ease-in-out;
+}
+
+.notion-hover:hover {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+/* Line clamp utilities for search results */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

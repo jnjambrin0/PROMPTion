@@ -1,4 +1,18 @@
-/* eslint-disable @next/next/no-head-element */
+import {
+  Body,
+  Button,
+  Container,
+  Column,
+  Head,
+  Hr,
+  Html,
+  Link,
+  Preview,
+  Row,
+  Section,
+  Text,
+} from '@react-email/components';
+import { Tailwind } from '@react-email/tailwind';
 import * as React from 'react'
 
 interface WorkspaceInvitationEmailProps {
@@ -22,220 +36,142 @@ export const WorkspaceInvitationEmail: React.FC<Readonly<WorkspaceInvitationEmai
   invitationUrl,
   expiresInDays,
 }) => {
-  const previewText = `${inviterName} invited you to join ${workspaceName} on Promption`
+  const previewText = `Join ${workspaceName} on Promption`
 
   return (
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>{previewText}</title>
-      </head>
-      <body style={{ 
-        backgroundColor: '#f6f9fc', 
-        fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-        margin: 0,
-        padding: 0,
-        lineHeight: '1.6',
-        color: '#333333'
-      }}>
-        {/* Hidden preview text */}
-        <div style={{ 
-          display: 'none', 
-          overflow: 'hidden', 
-          lineHeight: '1px', 
-          opacity: 0, 
-          maxHeight: 0, 
-          maxWidth: 0 
-        }}>
-          {previewText}
-        </div>
-
-        {/* Email wrapper */}
-        <table role="presentation" style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse', 
-          backgroundColor: '#f6f9fc',
-          padding: '20px 0'
-        }}>
-          <tr>
-            <td align="center">
-              {/* Email container */}
-              <table role="presentation" style={{ 
-                maxWidth: '600px', 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                overflow: 'hidden'
-              }}>
-                {/* Header */}
-                <tr>
-                  <td style={{ 
-                    backgroundColor: '#1f2937', 
-                    padding: '40px 30px 30px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#3b82f6',
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '8px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: '20px'
-                    }}>
-                      <span style={{
-                        color: '#ffffff',
-                        fontSize: '24px',
-                        fontWeight: 'bold'
-                      }}>P</span>
-                    </div>
-                    <h1 style={{ 
-                      color: '#ffffff', 
-                      margin: '0 0 10px',
-                      fontSize: '24px',
-                      fontWeight: '600',
-                      lineHeight: '1.3'
-                    }}>
-                      You&apos;re invited to join {workspaceName}
-                    </h1>
-                    <p style={{ 
-                      color: '#d1d5db', 
-                      margin: '0',
-                      fontSize: '16px'
-                    }}>
-                      {inviterName} has invited you to collaborate on Promption
-                    </p>
-                  </td>
-                </tr>
-
-                {/* Body */}
-                <tr>
-                  <td style={{ padding: '40px 30px' }}>
-                    <div style={{ marginBottom: '30px' }}>
-                      <h2 style={{ 
-                        margin: '0 0 20px',
-                        fontSize: '20px',
-                        fontWeight: '600',
-                        color: '#1f2937'
-                      }}>
-                        Welcome to the team!
-                      </h2>
-                      <p style={{ 
-                        margin: '0 0 20px',
-                        fontSize: '16px',
-                        color: '#4b5563',
-                        lineHeight: '1.6'
-                      }}>
-                        <strong>{inviterName}</strong> ({inviterEmail}) has invited you to join the <strong>{workspaceName}</strong> workspace with <strong>{role.toLowerCase()}</strong> access.
-                      </p>
-                      
-                      {message && (
-                        <div style={{
-                          backgroundColor: '#f9fafb',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '6px',
-                          padding: '20px',
-                          margin: '20px 0'
-                        }}>
-                          <p style={{
-                            margin: '0',
-                            fontSize: '14px',
-                            color: '#6b7280',
-                            fontStyle: 'italic'
-                          }}>
-                            &ldquo;{message}&rdquo;
-                          </p>
-                        </div>
-                      )}
-
-                      <div style={{
-                        backgroundColor: '#fef3c7',
-                        border: '1px solid #fcd34d',
-                        borderRadius: '6px',
-                        padding: '16px',
-                        margin: '20px 0'
-                      }}>
-                        <p style={{
-                          margin: '0',
-                          fontSize: '14px',
-                          color: '#92400e'
-                        }}>
-                          <strong>⏰ Time-sensitive:</strong> This invitation expires in {expiresInDays} days.
-                        </p>
+    <Html>
+      <Head />
+      <Preview>{previewText}</Preview>
+      <Tailwind>
+        <Body className="bg-gray-50 font-sans">
+          <Container className="mx-auto my-10 max-w-xl rounded-lg border border-gray-200 bg-white shadow-sm">
+            
+            {/* Header */}
+            <Section className="px-12 py-6">
+              <Row>
+                <Column>
+                  <Row>
+                    <Column className="w-10">
+                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black">
+                        <span className="text-2xl font-bold text-white">P</span>
                       </div>
-                    </div>
+                    </Column>
+                    <Column>
+                      <Text className="m-0 pl-3 text-xl font-semibold tracking-tighter text-black">
+                        Promption
+                      </Text>
+                    </Column>
+                  </Row>
+                </Column>
+              </Row>
+            </Section>
 
-                    {/* CTA Button */}
-                    <div style={{ textAlign: 'center', margin: '30px 0' }}>
-                      <a href={invitationUrl} style={{
-                        backgroundColor: '#3b82f6',
-                        color: '#ffffff',
-                        textDecoration: 'none',
-                        padding: '14px 28px',
-                        borderRadius: '6px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        display: 'inline-block',
-                        boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
-                      }}>
-                        Accept Invitation
-                      </a>
+            {/* Content */}
+            <Section className="px-12 py-6">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100">
+                <span className="text-2xl">🎉</span>
+              </div>
+              
+              <Text className="m-0 text-3xl font-bold text-black">
+                You&apos;re invited to join {workspaceName}
+              </Text>
+              
+              <Text className="m-0 text-base text-gray-600">
+                {inviterName} has invited you to collaborate on Promption.
+              </Text>
+              
+              {/* Invitation Details */}
+              <Section className="mb-6 rounded-md bg-gray-50 p-5">
+                <Row className="pb-3">
+                  <Column>
+                    <Text className="m-0 text-sm text-gray-500">Invited by</Text>
+                    <Text className="m-0 pt-1 text-base font-medium text-gray-800">{inviterName}</Text>
+                    <Text className="m-0 pt-1 text-sm text-gray-500">{inviterEmail}</Text>
+                  </Column>
+                </Row>
+                <Hr className="my-3 border-gray-200" />
+                <Row className="pt-3">
+                  <Column>
+                    <Text className="m-0 text-sm text-gray-500">Your role</Text>
+                    <div className="mt-1 inline-block rounded-md bg-blue-100 px-2 py-1">
+                      <Text className="m-0 text-sm font-medium text-blue-800">{role}</Text>
                     </div>
+                  </Column>
+                </Row>
+              </Section>
+              
+              {/* Personal Message */}
+              {message && (
+                <Section className="mb-6 rounded-md border-l-4 border-indigo-500 bg-gray-50 p-4">
+                  <Text className="m-0 mb-1 text-xs font-semibold uppercase text-gray-500">Personal Message</Text>
+                  <Text className="m-0 text-base italic text-gray-700">
+                    &ldquo;{message}&rdquo;
+                  </Text>
+                </Section>
+              )}
+              
+              {/* CTA Button */}
+              <Button
+                href={invitationUrl}
+                className="mb-8 block w-full rounded-md bg-indigo-600 px-6 py-3 text-center text-base font-semibold text-white"
+              >
+                Accept Invitation
+              </Button>
+              
+              {/* Expiration Warning */}
+              <Section className="rounded-md border-l-4 border-amber-400 bg-amber-50 p-4">
+                <Row>
+                  <Column className="w-6 align-top pt-1">
+                     <Text className="m-0 text-base">⏰</Text>
+                  </Column>
+                  <Column>
+                    <Text className="m-0 font-semibold text-amber-900">Time-sensitive invitation</Text>
+                    <Text className="m-0 text-sm text-amber-800">
+                      This invitation expires in {expiresInDays} days. After that, you&apos;ll need to request a new invitation.
+                    </Text>
+                  </Column>
+                </Row>
+              </Section>
+              
+              {/* What you'll get */}
+              <Section className="mt-8">
+                 <Text className="font-semibold text-gray-800">What you&apos;ll get access to:</Text>
+                 <ul className="m-0 list-disc pl-5 text-sm text-gray-600">
+                  <li className="mb-2">All shared prompts and templates in the workspace</li>
+                  <li className="mb-2">Collaboration tools for team feedback</li>
+                  <li className="mb-2">Performance analytics and insights</li>
+                  <li>Version history and prompt iterations</li>
+                </ul>
+              </Section>
 
-                    <p style={{ 
-                      margin: '30px 0 0',
-                      fontSize: '14px',
-                      color: '#6b7280',
-                      textAlign: 'center',
-                      lineHeight: '1.5'
-                    }}>
-                      If the button doesn&apos;t work, you can also copy and paste this link into your browser:
-                      <br />
-                      <a href={invitationUrl} style={{ 
-                        color: '#3b82f6', 
-                        textDecoration: 'none',
-                        wordBreak: 'break-all'
-                      }}>
-                        {invitationUrl}
-                      </a>
-                    </p>
-                  </td>
-                </tr>
-
-                {/* Footer */}
-                <tr>
-                  <td style={{
-                    backgroundColor: '#f9fafb',
-                    padding: '30px',
-                    borderTop: '1px solid #e5e7eb'
-                  }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <p style={{ 
-                        margin: '0 0 10px',
-                        fontSize: '14px',
-                        color: '#6b7280'
-                      }}>
-                        This invitation was sent to <strong>{recipientEmail}</strong>
-                      </p>
-                      <p style={{ 
-                        margin: '0',
-                        fontSize: '12px',
-                        color: '#9ca3af'
-                      }}>
-                        © 2024 Promption. All rights reserved.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-    </html>
+              {/* Alternative Link */}
+              <Section className="mt-8 border-t border-gray-200 pt-6 text-center">
+                 <Text className="text-sm text-gray-600">Having trouble? Copy and paste this link:</Text>
+                 <Link href={invitationUrl} className="break-all text-xs text-indigo-600">
+                   {invitationUrl}
+                 </Link>
+                 <Text className="mt-4 text-xs text-gray-500">
+                   This invitation was sent to <strong>{recipientEmail}</strong>
+                 </Text>
+              </Section>
+            </Section>
+            
+            {/* Footer */}
+            <Section className="border-t border-gray-200 bg-gray-50 px-12 py-6 text-center">
+              <Text className="m-0 text-xs text-gray-500">
+                © {new Date().getFullYear()} Promption. The developer-first prompt management platform.
+              </Text>
+               <Text className="m-0 text-xs text-gray-500">
+                  <Link href="https://promption.com/docs" className="text-gray-600">Documentation</Link> · 
+                  <Link href="https://promption.com/privacy" className="text-gray-600">Privacy</Link> · 
+                  <Link href="https://promption.com/security" className="text-gray-600">Security</Link>
+              </Text>
+            </Section>
+          </Container>
+        </Body>
+      </Tailwind>
+    </Html>
   )
-} 
+}
+
+export default WorkspaceInvitationEmail; 

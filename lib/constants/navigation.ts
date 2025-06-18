@@ -12,7 +12,8 @@ import {
   Users,
   Home,
   BookOpen,
-  Layers
+  Layers,
+  HelpCircle
 } from 'lucide-react'
 import { NavigationItem, QuickAction } from '@/lib/types/navigation'
 
@@ -88,6 +89,12 @@ export const MAIN_NAVIGATION: NavigationItem[] = [
     label: 'Guides',
     href: '/guides',
     icon: BookOpen
+  },
+  {
+    id: 'help',
+    label: 'Help',
+    href: '/help',
+    icon: HelpCircle
   },
   {
     id: 'settings',

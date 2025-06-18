@@ -4,6 +4,7 @@ import { RightSidebar } from '@/components/layout/right-sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { LegalFooter } from '@/components/legal/legal-footer'
 import { CookieBanner } from '@/components/legal/cookie-banner'
+import { FeedbackWidget } from '@/components/feedback'
 
 // Force dynamic rendering for authenticated layout
 export const dynamic = 'force-dynamic'
@@ -38,6 +39,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </div>
         </div>
       </div>
+      
+      {/* Feedback Widget - Global across app */}
+      <FeedbackWidget />
       
       {/* Sonner Toaster for notifications */}
       <Toaster position="bottom-right" />

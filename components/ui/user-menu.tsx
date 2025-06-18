@@ -172,7 +172,7 @@ export function UserMenu({ user, authUser }: UserMenuProps) {
 
           {/* Support */}
           <DropdownMenuItem asChild>
-            <Link href="/support" className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+            <Link href="/help" className="flex items-center gap-3 px-3 py-2 cursor-pointer">
               <HelpCircle className="h-4 w-4 text-neutral-600" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-neutral-900">Help & Support</p>

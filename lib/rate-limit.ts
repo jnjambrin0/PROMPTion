@@ -49,6 +49,14 @@ export const passwordResetRateLimit = new Ratelimit({
   prefix: 'pwd_reset_rl',
 })
 
+// Feedback Submission Rate Limiting - Prevent spam
+export const feedbackRateLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(5, '10m'), // 5 submissions per 10 minutes
+  analytics: true,
+  prefix: 'feedback_rl',
+})
+
 // ==================== ADAPTIVE RATE LIMITING ====================
 // Adjust limits based on server load and threat detection
 
@@ -170,7 +178,7 @@ export interface RateLimitResult {
  */
 export async function checkRateLimit(
   identifier: string,
-  category: 'api' | 'auth' | 'public' | 'password-reset' | 'aggressive'
+  category: 'api' | 'auth' | 'public' | 'password-reset' | 'aggressive' | 'feedback'
 ): Promise<RateLimitResult> {
   const ipTracker = IPSecurityTracker.getInstance()
 
@@ -199,7 +207,9 @@ export async function checkRateLimit(
     case 'aggressive':
       rateLimit = aggressiveRateLimit
       break
-    case 'api':
+    case 'feedback':
+      rateLimit = feedbackRateLimit
+      break
     default:
       rateLimit = apiRateLimit
       break
