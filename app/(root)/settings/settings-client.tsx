@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { User, Shield, Bell, CreditCard, Building, Settings as SettingsIcon, Zap } from 'lucide-react'
+import { User, Shield, Bell, CreditCard, Building, Settings as SettingsIcon, Zap, Landmark } from 'lucide-react'
 import { 
   ProfileSettings, 
   NotificationSettings, 
@@ -9,7 +9,8 @@ import {
   PrivacySettings,
   AccountSettings,
   BillingSettings,
-  IntegrationsSettings
+  IntegrationsSettings,
+  LegalSettings
 } from '@/components/settings'
 import { getUserSettingsAction, type UserSettingsData } from '@/lib/actions/user-settings'
 import { toast } from 'sonner'
@@ -56,6 +57,12 @@ const settingsTabs = [
     label: 'Integrations',
     icon: Zap,
     description: 'Connect with other services'
+  },
+  {
+    id: 'legal',
+    label: 'Legal',
+    icon: Landmark,
+    description: 'Terms, Privacy and Cookies'
   }
 ]
 
@@ -132,6 +139,8 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         )
       case 'integrations':
         return <IntegrationsSettings />
+      case 'legal':
+        return <LegalSettings />
       default:
         return null
     }

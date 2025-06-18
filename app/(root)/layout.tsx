@@ -2,6 +2,8 @@ import { Topbar } from '@/components/layout/topbar'
 import { Sidebar } from '@/components/layout/sidebar'
 import { RightSidebar } from '@/components/layout/right-sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { LegalFooter } from '@/components/legal/legal-footer'
+import { CookieBanner } from '@/components/legal/cookie-banner'
 
 // Force dynamic rendering for authenticated layout
 export const dynamic = 'force-dynamic'
@@ -26,6 +28,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           {/* Main Content */}
           <main className="flex-1 min-w-0 w-full overflow-y-auto">
             {children}
+            <CookieBanner />
+            <LegalFooter />
           </main>
           
           {/* Right Sidebar - Hidden on mobile and tablet */}

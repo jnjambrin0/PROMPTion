@@ -1,11 +1,12 @@
 // Settings Components - Redesigned with optimal UX
-export { ProfileSettings } from './profile-settings'
-export { AccountSettings } from './account-settings'
-export { NotificationSettings } from './notification-settings'
-export { WorkspaceSettings } from './workspace-settings'
-export { PrivacySettings } from './privacy-settings'
-export { BillingSettings } from './billing-settings'
-export { IntegrationsSettings } from './integrations-settings'
+export { AccountSettings } from './account-settings';
+export { BillingSettings } from './billing-settings';
+export { IntegrationsSettings } from './integrations-settings';
+export { NotificationSettings } from './notification-settings';
+export { PrivacySettings } from './privacy-settings';
+export { ProfileSettings } from './profile-settings';
+export { WorkspaceSettings } from './workspace-settings';
+export { LegalSettings } from './legal-settings';
 
 // Shared UI Components
 export { SettingsSection } from './shared/settings-section'
