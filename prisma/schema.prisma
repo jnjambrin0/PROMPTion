@@ -55,6 +55,10 @@ model User {
   receivedNotifications Notification[] @relation("NotificationRecipient")
   sentNotifications     Notification[] @relation("NotificationActor")
   
+  // Consentimiento y preferencias
+  marketingConsent      Boolean  @default(false) @map("marketing_consent")
+  consentLogs           ConsentLog[]
+  
   @@index([email])
   @@index([authId])
   @@map("users")
@@ -699,3 +703,28 @@ enum NotificationStatus {
 // Nota: Estos se crearán con migraciones SQL personalizadas para búsqueda de texto completo
 // CREATE INDEX idx_prompts_search ON prompts USING GIN(to_tsvector('english', title || ' ' || COALESCE(description, '')));
 // CREATE INDEX idx_blocks_search ON blocks USING GIN(content jsonb_path_ops);
+
+model ConsentLog {
+  id                String   @id @default(uuid())
+  type              ConsentType
+  version           String   // Ej: "v1.0" para la versión de los términos
+  ipAddress         String?  @map("ip_address")
+  userAgent         String?  @map("user_agent")
+  
+  // Metadata
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  // Relaciones
+  userId            String   @map("user_id")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([type])
+  @@map("consent_logs")
+}
+
+enum ConsentType {
+  TERMS_AND_CONDITIONS
+  PRIVACY_POLICY
+  MARKETING_COMMUNICATIONS
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -16,9 +16,9 @@ export function TopbarSearch() {
 
   const isSearchPage = pathname === '/search';
 
-  const handleNavigate = (searchTerm: string) => {
+  const handleNavigate = useCallback((searchTerm: string) => {
     router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-  };
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
@@ -40,7 +40,7 @@ export function TopbarSearch() {
     if (!isSearchPage && debouncedQuery.length > 0 && debouncedQuery !== urlQuery) {
       handleNavigate(debouncedQuery);
     }
-  }, [debouncedQuery, urlQuery, isSearchPage]);
+  }, [debouncedQuery, urlQuery, isSearchPage, handleNavigate]);
 
   // Effect to sync input with URL changes (e.g., from SearchClient)
   useEffect(() => {
@@ -48,7 +48,7 @@ export function TopbarSearch() {
     if (query !== urlQuery) {
       setQuery(urlQuery);
     }
-  }, [urlQuery]);
+  }, [urlQuery, query]);
 
   return (
     <div className="relative w-full max-w-lg">

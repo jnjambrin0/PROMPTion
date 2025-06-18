@@ -26,6 +26,7 @@ export async function getUserById(id: string): Promise<Omit<User, 'authId'> | nu
         lastActiveAt: true,
         createdAt: true,
         updatedAt: true,
+        marketingConsent: true
         // Excluimos authId por seguridad
       }
     })
@@ -104,6 +105,7 @@ export async function updateUser(
         lastActiveAt: true,
         createdAt: true,
         updatedAt: true,
+        marketingConsent: true
       }
     })
 
@@ -139,6 +141,7 @@ export async function getUserByEmail(email: string): Promise<Omit<User, 'authId'
         lastActiveAt: true,
         createdAt: true,
         updatedAt: true,
+        marketingConsent: true
       }
     })
     

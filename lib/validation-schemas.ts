@@ -120,4 +120,74 @@ export const createCategorySchema = z.object({
   parentId: z.string().optional()
 })
 
-export type CreateCategoryInput = z.infer<typeof createCategorySchema> 
+export type CreateCategoryInput = z.infer<typeof createCategorySchema>
+
+/**
+ * Validation schemas for authentication forms
+ * These schemas are shared between frontend and backend for consistency
+ */
+
+// Password validation schema with security requirements
+export const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters long')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character')
+
+// Email validation schema
+export const emailSchema = z
+  .string()
+  .email('Please enter a valid email address')
+  .min(1, 'Email is required')
+
+// Sign up form validation schema
+export const signUpFormSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    termsAccepted: z.literal(true, {
+      errorMap: () => ({ message: 'You must accept the Terms and Conditions' }),
+    }),
+    marketingConsent: z.boolean().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+// Sign in form validation schema
+export const signInFormSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Password is required'),
+})
+
+// Password strength checker for real-time feedback
+export const getPasswordStrength = (password: string) => {
+  const checks = {
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^a-zA-Z0-9]/.test(password),
+  }
+
+  const passedChecks = Object.values(checks).filter(Boolean).length
+  const strength = passedChecks / 5
+
+  return {
+    checks,
+    strength,
+    score: Math.round(strength * 100),
+    level: 
+      strength >= 1 ? 'strong' :
+      strength >= 0.8 ? 'good' :
+      strength >= 0.6 ? 'fair' :
+      strength >= 0.4 ? 'weak' : 'very-weak'
+  }
+}
+
+export type SignUpFormData = z.infer<typeof signUpFormSchema>
+export type SignInFormData = z.infer<typeof signInFormSchema> 
